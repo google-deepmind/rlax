@@ -25,6 +25,8 @@ ArrayLike = base.ArrayLike
 
 DiscreteDistribution = collections.namedtuple(
     "DiscreteDistribution", ["sample", "probs", "logprob", "entropy"])
+ContinuousDistribution = collections.namedtuple(
+    "ContinuousDistribution", ["sample", "prob", "logprob", "entropy"])
 
 
 def _categorical_sample(key, probs):
@@ -44,9 +46,9 @@ def softmax(temperature=1.):
   def probs_fn(logits: ArrayLike):
     return jax.nn.softmax(logits / temperature)
 
-  def logprob_fn(logits: ArrayLike, samples: ArrayLike):
+  def logprob_fn(sample: ArrayLike, logits: ArrayLike):
     logprobs = jax.nn.log_softmax(logits / temperature)
-    return base.batched_index(logprobs, samples)
+    return base.batched_index(logprobs, sample)
 
   def entropy_fn(logits: ArrayLike):
     probs = jax.nn.softmax(logits / temperature)
@@ -75,10 +77,10 @@ def epsilon_softmax(epsilon, temperature):
     probs = jax.nn.softmax(logits / temperature)
     return _mix_with_uniform(probs, epsilon)
 
-  def log_prob_fn(logits: ArrayLike, samples: ArrayLike):
+  def log_prob_fn(sample: ArrayLike, logits: ArrayLike):
     probs = jax.nn.softmax(logits / temperature)
     probs = _mix_with_uniform(probs, epsilon)
-    return base.batched_index(jnp.log(probs), samples)
+    return base.batched_index(jnp.log(probs), sample)
 
   def entropy_fn(logits: ArrayLike):
     probs = jax.nn.softmax(logits / temperature)
@@ -104,9 +106,9 @@ def greedy():
   def probs_fn(preferences: ArrayLike):
     return _argmax_with_random_tie_breaking(preferences)
 
-  def log_prob_fn(preferences: ArrayLike, samples: ArrayLike):
+  def log_prob_fn(sample: ArrayLike, preferences: ArrayLike):
     probs = _argmax_with_random_tie_breaking(preferences)
-    return base.batched_index(jnp.log(probs), samples)
+    return base.batched_index(jnp.log(probs), sample)
 
   def entropy_fn(preferences: ArrayLike):
     probs = _argmax_with_random_tie_breaking(preferences)
@@ -127,7 +129,7 @@ def epsilon_greedy(epsilon=None):
     probs = _argmax_with_random_tie_breaking(preferences)
     return _mix_with_uniform(probs, epsilon)
 
-  def logprob_fn(preferences: ArrayLike, sample: ArrayLike, epsilon=epsilon):
+  def logprob_fn(sample: ArrayLike, preferences: ArrayLike, epsilon=epsilon):
     probs = _argmax_with_random_tie_breaking(preferences)
     probs = _mix_with_uniform(probs, epsilon)
     return base.batched_index(jnp.log(probs), sample)
@@ -138,6 +140,48 @@ def epsilon_greedy(epsilon=None):
     return -jnp.nansum(probs * jnp.log(probs), axis=-1)
 
   return DiscreteDistribution(sample_fn, probs_fn, logprob_fn, entropy_fn)
+
+
+def _add_gaussian_noise(key, sample, sigma):
+  noise = jax.random.normal(key, shape=sample.shape) * sigma
+  return sample + noise
+
+
+def gaussian_diagonal(sigma=None):
+  """A gaussian distribution with diagonal covariance matrix."""
+
+  def sample_fn(key: ArrayLike, mu: ArrayLike, sigma: ArrayLike = sigma):
+    return _add_gaussian_noise(key, mu, sigma)
+
+  def prob_fn(sample: ArrayLike, mu: ArrayLike, sigma: ArrayLike = sigma):
+    # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
+    sigma = jnp.ones_like(mu) * sigma
+    # Compute pdf for multivariate gaussian.
+    d = mu.shape[-1]
+    det = jnp.prod(sigma ** 2, axis=-1)
+    z = ((2 * jnp.pi) ** (0.5 * d)) * (det ** 0.5)
+    exp = jnp.exp(-0.5 * jnp.sum(((mu - sample) / sigma)**2, axis=-1))
+    return exp / z
+
+  def logprob_fn(sample: ArrayLike, mu: ArrayLike, sigma: ArrayLike = sigma):
+    # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
+    sigma = jnp.ones_like(mu) * sigma
+    # Compute logpdf for multivariate gaussian in a numerically safe way.
+    d = mu.shape[-1]
+    half_logdet = jnp.sum(jnp.log(sigma), axis=-1)
+    logz = half_logdet + 0.5 * d * jnp.log(2 * jnp.pi)
+    logexp = -0.5 * jnp.sum(((mu - sample) / sigma) ** 2, axis=-1)
+    return logexp - logz
+
+  def entropy_fn(mu: ArrayLike, sigma: ArrayLike = sigma):
+    # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
+    sigma = jnp.ones_like(mu) * sigma
+    # Compute entropy in a numerically safe way.
+    d = mu.shape[-1]
+    half_logdet = jnp.sum(jnp.log(sigma), axis=-1)
+    return half_logdet + 0.5 * d * (1 + jnp.log(2 * jnp.pi))
+
+  return ContinuousDistribution(sample_fn, prob_fn, logprob_fn, entropy_fn)
 
 
 def categorical_importance_sampling_ratios(

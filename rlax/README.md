@@ -7,6 +7,12 @@ The operations and functions provided are not complete algorithms, but
 implementations of reinforcement learning specific mathematical operations that
 are needed when building fully-functional agents.
 
+## Installation
+
+RLax can be installed with pip directly from github, with the following command:
+`pip install git+git://github.com/deepmind/rlax.git`. RLax code may be
+just-in-time compiled for different platforms (CPU, GPU, TPU) using JAX's `jit`.
+
 ## Background
 
 Reinforcement learning studies the problem of a learning system (the *agent*),

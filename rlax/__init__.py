@@ -28,6 +28,7 @@ from rlax._src.distributions import categorical_importance_sampling_ratios
 from rlax._src.distributions import categorical_kl_divergence
 from rlax._src.distributions import epsilon_greedy
 from rlax._src.distributions import epsilon_softmax
+from rlax._src.distributions import gaussian_diagonal
 from rlax._src.distributions import greedy
 from rlax._src.distributions import softmax
 from rlax._src.general_value_functions import pixel_control_rewards
@@ -51,7 +52,7 @@ from rlax._src.perturbations import add_ornstein_uhlenbeck_noise
 from rlax._src.policy_gradients import dpg_loss
 from rlax._src.policy_gradients import entropy_loss
 from rlax._src.policy_gradients import policy_gradient_loss
-from rlax._src.schedules import polynomial_decay
+from rlax._src.schedules import polynomial_schedule
 from rlax._src.transforms import identity
 from rlax._src.transforms import logit
 from rlax._src.transforms import power
@@ -97,6 +98,7 @@ __all__ = (
     "epsilon_greedy",
     "epsilon_softmax",
     "expected_sarsa",
+    "gaussian_diagonal",
     "greedy",
     "huber_loss",
     "identity",
@@ -110,7 +112,7 @@ __all__ = (
     "persistent_q_learning",
     "pixel_control_rewards",
     "policy_gradient_loss",
-    "polynomial_decay",
+    "polynomial_schedule",
     "power",
     "q_lambda",
     "q_learning",

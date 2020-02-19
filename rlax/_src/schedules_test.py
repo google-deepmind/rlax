@@ -24,30 +24,71 @@ import numpy as np
 from rlax._src import schedules
 
 
+@parameterized.named_parameters(
+    ('JitOnp', jax.jit, lambda t: t),
+    ('NoJitOnp', lambda fn: fn, lambda t: t),
+    ('JitJnp', jax.jit, jax.device_put),
+    ('NoJitJnp', lambda fn: fn, jax.device_put))
 class PolynomialTest(parameterized.TestCase):
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_deterministic(self, compile_fn, place_fn):
-    """Check that noisy and noisless actions match for zero stddev."""
+  def test_linear(self, compile_fn, place_fn):
+    """Check linear schedule."""
     # Get schedule function.
-    schedule_fn = schedules.polynomial_decay(10., 20, 1, 10)
+    schedule_fn = schedules.polynomial_schedule(10., 20., 1, 10)
     # Optionally compile.
     schedule_fn = compile_fn(schedule_fn)
-    # Test that noisy and noisless actions match for zero stddev
+    # Test that generated values equal the expected schedule values.
     generated_vals = []
-    for count in range(10):
+    for count in range(15):
       # Optionally convert to device array.
       step_count = place_fn(count)
       # Compute next value.
       generated_vals.append(schedule_fn(step_count))
     # Test output.
-    expected_vals = np.arange(10, 20, 1, dtype=np.float32)
+    expected_vals = np.array(list(range(10, 20)) + [20] * 5, dtype=np.float32)
     np.testing.assert_allclose(
-        np.stack(generated_vals), expected_vals, atol=1e-3)
+        expected_vals, np.array(generated_vals), atol=1e-3)
+
+  def test_nonlinear(self, compile_fn, place_fn):
+    """Check non-linear (quadratic) schedule."""
+    # Get schedule function.
+    schedule_fn = schedules.polynomial_schedule(25., 10., 2, 10)
+    # Optionally compile.
+    schedule_fn = compile_fn(schedule_fn)
+    # Test that generated values equal the expected schedule values.
+    generated_vals = []
+    for count in range(15):
+      # Optionally convert to device array.
+      step_count = place_fn(count)
+      # Compute next value.
+      generated_vals.append(schedule_fn(step_count))
+    # Test output.
+    expected_vals = np.array(
+        [10. + 15. * (1.-n/10)**2 for n in range(10)] + [10] * 5,
+        dtype=np.float32)
+    np.testing.assert_allclose(
+        expected_vals, np.array(generated_vals), atol=1e-3)
+
+  def test_with_decay_begin(self, compile_fn, place_fn):
+    """Check quadratic schedule with non-zero schedule begin."""
+    # Get schedule function.
+    schedule_fn = schedules.polynomial_schedule(
+        30., 10., 2, 10, transition_begin=4)
+    # Optionally compile.
+    schedule_fn = compile_fn(schedule_fn)
+    # Test that generated values equal the expected schedule values.
+    generated_vals = []
+    for count in range(20):
+      # Optionally convert to device array.
+      step_count = place_fn(count)
+      # Compute next value.
+      generated_vals.append(schedule_fn(step_count))
+    # Test output.
+    expected_vals = np.array(
+        [30.] * 4 + [10. + 20. * (1.-n/10)**2 for n in range(10)] + [10] * 6,
+        dtype=np.float32)
+    np.testing.assert_allclose(
+        expected_vals, np.array(generated_vals), atol=1e-3)
 
 
 if __name__ == '__main__':

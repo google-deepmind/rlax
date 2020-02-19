@@ -1,5 +1,4 @@
 # Lint as: python3
-# coding=utf8
 # Copyright 2019 DeepMind Technologies Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,9 +90,9 @@ class LogLossTest(parameterized.TestCase):
 
   def setUp(self):
     super(LogLossTest, self).setUp()
-    self.preds = jnp.array([0.25, 0.5, 0.75, 1.])
-    self.targets = jnp.ones_like(self.preds)
-    self.expected = jnp.array([1.386294, 0.693147, 0.287682, 0.])
+    self.preds = jnp.array([1., 1., 0., 0., 0.5, 0.5])
+    self.targets = jnp.array([1., 0., 0., 1., 1., 0])
+    self.expected = jnp.array([0., np.inf, 0., np.inf, 0.6931472, 0.6931472])
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),

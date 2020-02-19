@@ -1,5 +1,4 @@
 # Lint as: python3
-# coding=utf8
 # Copyright 2019 DeepMind Technologies Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +55,12 @@ def likelihood(predictions: ArrayLike, targets: ArrayLike) -> ArrayLike:
     a vector of same shape of `predictions`.
   """
   base.type_assert([predictions, targets], float)
-  return targets * predictions + (1. - targets) * (1. - predictions)
+  likelihood_vals = predictions**targets * (1. - predictions)**(1. - targets)
+  # Note: 0**0 evaluates to NaN on TPUs, manually set these cases to 1.
+  filter_indices = jnp.logical_or(
+      jnp.logical_and(targets == 1, predictions == 1),
+      jnp.logical_and(targets == 0, predictions == 0))
+  return jnp.where(filter_indices, 1, likelihood_vals)
 
 
 def log_loss(

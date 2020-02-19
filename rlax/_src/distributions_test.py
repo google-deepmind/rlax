@@ -94,7 +94,7 @@ class SoftmaxTest(parameterized.TestCase):
       # Optionally convert to device array.
       logits, samples = tree_map(place_fn, (logits, samples))
       # Test output.
-      actual = logprob_fn(logits, samples)
+      actual = logprob_fn(samples, logits)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
   @parameterized.named_parameters(
@@ -110,7 +110,7 @@ class SoftmaxTest(parameterized.TestCase):
     # Optionally convert to device array.
     logits, samples = tree_map(place_fn, (self.logits, self.samples))
     # Test softmax output in batch.
-    actual = logprob_fn(logits, samples)
+    actual = logprob_fn(samples, logits)
     np.testing.assert_allclose(self.expected_logprobs, actual, atol=1e-4)
 
   @parameterized.named_parameters(
@@ -210,7 +210,7 @@ class GreedyTest(parameterized.TestCase):
       # Optionally convert to device array.
       preferences, samples = tree_map(place_fn, (preferences, samples))
       # Test output.
-      actual = logprob_fn(preferences, samples)
+      actual = logprob_fn(samples, preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
   @parameterized.named_parameters(
@@ -226,7 +226,7 @@ class GreedyTest(parameterized.TestCase):
     # Optionally convert to device array.
     preferences, samples = tree_map(place_fn, (self.preferences, self.samples))
     # Test greedy output in batch.
-    actual = logprob_fn(preferences, samples)
+    actual = logprob_fn(samples, preferences)
     np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
 
   @parameterized.named_parameters(
@@ -328,7 +328,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
       # Optionally convert to device array.
       preferences, samples = tree_map(place_fn, (preferences, samples))
       # Test output.
-      actual = logprob_fn(preferences, samples)
+      actual = logprob_fn(samples, preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
   @parameterized.named_parameters(
@@ -344,7 +344,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
     # Optionally convert to device array.
     preferences, samples = tree_map(place_fn, (self.preferences, self.samples))
     # Test greedy output in batch.
-    actual = logprob_fn(preferences, samples)
+    actual = logprob_fn(samples, preferences)
     np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
 
   @parameterized.named_parameters(
@@ -379,6 +379,138 @@ class EpsilonGreedyTest(parameterized.TestCase):
     preferences = place_fn(self.preferences)
     # Test greedy output in batch.
     actual = entropy_fn(preferences)
+    np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
+
+
+class GaussianDiagonalTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(GaussianDiagonalTest, self).setUp()
+    self.mu = np.array(
+        [[1., -1], [0.1, -0.1]],
+        dtype=np.float32)
+    self.sigma = np.array(
+        [[0.1, 0.1], [0.2, 0.3]],
+        dtype=np.float32)
+    self.sample = np.array(
+        [[1.2, -1.1], [-0.1, 0.]],
+        dtype=np.float32)
+
+    # Expected values for the distribution's function were computed using
+    # tfd.MultivariateNormalDiag (from the tensorflow_probability package).
+    self.expected_prob_a = np.array(
+        [1.3064219, 1.5219283],
+        dtype=np.float32)
+    self.expected_logprob_a = np.array(
+        [0.26729202, 0.41997814],
+        dtype=np.float32)
+    self.expected_entropy = np.array(
+        [-1.7672932, 0.02446628],
+        dtype=np.float32)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_gaussian_prob(self, compile_fn, place_fn):
+    """Tests for a single element."""
+    distrib = distributions.gaussian_diagonal()
+    # Optionally compile.
+    prob_fn = compile_fn(distrib.prob)
+    # For each element in the batch.
+    for mu, sigma, sample, expected in zip(
+        self.mu, self.sigma, self.sample, self.expected_prob_a):
+      # Optionally convert to device array.
+      mu, sigma, sample = tree_map(place_fn, (mu, sigma, sample))
+      # Test outputs.
+      actual = prob_fn(sample, mu, sigma)
+      np.testing.assert_allclose(expected, actual, atol=1e-4)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_gaussian_prob_batch(self, compile_fn, place_fn):
+    """Tests for a full batch."""
+    distrib = distributions.gaussian_diagonal()
+    # Vmap and optionally compile.
+    prob_fn = compile_fn(distrib.prob)
+    # Optionally convert to device array.
+    mu, sigma, sample = tree_map(place_fn, (self.mu, self.sigma, self.sample))
+    # Test greedy output in batch.
+    actual = prob_fn(sample, mu, sigma)
+    np.testing.assert_allclose(self.expected_prob_a, actual, atol=1e-4)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_gaussian_logprob(self, compile_fn, place_fn):
+    """Tests for a single element."""
+    distrib = distributions.gaussian_diagonal()
+    # Optionally compile.
+    logprob_fn = compile_fn(distrib.logprob)
+    # For each element in the batch.
+    for mu, sigma, sample, expected in zip(
+        self.mu, self.sigma, self.sample, self.expected_logprob_a):
+      # Optionally convert to device array.
+      mu, sigma, sample = tree_map(place_fn, (mu, sigma, sample))
+      # Test output.
+      actual = logprob_fn(sample, mu, sigma)
+      np.testing.assert_allclose(expected, actual, atol=1e-4)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_gaussian_logprob_batch(self, compile_fn, place_fn):
+    """Tests for a full batch."""
+    distrib = distributions.gaussian_diagonal()
+    # Vmap and optionally compile.
+    logprob_fn = compile_fn(distrib.logprob)
+    # Optionally convert to device array.
+    mu, sigma, sample = tree_map(place_fn, (self.mu, self.sigma, self.sample))
+    # Test greedy output in batch.
+    actual = logprob_fn(sample, mu, sigma)
+    np.testing.assert_allclose(self.expected_logprob_a, actual, atol=1e-4)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_gaussian_entropy(self, compile_fn, place_fn):
+    """Tests for a single element."""
+    distrib = distributions.gaussian_diagonal()
+    # Optionally compile.
+    entropy_fn = compile_fn(distrib.entropy)
+    # For each element in the batch.
+    for mu, sigma, sample, expected in zip(
+        self.mu, self.sigma, self.sample, self.expected_entropy):
+      # Optionally convert to device array.
+      mu, sigma, sample = tree_map(place_fn, (mu, sigma, sample))
+      # Test outputs.
+      actual = entropy_fn(mu, sigma)
+      np.testing.assert_allclose(expected, actual, atol=1e-4)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_gaussian_entropy_batch(self, compile_fn, place_fn):
+    """Tests for a full batch."""
+    distrib = distributions.gaussian_diagonal()
+    # Vmap and optionally compile.
+    entropy_fn = compile_fn(distrib.entropy)
+    # Optionally convert to device array.
+    mu, sigma = tree_map(place_fn, (self.mu, self.sigma))
+    # Test greedy output in batch.
+    actual = entropy_fn(mu, sigma)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
 
 

@@ -81,7 +81,7 @@ def policy_gradient_loss(
   base.rank_assert([logits_t, a_t, adv_t, w_t], [2, 1, 1, 1])
   base.type_assert([logits_t, a_t, adv_t, w_t], [float, int, float, float])
 
-  log_pi_a = distributions.softmax().logprob(logits_t, a_t)
+  log_pi_a = distributions.softmax().logprob(a_t, logits_t)
   adv_t = jax.lax.stop_gradient(adv_t)
   loss_per_timestep = - log_pi_a * adv_t
   return jnp.mean(loss_per_timestep * w_t)

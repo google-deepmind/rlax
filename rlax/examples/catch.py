@@ -36,7 +36,7 @@ flags.DEFINE_float("learning_rate", 0.01, "Optimizer learning rate.")
 flags.DEFINE_integer("seed", 1234, "Random seed.")
 
 
-def build_network(num_actions: int) -> hk.TransformedPair:
+def build_network(num_actions: int) -> hk.Transformed:
 
   def q(obs):
     flatten = lambda x: jnp.reshape(x, (-1,))

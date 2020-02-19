@@ -22,10 +22,15 @@ from rlax._src import base
 Scalar = base.Scalar
 
 
-def polynomial_decay(
-    init_value: Scalar, end_value: Scalar, power: Scalar, decay_steps: int):
-  """Construct a schedule with polynomial decay."""
+def polynomial_schedule(
+    init_value: Scalar,
+    end_value: Scalar,
+    power: Scalar,
+    transition_steps: int,
+    transition_begin: int = 0):
+  """Construct a schedule with polynomial transition from init to end value."""
   def schedule(step_count):
-    count = jnp.minimum(step_count, decay_steps)
-    return (init_value - end_value)*(1 - count/decay_steps)**(power) + end_value
+    count = jnp.clip(step_count - transition_begin, 0, transition_steps)
+    frac = 1 - count/transition_steps
+    return (init_value - end_value) * (frac**power) + end_value
   return schedule

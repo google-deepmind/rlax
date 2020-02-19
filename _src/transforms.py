@@ -13,7 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Custom non-linear transformations."""
+"""JAX functions implementing custom non-linear transformations.
+
+This is a collection of element-wise non-linear transformations that may be
+used to transform losses, value estimates, or other multidimensional data.
+"""
 
 import jax
 import jax.numpy as jnp

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Utilities for RLax functions."""
+"""Common utilities for RLax functions."""
 
 from typing import List, Type, Union
 import jax.numpy as jnp

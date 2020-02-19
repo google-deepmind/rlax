@@ -3,15 +3,27 @@
 RLax (pronounced "relax") is a library built on top of JAX that exposes
 useful building blocks for implementing reinforcement learning agents.
 
+## Installation
+
+RLax can be installed with pip directly from github, with the following command:
+
+`pip install git+git://github.com/deepmind/rlax.git`.
+
+All RLax code may then be just in time compiled for different hardware
+(e.g. CPU, GPU, TPU) using JAX's `jax.jit` function.
+
+## Usage
+
 The operations and functions provided are not complete algorithms, but
 implementations of reinforcement learning specific mathematical operations that
 are needed when building fully-functional agents.
 
-## Installation
+See `examples/catch.py` for an example of using some of the functions in RLax
+to implement a Q-learning agent capable of learning to play Catch (a common
+unit-test for agent learning in the reinforcement learning literature).
 
-RLax can be installed with pip directly from github, with the following command:
-`pip install git+git://github.com/deepmind/rlax.git`. RLax code may be
-just-in-time compiled for different platforms (CPU, GPU, TPU) using JAX's `jit`.
+See file-level and function-level doc-strings for the documentation of these
+functions and for references to the papers that introduced and/or used them.
 
 ## Background
 
@@ -75,3 +87,21 @@ timesteps in order to compute their outputs. In this case the suffix `_t` and
 Extensive testing is provided for each function. All tests should also verify
 the output of `rlax` functions when compiled to XLA using `jax.jit` and when
 performing batch operations using `jax.vmap`.
+
+## Citing RLax
+
+To cite this repository:
+
+```
+@software{rlax2020github,
+  author = {David Budden and Matteo Hessel and Jonh Quan and Steven Kapturowski},
+  title = {{RL}ax: {R}einforcement {L}earning in {JAX}},
+  url = {http://github.com/deepmind/rlax},
+  version = {0.0.1a0},
+  year = {2020},
+}
+```
+
+In this bibtex entry, the version number is intended to be from
+[rlax/__init__.py](https://github.com/deepmind/rlax/blob/master/rlax/__init__.py),
+and the year corresponds to the project's open-source release.

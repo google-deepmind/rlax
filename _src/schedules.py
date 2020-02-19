@@ -13,7 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Schedules."""
+"""JAX Schedules.
+
+Schedules may be used to anneal the value of a hyper-parameter over time; for
+instance, they may be used to anneal the learning rate used to update an agent's
+parameters or the exploration factor used to select actions.
+"""
 
 import jax.numpy as jnp
 from rlax._src import base

@@ -13,7 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Transformed value functions."""
+"""Transformed value functions.
+
+Canonical value functions map states onto the expected discounted sum of rewards
+that may be collected by an agent from any starting state. Value functions may
+also be defined as the fixed points of certain linear recursive relations known
+as Bellman equations. It is sometimes useful to consider transformed values that
+are the solution to non-linear generalization of traditional Bellman equations.
+In this subpackage we provide a general utility for wrapping bootstrapped return
+calculations to construct regression targets for these transformed values.
+We also use this to implement different learning algorithms from the literature.
+"""
 
 import collections
 import functools

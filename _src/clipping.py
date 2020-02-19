@@ -13,7 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Functions for implementing forms of gradient clipping."""
+"""JAX functions for implementing forms of gradient clipping.
+
+Gradient clipping is commonly used to avoid taking too large steps in parameter
+space when updating the parameters of an agent's policy, value or model. Certain
+forms of gradient clipping can be conveniently expressed as transformations of
+the loss function optimized by a suitable gradient descent algorithm.
+"""
 
 import jax
 import jax.numpy as jnp

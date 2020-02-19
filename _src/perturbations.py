@@ -13,7 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Functions implementing different forms of perturbations."""
+"""JAX functions implementing different forms of perturbations.
+
+It is common in reinforcement learning to introduce various forms of
+stochasticity in the training process in order to aid exploration. This
+subpackage exposes popular forms of perturbations used by RL agents.
+"""
 
 import jax
 from rlax._src import base

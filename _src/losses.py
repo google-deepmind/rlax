@@ -13,7 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Common losses."""
+"""JAX implementation of common losses.
+
+Deep reinforcement learning algorithms are often expressed as gradients of
+suitable pseudo-loss functions constructed from the observations and rewards
+collected in the environment. In this subpackage we collate common mathematical
+transformations used to construct such losses.
+"""
 
 from typing import Optional
 import jax.numpy as jnp

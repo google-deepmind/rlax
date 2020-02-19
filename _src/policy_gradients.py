@@ -13,7 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Policy gradient losses."""
+"""JAX functions implementing policy gradient losses.
+
+Policy gradient algorithms directly update the policy of an agent based on
+a stochatic estimate of the direction of steepest ascent in a score function
+representing the expected return of that policy. This subpackage provides a
+number of utility functions for implementing policy gradient algorithms for
+discrete and continuous policies.
+"""
 
 from typing import Optional
 import jax

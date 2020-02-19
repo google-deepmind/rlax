@@ -16,8 +16,11 @@
 
 """JAX functions for V-Trace algorithm.
 
-See "IMPALA: Scalable Distributed Deep-RL with Importance Weighted Actor-Learner
-Architectures" by Espeholt et al. (https://arxiv.org/abs/1802.01561)
+V-Trace is a form of importance sampling correction that was introduced by
+Espeholt et al. in the context of an off-policy actor-critic agent (IMPALA).
+This subpackage implements the specific targets used in IMPALA to implement
+both the value and the policy. Note however that the V-Trace return estimate is
+a special case of the multistep return estimates from `multistep.py`.
 """
 
 import collections
@@ -42,6 +45,9 @@ def vtrace_td_error_and_advantage(
     stop_target_gradients: bool = True,
 ) -> VTraceOutput:
   """Calculates V-Trace errors and PG advantage from importance weights.
+
+  See "IMPALA: Scalable Distributed Deep-RL with Importance Weighted Actor
+  Learner Architectures" by Espeholt et al. (https://arxiv.org/abs/1802.01561)
 
   Args:
     v_tm1: values at time t-1.

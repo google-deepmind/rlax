@@ -13,7 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Functions for working with probability distributions."""
+"""JAX functions for working with probability distributions.
+
+Reinforcement learning algorithms often require to estimate suitably
+parametrized probability distributions. In this subpackage a distribution is
+represented as a collection of functions that may be used to sample from a
+distribution, to evaluate its probability mass (or density) function, and
+to compute statistics such as its entropy.
+"""
 
 import collections
 import jax

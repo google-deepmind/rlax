@@ -15,9 +15,11 @@
 # ==============================================================================
 """JAX functions for calculating multistep returns.
 
-All these functions estimate returns from trajectories of experience; such
-trajectories are not assumed to be aligned with episode boundaries, and
-bootstrapping is used to estimate returns beyond the end of a trajectory.
+In this subpackage we expose a number of functions that may be used to compute
+multistep truncated bootstrapped estimates of the return (the discounted sum of
+rewards collected by an agent). These estimate compute returns from trajectories
+of experience; trajectories are not assumed to align with episode boundaries,
+and bootstrapping is used to estimate returns beyond the end of a trajectory.
 """
 
 import jax.numpy as jnp

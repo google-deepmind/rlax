@@ -29,12 +29,12 @@ class LambdaReturnsTest(parameterized.TestCase):
     super(LambdaReturnsTest, self).setUp()
     self.lambda_ = 0.75
 
-    self.r_t = np.array([[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0,
-                                                      2.1]])
-    self.discount_t = np.array([[0.5, 0.9, 1.0, 0.5, 0.8],
-                                [0.9, 0.5, 0.3, 0.8, 0.7]])
-    self.v_t = np.array([[3.0, 1.0, 5.0, -5.0, 3.0], [-1.7, 1.2, 2.3, 2.2,
-                                                      2.7]])
+    self.r_t = np.array(
+        [[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0, 2.1]])
+    self.discount_t = np.array(
+        [[0.5, 0.9, 1.0, 0.5, 0.8], [0.9, 0.5, 0.3, 0.8, 0.7]])
+    self.v_t = np.array(
+        [[3.0, 1.0, 5.0, -5.0, 3.0], [-1.7, 1.2, 2.3, 2.2, 2.7]])
 
     self.expected = np.array(
         [[1.6460547, 0.72281253, 0.7375001, 0.6500001, 3.4],
@@ -82,17 +82,18 @@ class DiscountedReturnsTest(parameterized.TestCase):
 
   def setUp(self):
     super(DiscountedReturnsTest, self).setUp()
-    self.r_t = np.array([[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0,
-                                                      2.1]])
-    self.discount_t = np.array([[0.5, 0.9, 1.0, 0.5, 0.8],
-                                [0.9, 0.5, 0.3, 0.8, 0.7]])
-    self.v_t = np.array([[3.0, 1.0, 5.0, -5.0, 3.0], [-1.7, 1.2, 2.3, 2.2,
-                                                      2.7]])
+    self.r_t = np.array(
+        [[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0, 2.1]])
+    self.discount_t = np.array(
+        [[0.5, 0.9, 1.0, 0.5, 0.8], [0.9, 0.5, 0.3, 0.8, 0.7]])
+    self.v_t = np.array(
+        [[3.0, 1.0, 5.0, -5.0, 3.0], [-1.7, 1.2, 2.3, 2.2, 2.7]])
     self.bootstrap_v = np.array([v[-1] for v in self.v_t])
 
-    self.expected = np.array([[1.315, 0.63000005, 0.70000005, 1.7, 3.4],
-                              [1.33592, 0.9288, 0.2576, 3.192, 3.9899998]],
-                             dtype=np.float32)
+    self.expected = np.array(
+        [[1.315, 0.63000005, 0.70000005, 1.7, 3.4],
+         [1.33592, 0.9288, 0.2576, 3.192, 3.9899998]],
+        dtype=np.float32)
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -140,14 +141,14 @@ class TDErrorTest(parameterized.TestCase):
 
   def setUp(self):
     super(TDErrorTest, self).setUp()
-    self.r_t = np.array([[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0,
-                                                      2.1]])
-    self.discount_t = np.array([[0.5, 0.9, 1.0, 0.5, 0.8],
-                                [0.9, 0.5, 0.3, 0.8, 0.7]])
-    self.rho_tm1 = np.array([[0.5, 0.9, 1.3, 0.2, 0.8], [2., 0.1, 1., 0.4,
-                                                         1.7]])
-    self.values = np.array([[3.0, 1.0, 5.0, -5.0, 3.0, 1.],
-                            [-1.7, 1.2, 2.3, 2.2, 2.7, 2.]])
+    self.r_t = np.array(
+        [[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0, 2.1]])
+    self.discount_t = np.array(
+        [[0.5, 0.9, 1.0, 0.5, 0.8], [0.9, 0.5, 0.3, 0.8, 0.7]])
+    self.rho_tm1 = np.array(
+        [[0.5, 0.9, 1.3, 0.2, 0.8], [2., 0.1, 1., 0.4, 1.7]])
+    self.values = np.array(
+        [[3.0, 1.0, 5.0, -5.0, 3.0, 1.], [-1.7, 1.2, 2.3, 2.2, 2.7, 2.]])
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),

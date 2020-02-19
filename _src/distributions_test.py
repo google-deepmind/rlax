@@ -27,18 +27,18 @@ class SoftmaxTest(parameterized.TestCase):
 
   def setUp(self):
     super(SoftmaxTest, self).setUp()
+
     self.logits = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.samples = np.array([0, 1], dtype=np.int32)
 
-    # softmax with temperature=10
-    self.expected_probs = np.array([[0.34425336, 0.34425336, 0.31149334],
-                                    [0.332225, 0.3671654, 0.3006096]],
-                                   dtype=np.float32)
-
-    # softmax with temperature=1
-    probs = np.array([[0.42231882, 0.42231882, 0.15536241],
-                      [0.24472848, 0.66524094, 0.09003057]],
-                     dtype=np.float32)
+    self.expected_probs = np.array(  # softmax with temperature=10
+        [[0.34425336, 0.34425336, 0.31149334],
+         [0.332225, 0.3671654, 0.3006096]],
+        dtype=np.float32)
+    probs = np.array(  # softmax with temperature=1
+        [[0.42231882, 0.42231882, 0.15536241],
+         [0.24472848, 0.66524094, 0.09003057]],
+        dtype=np.float32)
     logprobs = np.log(probs)
     self.expected_logprobs = np.array(
         [logprobs[0][self.samples[0]], logprobs[1][self.samples[1]]])
@@ -152,13 +152,16 @@ class GreedyTest(parameterized.TestCase):
 
   def setUp(self):
     super(GreedyTest, self).setUp()
+
     self.preferences = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.samples = np.array([0, 1], dtype=np.int32)
 
-    self.expected_probs = np.array([[0.5, 0.5, 0.], [0., 1., 0.]],
-                                   dtype=np.float32)
-    self.expected_logprob = np.array([-0.6931472, 0.], dtype=np.float32)
-    self.expected_entropy = np.array([0.6931472, 0.], dtype=np.float32)
+    self.expected_probs = np.array(
+        [[0.5, 0.5, 0.], [0., 1., 0.]], dtype=np.float32)
+    self.expected_logprob = np.array(
+        [-0.6931472, 0.], dtype=np.float32)
+    self.expected_entropy = np.array(
+        [0.6931472, 0.], dtype=np.float32)
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -275,8 +278,10 @@ class EpsilonGreedyTest(parameterized.TestCase):
 
     self.expected_probs = np.array(
         [[0.45, 0.45, 0.05, 0.05], [0.05, 0.85, 0.05, 0.05]], dtype=np.float32)
-    self.expected_logprob = np.array([-0.7985077, -0.1625189], dtype=np.float32)
-    self.expected_entropy = np.array([1.01823008, 0.58750093], dtype=np.float32)
+    self.expected_logprob = np.array(
+        [-0.7985077, -0.1625189], dtype=np.float32)
+    self.expected_entropy = np.array(
+        [1.01823008, 0.58750093], dtype=np.float32)
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -386,27 +391,19 @@ class GaussianDiagonalTest(parameterized.TestCase):
 
   def setUp(self):
     super(GaussianDiagonalTest, self).setUp()
-    self.mu = np.array(
-        [[1., -1], [0.1, -0.1]],
-        dtype=np.float32)
-    self.sigma = np.array(
-        [[0.1, 0.1], [0.2, 0.3]],
-        dtype=np.float32)
-    self.sample = np.array(
-        [[1.2, -1.1], [-0.1, 0.]],
-        dtype=np.float32)
+
+    self.mu = np.array([[1., -1], [0.1, -0.1]], dtype=np.float32)
+    self.sigma = np.array([[0.1, 0.1], [0.2, 0.3]], dtype=np.float32)
+    self.sample = np.array([[1.2, -1.1], [-0.1, 0.]], dtype=np.float32)
 
     # Expected values for the distribution's function were computed using
     # tfd.MultivariateNormalDiag (from the tensorflow_probability package).
     self.expected_prob_a = np.array(
-        [1.3064219, 1.5219283],
-        dtype=np.float32)
+        [1.3064219, 1.5219283], dtype=np.float32)
     self.expected_logprob_a = np.array(
-        [0.26729202, 0.41997814],
-        dtype=np.float32)
+        [0.26729202, 0.41997814], dtype=np.float32)
     self.expected_entropy = np.array(
-        [-1.7672932, 0.02446628],
-        dtype=np.float32)
+        [-1.7672932, 0.02446628], dtype=np.float32)
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -518,14 +515,15 @@ class ImportanceSamplingTest(parameterized.TestCase):
 
   def setUp(self):
     super(ImportanceSamplingTest, self).setUp()
+
     self.pi_logits = np.array([[0.2, 0.8], [0.6, 0.4]], dtype=np.float32)
     self.mu_logits = np.array([[0.8, 0.2], [0.6, 0.4]], dtype=np.float32)
     self.actions = np.array([1, 0], dtype=np.int32)
 
     pi = jax.nn.softmax(self.pi_logits)
     mu = jax.nn.softmax(self.mu_logits)
-    self.expected_rhos = np.array([pi[0][1] / mu[0][1], pi[1][0] / mu[1][0]],
-                                  dtype=np.float32)
+    self.expected_rhos = np.array(
+        [pi[0][1] / mu[0][1], pi[1][0] / mu[1][0]], dtype=np.float32)
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -619,6 +617,7 @@ class CategoricalCrossEntropyTest(parameterized.TestCase):
 
   def setUp(self):
     super(CategoricalCrossEntropyTest, self).setUp()
+
     self.labels = np.array([[0., 1., 0.], [1., 0., 0.]], dtype=np.float32)
     self.logits = np.array([[10., 1., -2.], [1., 4., 0.2]], dtype=np.float32)
 

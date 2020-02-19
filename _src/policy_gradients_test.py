@@ -87,9 +87,10 @@ class PolicyGradientLossTest(parameterized.TestCase):
   def setUp(self):
     super(PolicyGradientLossTest, self).setUp()
 
-    logits = np.array([[1., 1., 1.], [2., 0., 0.], [-1., -2., -3.]],
-                      dtype=np.float32)
+    logits = np.array(
+        [[1., 1., 1.], [2., 0., 0.], [-1., -2., -3.]], dtype=np.float32)
     self.logits = np.stack([logits, logits + 1.])
+
     weights = np.array([-2., 2., 0], dtype=np.float32)
     self.weights = np.stack([weights, weights - 1.])
     advantages = np.array([0.3, 0.2, 0.1], dtype=np.float32)
@@ -141,8 +142,8 @@ class EntropyLossTest(parameterized.TestCase):
   def setUp(self):
     super(EntropyLossTest, self).setUp()
 
-    logits = np.array([[1., 1., 1.], [2., 0., 0.], [-1., -2., -3.]],
-                      dtype=np.float32)
+    logits = np.array(
+        [[1., 1., 1.], [2., 0., 0.], [-1., -2., -3.]], dtype=np.float32)
     self.logits = np.stack([logits, logits + 1.])
     weights = np.array([-2., 2., 0], dtype=np.float32)
     self.weights = np.stack([weights, weights - 1.])

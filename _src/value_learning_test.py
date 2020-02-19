@@ -31,14 +31,17 @@ class TDLearningTest(parameterized.TestCase):
   def setUp(self):
     super(TDLearningTest, self).setUp()
 
-    self.v_tm1 = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1], dtype=np.float32)
-    self.r_t = np.array([-1, -1, -1, -1, -1, -1, -1, -1, -1], dtype=np.float32)
-    self.discount_t = np.array([0, 0.5, 1, 0, 0.5, 1, 0, 0.5, 1],
-                               dtype=np.float32)
-    self.v_t = np.array([0, 0, 0, 1, 1, 1, 2, 2, 2], dtype=np.float32)
+    self.v_tm1 = np.array(
+        [1, 1, 1, 1, 1, 1, 1, 1, 1], dtype=np.float32)
+    self.r_t = np.array(
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1], dtype=np.float32)
+    self.discount_t = np.array(
+        [0, 0.5, 1, 0, 0.5, 1, 0, 0.5, 1], dtype=np.float32)
+    self.v_t = np.array(
+        [0, 0, 0, 1, 1, 1, 2, 2, 2], dtype=np.float32)
 
-    self.expected_td = np.array([-2., -2., -2., -2., -1.5, -1., -2., -1., 0.],
-                                dtype=np.float32)
+    self.expected_td = np.array(
+        [-2., -2., -2., -2., -1.5, -1., -2., -1., 0.], dtype=np.float32)
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -84,15 +87,17 @@ class TDLambdaTest(parameterized.TestCase):
     super(TDLambdaTest, self).setUp()
     self.lambda_ = 0.75
 
-    self.v_tm1 = np.array([[1.1, -1.1, 3.1], [2.1, -1.1, -2.1]],
-                          dtype=np.float32)
-    self.discount_t = np.array([[0., 0.89, 0.85], [0.88, 1., 0.83]],
-                               dtype=np.float32)
-    self.r_t = np.array([[-1.3, -1.3, 2.3], [1.3, 5.3, -3.3]], dtype=np.float32)
+    self.v_tm1 = np.array(
+        [[1.1, -1.1, 3.1], [2.1, -1.1, -2.1]], dtype=np.float32)
+    self.discount_t = np.array(
+        [[0., 0.89, 0.85], [0.88, 1., 0.83]], dtype=np.float32)
+    self.r_t = np.array(
+        [[-1.3, -1.3, 2.3], [1.3, 5.3, -3.3]], dtype=np.float32)
     self.bootstrap_v = np.array([2.2, -1.2], np.float32)
 
     self.expected = np.array(
-        [[-2.4, 3.2732253, 1.0700002], [-0.01701999, 2.6529999, -2.196]],
+        [[-2.4, 3.2732253, 1.0700002],
+         [-0.01701999, 2.6529999, -2.196]],
         dtype=np.float32)
 
   @parameterized.named_parameters(
@@ -142,6 +147,7 @@ class SarsaTest(parameterized.TestCase):
 
   def setUp(self):
     super(SarsaTest, self).setUp()
+
     self.q_tm1 = np.array([[1, 1, 0], [1, 1, 0]], dtype=np.float32)
     self.a_tm1 = np.array([0, 1], dtype=np.int32)
     self.r_t = np.array([1, 1], dtype=np.float32)
@@ -193,15 +199,22 @@ class ExpectedSarsaTest(parameterized.TestCase):
 
   def setUp(self):
     super(ExpectedSarsaTest, self).setUp()
-    self.q_tm1 = np.array([[1, 1, 0.5], [1, 1, 3]], dtype=np.float32)
-    self.a_tm1 = np.array([0, 1], dtype=np.int32)
-    self.r_t = np.array([4, 1], dtype=np.float32)
-    self.discount_t = np.array([1, 1], dtype=np.float32)
-    self.q_t = np.array([[1.5, 1, 2], [3, 2, 1]], dtype=np.float32)
-    self.probs_a_t = np.array([[0.2, 0.5, 0.3], [0.3, 0.4, 0.3]],
-                              dtype=np.float32)
 
-    self.expected = np.array([4.4, 2.], dtype=np.float32)
+    self.q_tm1 = np.array(
+        [[1, 1, 0.5], [1, 1, 3]], dtype=np.float32)
+    self.a_tm1 = np.array(
+        [0, 1], dtype=np.int32)
+    self.r_t = np.array(
+        [4, 1], dtype=np.float32)
+    self.discount_t = np.array(
+        [1, 1], dtype=np.float32)
+    self.q_t = np.array(
+        [[1.5, 1, 2], [3, 2, 1]], dtype=np.float32)
+    self.probs_a_t = np.array(
+        [[0.2, 0.5, 0.3], [0.3, 0.4, 0.3]], dtype=np.float32)
+
+    self.expected = np.array(
+        [4.4, 2.], dtype=np.float32)
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -247,17 +260,30 @@ class SarsaLambdaTest(parameterized.TestCase):
     super(SarsaLambdaTest, self).setUp()
     self.lambda_ = 0.75
 
-    self.q_tm1 = np.array([[[1.1, 2.1], [-1.1, 1.1], [3.1, -3.1]],
-                           [[2.1, 3.1], [-1.1, 0.1], [-2.1, -1.1]]],
-                          dtype=np.float32)
-    self.a_tm1 = np.array([[0, 1, 0], [1, 0, 0]], dtype=np.int32)
-    self.discount_t = np.array([[0., 0.89, 0.85], [0.88, 1., 0.83]],
-                               dtype=np.float32)
-    self.r_t = np.array([[-1.3, -1.3, 2.3], [1.3, 5.3, -3.3]], dtype=np.float32)
-    self.q_t = np.array([[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2]],
-                         [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2]]],
-                        dtype=np.float32)
-    self.a_t = np.array([[1, 0, 1], [1, 1, 0]], dtype=np.int32)
+    self.q_tm1 = np.array(
+        [[[1.1, 2.1], [-1.1, 1.1], [3.1, -3.1]],
+         [[2.1, 3.1], [-1.1, 0.1], [-2.1, -1.1]]],
+        dtype=np.float32)
+    self.a_tm1 = np.array(
+        [[0, 1, 0],
+         [1, 0, 0]],
+        dtype=np.int32)
+    self.discount_t = np.array(
+        [[0., 0.89, 0.85],
+         [0.88, 1., 0.83]],
+        dtype=np.float32)
+    self.r_t = np.array(
+        [[-1.3, -1.3, 2.3],
+         [1.3, 5.3, -3.3]],
+        dtype=np.float32)
+    self.q_t = np.array(
+        [[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2]],
+         [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2]]],
+        dtype=np.float32)
+    self.a_t = np.array(
+        [[1, 0, 1],
+         [1, 1, 0]],
+        dtype=np.int32)
 
     self.expected = np.array(
         [[-2.4, -1.8126001, -1.8200002], [0.25347996, 3.4780002, -2.196]],
@@ -310,11 +336,13 @@ class QLearningTest(parameterized.TestCase):
 
   def setUp(self):
     super(QLearningTest, self).setUp()
+
     self.q_tm1 = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.a_tm1 = np.array([0, 1], dtype=np.int32)
     self.r_t = np.array([1, 1], dtype=np.float32)
     self.discount_t = np.array([0, 1], dtype=np.float32)
     self.q_t = np.array([[0, 1, 0], [1, 2, 0]], dtype=np.float32)
+
     self.expected = np.array([0., 1.], dtype=np.float32)
 
   @parameterized.named_parameters(
@@ -358,12 +386,14 @@ class DoubleQLearningTest(parameterized.TestCase):
 
   def setUp(self):
     super(DoubleQLearningTest, self).setUp()
+
     self.q_tm1 = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.a_tm1 = np.array([0, 1], dtype=np.int32)
     self.r_t = np.array([1, 1], dtype=np.float32)
     self.discount_t = np.array([0, 1], dtype=np.float32)
     self.q_t_value = np.array([[99, 1, 98], [91, 2, 66]], dtype=np.float32)
     self.q_t_selector = np.array([[2, 10, 1], [11, 20, 1]], dtype=np.float32)
+
     self.expected = np.array([0., 1.], dtype=np.float32)
 
   @parameterized.named_parameters(
@@ -410,12 +440,14 @@ class PersistentQLearningTest(parameterized.TestCase):
 
   def setUp(self):
     super(PersistentQLearningTest, self).setUp()
+    self.action_gap_scale = 0.25
+
     self.q_tm1 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
     self.a_tm1 = np.array([0, 1, 1], dtype=np.int32)
     self.r_t = np.array([3, 2, 7], dtype=np.float32)
     self.discount_t = np.array([0, 1, 0.5], dtype=np.float32)
     self.q_t = np.array([[11, 12], [20, 16], [-8, -4]], dtype=np.float32)
-    self.action_gap_scale = 0.25
+
     self.expected = np.array([2., 17., -1.], dtype=np.float32)
 
   @parameterized.named_parameters(
@@ -466,11 +498,13 @@ class QVLearningTest(parameterized.TestCase):
 
   def setUp(self):
     super(QVLearningTest, self).setUp()
+
     self.q_tm1 = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.a_tm1 = np.array([0, 1], dtype=np.int32)
     self.r_t = np.array([1, 1], dtype=np.float32)
     self.discount_t = np.array([0, 1], dtype=np.float32)
     self.v_t = np.array([1, 3], dtype=np.float32)
+
     self.expected = np.array([0., 2.], dtype=np.float32)
 
   @parameterized.named_parameters(
@@ -514,15 +548,24 @@ class QVMaxTest(parameterized.TestCase):
 
   def setUp(self):
     super(QVMaxTest, self).setUp()
-    self.v_tm1 = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1], dtype=np.float32)
-    self.r_t = np.array([-1, -1, -1, -1, -1, -1, -1, -1, -1], dtype=np.float32)
-    self.discount_t = np.array([0, 0.5, 1, 0, 0.5, 1, 0, 0.5, 1],
-                               dtype=np.float32)
-    self.q_t = np.array([[0, -1], [-2, 0], [0, -3], [1, 0], [1, 1], [0, 1],
-                         [1, 2], [2, -2], [2, 2]],
-                        dtype=np.float32)
-    self.expected = np.array([-2., -2., -2., -2., -1.5, -1., -2., -1., 0.],
-                             dtype=np.float32)
+
+    self.v_tm1 = np.array(
+        [1, 1, 1, 1, 1, 1, 1, 1, 1],
+        dtype=np.float32)
+    self.r_t = np.array(
+        [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+        dtype=np.float32)
+    self.discount_t = np.array(
+        [0, 0.5, 1, 0, 0.5, 1, 0, 0.5, 1],
+        dtype=np.float32)
+    self.q_t = np.array(
+        [[0, -1], [-2, 0], [0, -3], [1, 0], [1, 1], [0, 1],
+         [1, 2], [2, -2], [2, 2]],
+        dtype=np.float32)
+
+    self.expected = np.array(
+        [-2., -2., -2., -2., -1.5, -1., -2., -1., 0.],
+        dtype=np.float32)
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -566,19 +609,31 @@ class QLambdaTest(parameterized.TestCase):
     super(QLambdaTest, self).setUp()
     self.lambda_ = 0.75
 
-    self.q_tm1 = np.array([[[1.1, 2.1], [-1.1, 1.1], [3.1, -3.1]],
-                           [[2.1, 3.1], [-1.1, 0.1], [-2.1, -1.1]]],
-                          dtype=np.float32)
-    self.a_tm1 = np.array([[0, 1, 0], [1, 0, 0]], dtype=np.int32)
-    self.discount_t = np.array([[0., 0.89, 0.85], [0.88, 1., 0.83]],
-                               dtype=np.float32)
-    self.r_t = np.array([[-1.3, -1.3, 2.3], [1.3, 5.3, -3.3]], dtype=np.float32)
-    self.q_t = np.array([[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2]],
-                         [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2]]],
-                        dtype=np.float32)
+    self.q_tm1 = np.array(
+        [[[1.1, 2.1], [-1.1, 1.1], [3.1, -3.1]],
+         [[2.1, 3.1], [-1.1, 0.1], [-2.1, -1.1]]],
+        dtype=np.float32)
+    self.a_tm1 = np.array(
+        [[0, 1, 0],
+         [1, 0, 0]],
+        dtype=np.int32)
+    self.discount_t = np.array(
+        [[0., 0.89, 0.85],
+         [0.88, 1., 0.83]],
+        dtype=np.float32)
+    self.r_t = np.array(
+        [[-1.3, -1.3, 2.3],
+         [1.3, 5.3, -3.3]],
+        dtype=np.float32)
+    self.q_t = np.array(
+        [[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2]],
+         [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2]]],
+        dtype=np.float32)
 
-    self.expected = np.array([[-2.4, 0.427975, 1.07], [0.69348, 3.478, -2.196]],
-                             dtype=np.float32)
+    self.expected = np.array(
+        [[-2.4, 0.427975, 1.07],
+         [0.69348, 3.478, -2.196]],
+        dtype=np.float32)
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -625,32 +680,41 @@ class RetraceTest(parameterized.TestCase):
     super(RetraceTest, self).setUp()
     self._lambda = 0.9
 
-    self._qs = np.array([[[1.1, 2.1], [-1.1, 1.1], [3.1, -3.1], [-1.2, 0.0]],
-                         [[2.1, 3.1], [9.5, 0.1], [-2.1, -1.1], [0.1, 7.4]]],
-                        dtype=np.float32)
+    self._qs = np.array(
+        [[[1.1, 2.1], [-1.1, 1.1], [3.1, -3.1], [-1.2, 0.0]],
+         [[2.1, 3.1], [9.5, 0.1], [-2.1, -1.1], [0.1, 7.4]]],
+        dtype=np.float32)
     self._targnet_qs = np.array(
         [[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2], [-2.25, -6.0]],
          [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2], [1.5, 1.0]]],
         dtype=np.float32)
-    self._actions = np.array([[0, 1, 0, 0], [1, 0, 0, 1]], dtype=np.int32)
-    self._rewards = np.array([[-1.3, -1.3, 2.3, 42.0], [1.3, 5.3, -3.3, -5.0]],
-                             dtype=np.float32)
+    self._actions = np.array(
+        [[0, 1, 0, 0], [1, 0, 0, 1]],
+        dtype=np.int32)
+    self._rewards = np.array(
+        [[-1.3, -1.3, 2.3, 42.0],
+         [1.3, 5.3, -3.3, -5.0]],
+        dtype=np.float32)
     self._pcontinues = np.array(
-        [[0., 0.89, 0.85, 0.99], [0.88, 1., 0.83, 0.95]], dtype=np.float32)
+        [[0., 0.89, 0.85, 0.99],
+         [0.88, 1., 0.83, 0.95]],
+        dtype=np.float32)
     self._target_policy_probs = np.array(
         [[[0.5, 0.5], [0.2, 0.8], [0.6, 0.4], [0.9, 0.1]],
          [[0.1, 0.9], [1.0, 0.0], [0.3, 0.7], [0.7, 0.3]]],
         dtype=np.float32)
     self._behavior_policy_probs = np.array(
-        [[0.5, 0.1, 0.9, 0.3], [0.4, 0.6, 1.0, 0.9]], dtype=np.float32)
+        [[0.5, 0.1, 0.9, 0.3], [0.4, 0.6, 1.0, 0.9]],
+        dtype=np.float32)
     self._inputs = [
-        self._qs, self._targnet_qs, self._actions, self._rewards,
-        self._pcontinues, self._target_policy_probs, self._behavior_policy_probs
-    ]
+        self._qs, self._targnet_qs, self._actions,
+        self._rewards, self._pcontinues,
+        self._target_policy_probs, self._behavior_policy_probs]
 
-    self.expected = np.array([[2.8800001, 3.8934109, 4.5942383],
-                              [3.1121615e-1, 2.0253206e1, 3.1601219e-3]],
-                             dtype=np.float32)
+    self.expected = np.array(
+        [[2.8800001, 3.8934109, 4.5942383],
+         [3.1121615e-1, 2.0253206e1, 3.1601219e-3]],
+        dtype=np.float32)
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -714,6 +778,7 @@ class L2ProjectTest(parameterized.TestCase):
 
   def setUp(self):
     super(L2ProjectTest, self).setUp()
+
     old_supports = np.arange(-1, 1., 0.25)
     self.old_supports = np.stack([old_supports, old_supports + 1.])
     weights = self.old_supports.copy()
@@ -774,8 +839,12 @@ class CategoricalTDLearningTest(parameterized.TestCase):
     self.logits_tm1 = np.array(
         [[0, 9, 0], [9, 0, 9], [0, 9, 0], [9, 9, 0], [9, 0, 9]],
         dtype=np.float32)
-    self.r_t = np.array([0.5, 0., 0.5, 0.8, -0.1], dtype=np.float32)
-    self.discount_t = np.array([0.8, 1., 0.8, 0., 1.], dtype=np.float32)
+    self.r_t = np.array(
+        [0.5, 0., 0.5, 0.8, -0.1],
+        dtype=np.float32)
+    self.discount_t = np.array(
+        [0.8, 1., 0.8, 0., 1.],
+        dtype=np.float32)
     self.logits_t = np.array(
         [[0, 0, 9], [1, 1, 1], [0, 0, 9], [1, 1, 1], [0, 9, 9]],
         dtype=np.float32)
@@ -839,15 +908,22 @@ class CategoricalQLearningTest(parameterized.TestCase):
          [[9, 9, 0], [9, 0, 9], [0, 0, 0], [9, -9, 0]],
          [[9, 9, 0], [9, 0, 9], [0, 0, 0], [9, -9, 0]]],
         dtype=np.float32)
-    self.q_logits_t = np.array([[[1, 1, 1], [9, 0, 9], [1, 0, 0], [0, 0, 9]],
-                                [[9, 9, 0], [9, 0, 0], [1, 1, 1], [9, -9, 0]],
-                                [[1, 1, 1], [9, 0, 9], [0, 0, 9], [1, 0, 0]],
-                                [[9, 9, 0], [9, 0, 0], [1, 1, 1], [9, -9, 0]],
-                                [[9, 9, 0], [9, 0, 0], [0, 9, 9], [9, -9, 0]]],
-                               dtype=np.float32)
-    self.a_tm1 = np.array([2, 1, 3, 0, 1], dtype=np.int32)
-    self.r_t = np.array([0.5, 0., 0.5, 0.8, -0.1], dtype=np.float32)
-    self.discount_t = np.array([0.8, 1., 0.8, 0., 1.], dtype=np.float32)
+    self.q_logits_t = np.array(
+        [[[1, 1, 1], [9, 0, 9], [1, 0, 0], [0, 0, 9]],
+         [[9, 9, 0], [9, 0, 0], [1, 1, 1], [9, -9, 0]],
+         [[1, 1, 1], [9, 0, 9], [0, 0, 9], [1, 0, 0]],
+         [[9, 9, 0], [9, 0, 0], [1, 1, 1], [9, -9, 0]],
+         [[9, 9, 0], [9, 0, 0], [0, 9, 9], [9, -9, 0]]],
+        dtype=np.float32)
+    self.a_tm1 = np.array(
+        [2, 1, 3, 0, 1],
+        dtype=np.int32)
+    self.r_t = np.array(
+        [0.5, 0., 0.5, 0.8, -0.1],
+        dtype=np.float32)
+    self.discount_t = np.array(
+        [0.8, 1., 0.8, 0., 1.],
+        dtype=np.float32)
     self.inputs = (
         self.q_logits_tm1, self.a_tm1, self.r_t,
         self.discount_t, self.q_logits_t)
@@ -908,24 +984,32 @@ class CategoricalDoubleQLearningTest(parameterized.TestCase):
          [[9, 9, 0], [9, 0, 9], [0, 0, 0], [9, -9, 0]],
          [[9, 9, 0], [9, 0, 9], [0, 0, 0], [9, -9, 0]]],
         dtype=np.float32)
-    self.q_logits_t = np.array([[[1, 1, 1], [9, 0, 9], [1, 0, 0], [0, 0, 9]],
-                                [[9, 9, 0], [9, 0, 0], [1, 1, 1], [9, -9, 0]],
-                                [[1, 1, 1], [9, 0, 9], [0, 0, 9], [1, 0, 0]],
-                                [[9, 9, 0], [9, 0, 0], [1, 1, 1], [9, -9, 0]],
-                                [[9, 9, 0], [9, 0, 0], [0, 9, 9], [9, -9, 0]]],
-                               dtype=np.float32)
+    self.q_logits_t = np.array(
+        [[[1, 1, 1], [9, 0, 9], [1, 0, 0], [0, 0, 9]],
+         [[9, 9, 0], [9, 0, 0], [1, 1, 1], [9, -9, 0]],
+         [[1, 1, 1], [9, 0, 9], [0, 0, 9], [1, 0, 0]],
+         [[9, 9, 0], [9, 0, 0], [1, 1, 1], [9, -9, 0]],
+         [[9, 9, 0], [9, 0, 0], [0, 9, 9], [9, -9, 0]]],
+        dtype=np.float32)
     self.q_t_selector = np.array(
         [[1, 0, 0, 9], [9, 0, 1, 1], [1, 9, 1, 1], [0, 1, 0, 9], [1, 1, 1, 9]],
         dtype=np.float32)
-    self.a_tm1 = np.array([2, 1, 3, 0, 1], dtype=np.int32)
-    self.r_t = np.array([0.5, 0., 0.5, 0.8, -0.1], dtype=np.float32)
-    self.discount_t = np.array([0.8, 1., 0.8, 0., 1.], dtype=np.float32)
+    self.a_tm1 = np.array(
+        [2, 1, 3, 0, 1],
+        dtype=np.int32)
+    self.r_t = np.array(
+        [0.5, 0., 0.5, 0.8, -0.1],
+        dtype=np.float32)
+    self.discount_t = np.array(
+        [0.8, 1., 0.8, 0., 1.],
+        dtype=np.float32)
     self.inputs = (
         self.q_logits_tm1, self.a_tm1, self.r_t,
         self.discount_t, self.q_logits_t, self.q_t_selector)
 
-    self.expected = np.array([8.998915, 5.192931, 5.400247, 0.693209, 0.693431],
-                             dtype=np.float32)
+    self.expected = np.array(
+        [8.998915, 5.192931, 5.400247, 0.693209, 0.693431],
+        dtype=np.float32)
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -1065,24 +1149,38 @@ class QuantileQLearningTest(parameterized.TestCase):
     super(QuantileQLearningTest, self).setUp()
 
     self.dist_q_tm1 = np.array(  # n_batch = 3, n_taus = 2, n_actions = 4
-        [[[0, 1, -5, 6], [-1, 3, 0, -2]], [[-5, 9, -5, 6], [2, 3, 1, -4]],
+        [[[0, 1, -5, 6], [-1, 3, 0, -2]],
+         [[-5, 9, -5, 6], [2, 3, 1, -4]],
          [[5, 1, -5, 7], [-1, 3, 0, -2]]],
         dtype=np.float32)
-    self.tau_q_tm1 = np.array([[0.2, 0.7], [0.1, 0.5], [0.3, 0.4]],
-                              dtype=np.float32)
-    self.a_tm1 = np.array([1, 2, 0], dtype=np.int32)
-    self.r_t = np.array([0.5, -1., 0.], dtype=np.float32)
-    self.discount_t = np.array([0.5, 0., 1], dtype=np.float32)
+    self.tau_q_tm1 = np.array(
+        [[0.2, 0.7],
+         [0.1, 0.5],
+         [0.3, 0.4]],
+        dtype=np.float32)
+    self.a_tm1 = np.array(
+        [1, 2, 0],
+        dtype=np.int32)
+    self.r_t = np.array(
+        [0.5, -1., 0.],
+        dtype=np.float32)
+    self.discount_t = np.array(
+        [0.5, 0., 1],
+        dtype=np.float32)
     self.dist_q_t = np.array(
-        [[[0, 5, 2, 2], [0, -3, 2, 2]], [[-3, -1, 4, -3], [1, 3, 1, -4]],
+        [[[0, 5, 2, 2], [0, -3, 2, 2]],
+         [[-3, -1, 4, -3], [1, 3, 1, -4]],
          [[-2, 2, -5, -7], [1, 3, 2, -2]]],
         dtype=np.float32)
     self.dist_q_t_selector = np.array(
-        [[[0, 7, 2, -2], [0, 4, 2, 2]], [[-3, -1, 4, 3], [1, 3, 1, 4]],
+        [[[0, 7, 2, -2], [0, 4, 2, 2]],
+         [[-3, -1, 4, 3], [1, 3, 1, 4]],
          [[-1, -2, -5, -6], [-1, -5, 2, -2]]],
         dtype=np.float32)
 
-    dist_qa_tm1 = np.array([[1, 3], [-5, 1], [5, -1]], dtype=np.float32)
+    dist_qa_tm1 = np.array(
+        [[1, 3], [-5, 1], [5, -1]],
+        dtype=np.float32)
     # dist_qa_tm1                                      [ 1,  3]
     #     (batch x n_tau)                          =   [-5,  1]
     #                                                  [ 5, -1]
@@ -1098,7 +1196,9 @@ class QuantileQLearningTest(parameterized.TestCase):
     # target = r + gamma * dist_qa_t                   [ 3, -1]
     #     (batch x n_taus)                         =   [-1, -1]
     #                                                  [-2,  1]
-    dist_target = np.array([[3, -1], [-1, -1], [-2, 1]], dtype=np.float32)
+    dist_target = np.array(
+        [[3, -1], [-1, -1], [-2, 1]],
+        dtype=np.float32)
 
     # Use qr loss to compute expected results (itself tested explicitly in
     # distributions_test.py).

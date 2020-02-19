@@ -27,10 +27,10 @@ class IdentityTest(parameterized.TestCase):
 
   def setUp(self):
     super(IdentityTest, self).setUp()
-
-    self.q_t = np.array([[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2]],
-                         [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2]]],
-                        dtype=np.float64)
+    self.q_t = np.array(
+        [[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2]],
+         [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2]]],
+        dtype=np.float64)
 
   @parameterized.parameters(
       nonlinear_bellman.IDENTITY_PAIR,
@@ -46,26 +46,34 @@ class TransformedQLambdaTest(parameterized.TestCase):
 
   def setUp(self):
     super(TransformedQLambdaTest, self).setUp()
-
-    self.q_tm1 = np.array([[[1.1, 2.1], [-1.1, 1.1], [3.1, -3.1]],
-                           [[2.1, 3.1], [-1.1, 0.1], [-2.1, -1.1]]],
-                          dtype=np.float32)
-    self.a_tm1 = np.array([[0, 1, 0], [1, 0, 0]], dtype=np.int32)
-    self.discount_t = np.array([[0., 0.89, 0.85], [0.88, 1., 0.83]],
-                               dtype=np.float32)
-    self.r_t = np.array([[-1.3, -1.3, 2.3], [1.3, 5.3, -3.3]], dtype=np.float32)
-    self.q_t = np.array([[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2]],
-                         [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2]]],
-                        dtype=np.float32)
-
     self.lambda_ = 0.75
 
-    self.expected_td = np.array([
-        [[-2.4, 0.4280, 1.07], [0.6935, 3.478, -2.196]],
-        [[-1.9329, 0.6643, -0.7854], [-0.20713, 2.1855, 0.27132]],
-        [[-1.6179, 0.4633, -0.7576], [-1.1097, 1.6509, 0.3598]],
-    ],
-                                dtype=np.float32)
+    self.q_tm1 = np.array(
+        [[[1.1, 2.1], [-1.1, 1.1], [3.1, -3.1]],
+         [[2.1, 3.1], [-1.1, 0.1], [-2.1, -1.1]]],
+        dtype=np.float32)
+    self.a_tm1 = np.array(
+        [[0, 1, 0],
+         [1, 0, 0]],
+        dtype=np.int32)
+    self.discount_t = np.array(
+        [[0., 0.89, 0.85],
+         [0.88, 1., 0.83]],
+        dtype=np.float32)
+    self.r_t = np.array(
+        [[-1.3, -1.3, 2.3],
+         [1.3, 5.3, -3.3]],
+        dtype=np.float32)
+    self.q_t = np.array(
+        [[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2]],
+         [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2]]],
+        dtype=np.float32)
+
+    self.expected_td = np.array(
+        [[[-2.4, 0.4280, 1.07], [0.6935, 3.478, -2.196]],
+         [[-1.9329, 0.6643, -0.7854], [-0.20713, 2.1855, 0.27132]],
+         [[-1.6179, 0.4633, -0.7576], [-1.1097, 1.6509, 0.3598]]],
+        dtype=np.float32)
 
   @parameterized.parameters(
       (nonlinear_bellman.IDENTITY_PAIR, 0, lambda fn: fn),
@@ -119,24 +127,34 @@ class TransformedRetraceTest(parameterized.TestCase):
     super(TransformedRetraceTest, self).setUp()
     self._lambda = 0.9
 
-    self._qs = np.array([[[1.1, 2.1], [-1.1, 1.1], [3.1, -3.1], [-1.2, 0.0]],
-                         [[2.1, 3.1], [9.5, 0.1], [-2.1, -1.1], [0.1, 7.4]]],
-                        dtype=np.float32)
+    self._qs = np.array(
+        [[[1.1, 2.1], [-1.1, 1.1], [3.1, -3.1], [-1.2, 0.0]],
+         [[2.1, 3.1], [9.5, 0.1], [-2.1, -1.1], [0.1, 7.4]]],
+        dtype=np.float32)
     self._targnet_qs = np.array(
         [[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2], [-2.25, -6.0]],
          [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2], [1.5, 1.0]]],
         dtype=np.float32)
-    self._actions = np.array([[0, 1, 0, 0], [1, 0, 0, 1]], dtype=np.int32)
-    self._rewards = np.array([[-1.3, -1.3, 2.3, 42.0], [1.3, 5.3, -3.3, -5.0]],
-                             dtype=np.float32)
+    self._actions = np.array(
+        [[0, 1, 0, 0],
+         [1, 0, 0, 1]],
+        dtype=np.int32)
+    self._rewards = np.array(
+        [[-1.3, -1.3, 2.3, 42.0],
+         [1.3, 5.3, -3.3, -5.0]],
+        dtype=np.float32)
     self._pcontinues = np.array(
-        [[0., 0.89, 0.85, 0.99], [0.88, 1., 0.83, 0.95]], dtype=np.float32)
+        [[0., 0.89, 0.85, 0.99],
+         [0.88, 1., 0.83, 0.95]],
+        dtype=np.float32)
     self._target_policy_probs = np.array(
         [[[0.5, 0.5], [0.2, 0.8], [0.6, 0.4], [0.9, 0.1]],
          [[0.1, 0.9], [1.0, 0.0], [0.3, 0.7], [0.7, 0.3]]],
         dtype=np.float32)
     self._behavior_policy_probs = np.array(
-        [[0.5, 0.1, 0.9, 0.3], [0.4, 0.6, 1.0, 0.9]], dtype=np.float32)
+        [[0.5, 0.1, 0.9, 0.3],
+         [0.4, 0.6, 1.0, 0.9]],
+        dtype=np.float32)
 
     self.expected_td = np.array(
         [[[-2.4, -2.7905, -3.0313], [0.7889, -6.3645, -0.0795]],
@@ -166,14 +184,9 @@ class TransformedRetraceTest(parameterized.TestCase):
              self._target_policy_probs, self._behavior_policy_probs):
       # Compute transformed retrace td errors.
       actual_td = transformed_retrace(
-          q_tm1=qs[:-1],
-          q_t=targnet_qs[1:],
-          a_tm1=actions[:-1],
-          a_t=actions[1:],
-          r_t=rewards[:-1],
-          discount_t=pcontinues[:-1],
-          pi_t=target_policy_probs[1:],
-          mu_t=behavior_policy_probs[1:])
+          q_tm1=qs[:-1], q_t=targnet_qs[1:], a_tm1=actions[:-1],
+          a_t=actions[1:], r_t=rewards[:-1], discount_t=pcontinues[:-1],
+          pi_t=target_policy_probs[1:], mu_t=behavior_policy_probs[1:])
       # Test output.
       np.testing.assert_allclose(expected_td, actual_td, rtol=1e-3)
 
@@ -193,12 +206,10 @@ class TransformedRetraceTest(parameterized.TestCase):
     transformed_retrace = jax.vmap(transformed_retrace)
     transformed_retrace = compile_fn(transformed_retrace)
     # Compute transformed vtrace td errors in batch.
-    actual_td = transformed_retrace(self._qs[:, :-1], self._targnet_qs[:, 1:],
-                                    self._actions[:, :-1], self._actions[:, 1:],
-                                    self._rewards[:, :-1],
-                                    self._pcontinues[:, :-1],
-                                    self._target_policy_probs[:, 1:],
-                                    self._behavior_policy_probs[:, 1:])
+    actual_td = transformed_retrace(
+        self._qs[:, :-1], self._targnet_qs[:, 1:], self._actions[:, :-1],
+        self._actions[:, 1:], self._rewards[:, :-1], self._pcontinues[:, :-1],
+        self._target_policy_probs[:, 1:], self._behavior_policy_probs[:, 1:])
     # Test output.
     np.testing.assert_allclose(self.expected_td[td_index], actual_td, rtol=1e-3)
 

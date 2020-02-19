@@ -46,7 +46,8 @@ class RankAssertTest(parameterized.TestCase):
 
   def test_rank_assert_should_raise_list_input_list_rank(self):
     with self.assertRaises(ValueError):
-      base.rank_assert([jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [2, 2])
+      base.rank_assert(
+          [jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [2, 2])
       base.rank_assert(
           [jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [[1, 3], 2])
       base.rank_assert(
@@ -70,7 +71,8 @@ class RankAssertTest(parameterized.TestCase):
     base.rank_assert([jnp.array(array)] * 3, correct_rank)
 
   def test_rank_assert_should_not_raise_list_input_list_rank(self):
-    base.rank_assert([jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [1, 2])
+    base.rank_assert(
+        [jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [1, 2])
     base.rank_assert(
         [jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [[1, 2], 2])
 
@@ -123,16 +125,16 @@ class TypeAssertTest(parameterized.TestCase):
     a_np_float = np.asarray([3., 4.])
     a_jax_int = jnp.asarray([5, 6])
     with self.assertRaises(ValueError):
-      base.type_assert([a_float, an_int, a_np_float, a_jax_int],
-                       [float, int, float, float])
+      base.type_assert(
+          [a_float, an_int, a_np_float, a_jax_int], [float, int, float, float])
 
   def test_mixed_inputs_should_not_raise(self):
     a_float = 1.
     an_int = 2
     a_np_float = np.asarray([3., 4.])
     a_jax_int = jnp.asarray([5, 6])
-    base.type_assert([a_float, an_int, a_np_float, a_jax_int],
-                     [float, int, float, int])
+    base.type_assert(
+        [a_float, an_int, a_np_float, a_jax_int], [float, int, float, int])
 
 if __name__ == '__main__':
   absltest.main()

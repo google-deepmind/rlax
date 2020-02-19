@@ -28,10 +28,11 @@ class HuberLossTest(parameterized.TestCase):
 
   def setUp(self):
     super(HuberLossTest, self).setUp()
+    self.delta = 1.
+
     self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
     self.ys = jnp.array([1.5, 0.5, 0.125, 0, 0.125, 0.5, 1.5])
     self.dys = jnp.array([-1, -1, -0.5, 0, 0.5, 1, 1])
-    self.delta = 1.
 
   @parameterized.named_parameters(
       ('JitOnp', jax.jit, lambda t: t),
@@ -119,8 +120,8 @@ class EquivalenceTest(parameterized.TestCase):
 
   def setUp(self):
     super(EquivalenceTest, self).setUp()
-    self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
     self.large_delta = 5.
+    self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
 
   @parameterized.named_parameters(
       ('JitOnp, 10', jax.jit, lambda t: t, 10.),

@@ -82,6 +82,7 @@ class DiscountedReturnsTest(parameterized.TestCase):
 
   def setUp(self):
     super(DiscountedReturnsTest, self).setUp()
+
     self.r_t = np.array(
         [[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0, 2.1]])
     self.discount_t = np.array(
@@ -141,6 +142,7 @@ class TDErrorTest(parameterized.TestCase):
 
   def setUp(self):
     super(TDErrorTest, self).setUp()
+
     self.r_t = np.array(
         [[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0, 2.1]])
     self.discount_t = np.array(
@@ -168,9 +170,8 @@ class TDErrorTest(parameterized.TestCase):
       r_t, discount_t, rho_tm1, values = tree_map(
           place_fn, (r_t, discount_t, rho_tm1, values))
       # Compute multistep td-error with recursion on deltas.
-      td_direct = importance_corrected_td_errors(r_t, discount_t, rho_tm1,
-                                                 np.ones_like(discount_t),
-                                                 values)
+      td_direct = importance_corrected_td_errors(
+          r_t, discount_t, rho_tm1, np.ones_like(discount_t), values)
       # Compute off-policy corrected return, and derive td-error from it.
       lambdas = np.concatenate((rho_tm1[1:], [1.]))
       td_from_returns = rho_tm1 * (
@@ -192,8 +193,8 @@ class TDErrorTest(parameterized.TestCase):
     r_t, discount_t, rho_tm1, values = tree_map(
         place_fn, (self.r_t, self.discount_t, self.rho_tm1, self.values))
     # Compute multistep td-error with recursion on deltas.
-    td_direct = td_errors(r_t, discount_t, rho_tm1,
-                          np.ones_like(self.discount_t), values)
+    td_direct = td_errors(
+        r_t, discount_t, rho_tm1, np.ones_like(self.discount_t), values)
     # Compute off-policy corrected return, and derive td-error from it.
     ls_ = np.concatenate((self.rho_tm1[:, 1:], [[1.], [1.]]), axis=1)
     td_from_returns = self.rho_tm1 * (

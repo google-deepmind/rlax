@@ -15,18 +15,18 @@
 # ==============================================================================
 """Install script for setuptools."""
 
-from setuptools import find_packages
+from setuptools import find_namespace_packages
 from setuptools import setup
 
 setup(
     name='rlax',
-    url='https://github.com/deepmind/haiku',
+    url='https://github.com/deepmind/rlax',
     license='Apache 2.0',
     author='DeepMind',
     description=('A library of reinforcement learning building blocks in JAX.'),
     author_email='rlax-dev@google.com',
     keywords='reinforcement-learning python machine learning',
-    packages=find_packages(),
+    packages=find_namespace_packages(exclude=['*_test.py']),
     install_requires=[
         'absl-py>=0.7.1',
         'jax>=0.1.55',

@@ -10,7 +10,11 @@ RLax can be installed with pip directly from github, with the following command:
 `pip install git+git://github.com/deepmind/rlax.git`.
 
 All RLax code may then be just in time compiled for different hardware
-(e.g. CPU, GPU, TPU) using JAX's `jax.jit` function.
+(e.g. CPU, GPU, TPU) using `jax.jit`.
+
+In order to run the `examples/` you will also need to install
+[haiku](https://github.com/deepmind/haiku) and
+[bsuite](https://github.com/deepmind/bsuite).
 
 ## Usage
 

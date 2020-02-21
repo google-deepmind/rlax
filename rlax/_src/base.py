@@ -77,17 +77,19 @@ def rank_assert(
     expected_ranks = [expected_ranks] * len(inputs)
   if len(inputs) != len(expected_ranks):
     raise ValueError("Length of inputs and expected_ranks must match.")
-  for x, expected in zip(inputs, expected_ranks):
-    try:
-      rank = x.ndim
-    except AttributeError:
-      rank = 0  # scalars are rank 0 by definition.
+  for idx, (x, expected) in enumerate(zip(inputs, expected_ranks)):
+    if hasattr(x, "shape"):
+      shape = x.shape
+    else:
+      shape = ()  # scalars have shape () by definition.
+    rank = len(shape)
 
     expected_as_list = expected if isinstance(expected, list) else [expected]
 
     if rank not in expected_as_list:
-      raise ValueError("Error in rank compatibility check, found {} but "
-                       "expected {}.".format(rank, expected))
+      raise ValueError(
+          "Error in rank compatibility check: input {} has rank {} "
+          "(shape {}) but expected {}.".format(idx, rank, shape, expected))
 
 
 def type_assert(

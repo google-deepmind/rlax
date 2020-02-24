@@ -17,12 +17,12 @@
 
 from absl import app
 from absl import flags
-from bsuite.experiments.catch import catch
 import haiku as hk
 from haiku import nets
 import jax
-from jax.experimental import optix
 import jax.numpy as jnp
+from jax.experimental import optix
+from bsuite.experiments.catch import catch
 import rlax
 
 FLAGS = flags.FLAGS

@@ -76,6 +76,11 @@ class RankAssertTest(parameterized.TestCase):
     base.rank_assert(
         [jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [[1, 2], 2])
 
+  def test_rank_assert_should_raise_different_length(self):
+    with self.assertRaises(ValueError):
+      base.rank_assert(
+          [jnp.array([1, 2])], [2, 2])
+
 
 class TypeAssertTest(parameterized.TestCase):
 
@@ -135,6 +140,42 @@ class TypeAssertTest(parameterized.TestCase):
     a_jax_int = jnp.asarray([5, 6])
     base.type_assert(
         [a_float, an_int, a_np_float, a_jax_int], [float, int, float, int])
+
+  def test_different_length_should_raise(self):
+    a_float = 1.
+    an_int = 2
+    a_np_float = np.asarray([3., 4.])
+    a_jax_int = jnp.asarray([5, 6])
+    with self.assertRaises(ValueError):
+      base.type_assert(
+          [a_float, an_int, a_np_float, a_jax_int], [int, float, int])
+
+  def test_unsupported_type_should_raise(self):
+    a_float = 1.
+    an_int = 2
+    a_np_float = np.asarray([3., 4.])
+    a_jax_int = jnp.asarray([5, 6])
+    with self.assertRaises(ValueError):
+      base.type_assert(
+          [a_float, an_int, a_np_float, a_jax_int],
+          [np.complex, np.complex, float, int])
+
+
+class OneHotTest(parameterized.TestCase):
+  """Testing base.one_hot"""
+
+  def test_one_hot(self):
+    indices = jnp.array([[[1.,2.,3.],
+                          [1.,2.,2.]]])
+    num_classes = 3
+    expected_result = jnp.array([[[[0., 1., 0.],
+                                   [0., 0., 1.],
+                                   [0., 0., 0.]],
+                                  [[0., 1., 0.],
+                                   [0., 0., 1.],
+                                   [0., 0., 1.]]]])
+    result = base.one_hot(indices, num_classes)
+    np.testing.assert_array_almost_equal(result, expected_result)
 
 if __name__ == '__main__':
   absltest.main()

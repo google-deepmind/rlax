@@ -107,6 +107,5 @@ To cite this repository:
 ```
 
 In this bibtex entry, the version number is intended to be from
-[rlax/\_\_init\_\_.py]
-(https://github.com/deepmind/rlax/blob/master/__init__.py),
+[rlax/\_\_init\_\_.py](https://github.com/deepmind/rlax/blob/master/rlax/__init__.py),
 and the year corresponds to the project's open-source release.

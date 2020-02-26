@@ -23,6 +23,15 @@ import numpy as np
 from rlax._src import distributions
 
 
+class CategoricalSampleTest(parameterized.TestCase):
+
+  def test_categorical_sample(self):
+    key = np.array([1, 2], dtype=np.uint32)
+    probs = np.array([0.2, 0.3, 0.5])
+    sample = distributions._categorical_sample(key, probs)
+    self.assertEqual(sample, 0)
+
+
 class SoftmaxTest(parameterized.TestCase):
 
   def setUp(self):
@@ -146,6 +155,65 @@ class SoftmaxTest(parameterized.TestCase):
     # Test softmax output in batch.
     actual = entropy_fn(logits)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
+
+
+class EpsilonSoftmaxTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(EpsilonSoftmaxTest, self).setUp()
+
+    self.logits = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
+    self.samples = np.array([0, 1], dtype=np.int32)
+
+    self.expected_probs = np.array(  # softmax with temperature=10
+        [[0.34316134, 0.34316134, 0.3136773],
+         [0.3323358, 0.36378217, 0.30388197]],
+        dtype=np.float32)
+    probs = np.array(  # softmax with temperature=10
+        [[0.34316134, 0.34316134, 0.3136773],
+         [0.3323358, 0.36378217, 0.30388197]],
+        dtype=np.float32)
+    probs = distributions._mix_with_uniform(probs, epsilon=0.1)
+    logprobs = np.log(probs)
+    self.expected_logprobs = np.array(
+        [logprobs[0][self.samples[0]], logprobs[1][self.samples[1]]])
+    self.expected_entropy = -np.sum(probs * logprobs, axis=-1)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_softmax_probs(self, compile_fn, place_fn):
+    """Tests for a single element."""
+    distrib = distributions.epsilon_softmax(epsilon=0.1,
+                                            temperature=10.)
+    # Optionally compile.
+    softmax = compile_fn(distrib.probs)
+    # For each element in the batch.
+    for logits, expected in zip(self.logits, self.expected_probs):
+      # Optionally convert to device array.
+      logits = place_fn(logits)
+      # Test outputs.
+      actual = softmax(logits)
+      np.testing.assert_allclose(expected, actual, atol=1e-4)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_softmax_probs_batch(self, compile_fn, place_fn):
+    """Tests for a full batch."""
+    distrib = distributions.epsilon_softmax(epsilon=0.1,
+                                            temperature=10.)
+    # Vmap and optionally compile.
+    softmax = compile_fn(distrib.probs)
+    # Optionally convert to device array.
+    logits = place_fn(self.logits)
+    # Test softmax output in batch.
+    actual = softmax(logits)
+    np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
 
 class GreedyTest(parameterized.TestCase):

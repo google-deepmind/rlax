@@ -111,7 +111,7 @@ def type_assert(
     expected_types = [expected_types] * len(inputs)
   if len(inputs) != len(expected_types):
     raise ValueError("Length of inputs and expected_types must match.")
-  for x, expected in zip(inputs, expected_types):
+  for idx, (x, expected) in enumerate(zip(inputs, expected_types)):
     if jnp.issubdtype(expected, jnp.floating):
       parent = jnp.floating
     elif jnp.issubdtype(expected, jnp.integer):
@@ -121,5 +121,6 @@ def type_assert(
                        " {}".format(expected))
 
     if not jnp.issubdtype(jnp.result_type(x), parent):
-      raise ValueError("Error in type compatibility check, found {} but "
-                       "expected {}.".format(jnp.result_type(x), expected))
+      raise ValueError(
+          "Error in type compatibility check: input {} has type {} but "
+          "expected {}.".format(idx, jnp.result_type(x), expected))

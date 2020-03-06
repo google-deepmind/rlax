@@ -33,7 +33,8 @@ ArrayLike = base.ArrayLike
 DiscreteDistribution = collections.namedtuple(
     "DiscreteDistribution", ["sample", "probs", "logprob", "entropy"])
 ContinuousDistribution = collections.namedtuple(
-    "ContinuousDistribution", ["sample", "prob", "logprob", "entropy"])
+    "ContinuousDistribution", ["sample", "prob", "logprob", "entropy",
+                               "kl_to_standard_normal"])
 
 
 def _categorical_sample(key, probs):
@@ -188,7 +189,12 @@ def gaussian_diagonal(sigma=None):
     half_logdet = jnp.sum(jnp.log(sigma), axis=-1)
     return half_logdet + 0.5 * d * (1 + jnp.log(2 * jnp.pi))
 
-  return ContinuousDistribution(sample_fn, prob_fn, logprob_fn, entropy_fn)
+  def kl_to_standard_normal_fn(mu: ArrayLike, sigma: ArrayLike = sigma):
+    v = jnp.clip(sigma**2, 1e-6, 1e6)
+    return -0.5 * (jnp.sum(v) + jnp.sum(mu**2) - 1 - jnp.sum(jnp.log(v)))
+
+  return ContinuousDistribution(sample_fn, prob_fn, logprob_fn, entropy_fn,
+                                kl_to_standard_normal_fn)
 
 
 def categorical_importance_sampling_ratios(

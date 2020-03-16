@@ -30,6 +30,7 @@ from rlax._src.distributions import epsilon_greedy
 from rlax._src.distributions import epsilon_softmax
 from rlax._src.distributions import gaussian_diagonal
 from rlax._src.distributions import greedy
+from rlax._src.distributions import safe_epsilon_softmax
 from rlax._src.distributions import softmax
 from rlax._src.general_value_functions import pixel_control_rewards
 from rlax._src.losses import l2_loss

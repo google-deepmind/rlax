@@ -16,18 +16,29 @@ In order to run the `examples/` you will also need to install
 [haiku](https://github.com/deepmind/haiku) and
 [bsuite](https://github.com/deepmind/bsuite).
 
-## Usage
+## Content
 
 The operations and functions provided are not complete algorithms, but
 implementations of reinforcement learning specific mathematical operations that
-are needed when building fully-functional agents.
+are needed when building fully-functional agents capable of learning:
+
+* Values, including both state and action-values;
+* Values for Non-linear generalizations of the Bellman equations.
+* Return Distributions, aka distributional value functions;
+* General Value Functions, for cumulants other than the main reward;
+* Policies, via policy-gradients in both continuous and discrete action spaces.
+
+The library supports both on-policy and off-policy learning (i.e. learning from
+data sampled from a policy different from the agent's policy).
+
+See file-level and function-level doc-strings for the documentation of these
+functions and for references to the papers that introduced and/or used them.
+
+## Usage
 
 See `examples/catch.py` for an example of using some of the functions in RLax
 to implement a Q-learning agent capable of learning to play Catch (a common
 unit-test for agent learning in the reinforcement learning literature).
-
-See file-level and function-level doc-strings for the documentation of these
-functions and for references to the papers that introduced and/or used them.
 
 ## Background
 

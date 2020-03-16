@@ -215,6 +215,22 @@ class EpsilonSoftmaxTest(parameterized.TestCase):
     actual = softmax(logits)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_safe_epsilon_softmax_equivalence(self, compile_fn, place_fn):
+    distrib = distributions.safe_epsilon_softmax(epsilon=0.1,
+                                                 temperature=10.)
+    # Vmap and optionally compile.
+    softmax = compile_fn(distrib.probs)
+    # Optionally convert to device array.
+    logits = place_fn(self.logits)
+    # Test softmax output in batch.
+    actual = softmax(logits)
+    np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
+
 
 class GreedyTest(parameterized.TestCase):
 
@@ -453,6 +469,22 @@ class EpsilonGreedyTest(parameterized.TestCase):
     # Test greedy output in batch.
     actual = entropy_fn(preferences)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_safe_epsilon_softmax_equivalence(self, compile_fn, place_fn):
+    distrib = distributions.safe_epsilon_softmax(epsilon=self.epsilon,
+                                                 temperature=0)
+    # Vmap and optionally compile.
+    probs_fn = compile_fn(distrib.probs)
+    # Optionally convert to device array.
+    preferences = place_fn(self.preferences)
+    # Test greedy output in batch.
+    actual = probs_fn(preferences)
+    np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
 
 class GaussianDiagonalTest(parameterized.TestCase):

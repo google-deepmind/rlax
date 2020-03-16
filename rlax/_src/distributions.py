@@ -150,6 +150,34 @@ def epsilon_greedy(epsilon=None):
   return DiscreteDistribution(sample_fn, probs_fn, logprob_fn, entropy_fn)
 
 
+def safe_epsilon_softmax(epsilon, temperature):
+  """Tolerantly handles the temperature=0 case."""
+  egreedy = epsilon_greedy(epsilon)
+  unsafe = epsilon_softmax(epsilon, temperature)
+
+  def sample_fn(key: ArrayLike, logits: ArrayLike):
+    return jax.lax.cond(temperature > 0,
+                        (key, logits), unsafe.sample,
+                        (key, logits), egreedy.sample)
+
+  def probs_fn(logits: ArrayLike):
+    return jax.lax.cond(temperature > 0,
+                        logits, unsafe.probs,
+                        logits, egreedy.probs)
+
+  def log_prob_fn(sample: ArrayLike, logits: ArrayLike):
+    return jax.lax.cond(temperature > 0,
+                        (sample, logits), unsafe.logprob,
+                        (sample, logits), egreedy.logprob)
+
+  def entropy_fn(logits: ArrayLike):
+    return jax.lax.cond(temperature > 0,
+                        logits, unsafe.entropy,
+                        logits, egreedy.entropy)
+
+  return DiscreteDistribution(sample_fn, probs_fn, log_prob_fn, entropy_fn)
+
+
 def _add_gaussian_noise(key, sample, sigma):
   noise = jax.random.normal(key, shape=sample.shape) * sigma
   return sample + noise

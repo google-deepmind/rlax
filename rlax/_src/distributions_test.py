@@ -79,7 +79,7 @@ class SoftmaxTest(parameterized.TestCase):
   def test_softmax_probs_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.softmax(temperature=10.)
-    # Vmap and optionally compile.
+    # Optionally compile.
     softmax = compile_fn(distrib.probs)
     # Optionally convert to device array.
     logits = place_fn(self.logits)
@@ -114,7 +114,7 @@ class SoftmaxTest(parameterized.TestCase):
   def test_softmax_logprob_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.softmax()
-    # Vmap and optionally compile.
+    # Optionally compile.
     logprob_fn = compile_fn(distrib.logprob)
     # Optionally convert to device array.
     logits, samples = tree_map(place_fn, (self.logits, self.samples))
@@ -148,7 +148,7 @@ class SoftmaxTest(parameterized.TestCase):
   def test_softmax_entropy_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.softmax()
-    # Vmap and optionally compile.
+    # Optionally compile.
     entropy_fn = compile_fn(distrib.entropy)
     # Optionally convert to device array.
     logits = place_fn(self.logits)
@@ -207,7 +207,7 @@ class EpsilonSoftmaxTest(parameterized.TestCase):
     """Tests for a full batch."""
     distrib = distributions.epsilon_softmax(epsilon=0.1,
                                             temperature=10.)
-    # Vmap and optionally compile.
+    # Optionally compile.
     softmax = compile_fn(distrib.probs)
     # Optionally convert to device array.
     logits = place_fn(self.logits)
@@ -223,7 +223,7 @@ class EpsilonSoftmaxTest(parameterized.TestCase):
   def test_safe_epsilon_softmax_equivalence(self, compile_fn, place_fn):
     distrib = distributions.safe_epsilon_softmax(epsilon=0.1,
                                                  temperature=10.)
-    # Vmap and optionally compile.
+    # Optionally compile.
     softmax = compile_fn(distrib.probs)
     # Optionally convert to device array.
     logits = place_fn(self.logits)
@@ -273,7 +273,7 @@ class GreedyTest(parameterized.TestCase):
   def test_greedy_probs_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    # Vmap and optionally compile.
+    # Optionally compile.
     greedy = compile_fn(distrib.probs)
     # Optionally convert to device array.
     preferences = place_fn(self.preferences)
@@ -308,7 +308,7 @@ class GreedyTest(parameterized.TestCase):
   def test_greedy_logprob_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    # Vmap and optionally compile.
+    # Optionally compile.
     logprob_fn = compile_fn(distrib.logprob)
     # Optionally convert to device array.
     preferences, samples = tree_map(place_fn, (self.preferences, self.samples))
@@ -342,7 +342,7 @@ class GreedyTest(parameterized.TestCase):
   def test_greedy_entropy_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    # Vmap and optionally compile.
+    # Optionally compile.
     entropy_fn = compile_fn(distrib.entropy)
     # Optionally convert to device array.
     preferences = place_fn(self.preferences)
@@ -393,7 +393,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
   def test_greedy_probs_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    # Vmap and optionally compile.
+    # Optionally compile.
     probs_fn = compile_fn(distrib.probs)
     # Optionally convert to device array.
     preferences = place_fn(self.preferences)
@@ -428,7 +428,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
   def test_greedy_logprob_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    # Vmap and optionally compile.
+    # Optionally compile.
     logprob_fn = compile_fn(distrib.logprob)
     # Optionally convert to device array.
     preferences, samples = tree_map(place_fn, (self.preferences, self.samples))
@@ -462,7 +462,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
   def test_greedy_entropy_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    # Vmap and optionally compile.
+    # Optionally compile.
     entropy_fn = compile_fn(distrib.entropy)
     # Optionally convert to device array.
     preferences = place_fn(self.preferences)
@@ -478,13 +478,30 @@ class EpsilonGreedyTest(parameterized.TestCase):
   def test_safe_epsilon_softmax_equivalence(self, compile_fn, place_fn):
     distrib = distributions.safe_epsilon_softmax(epsilon=self.epsilon,
                                                  temperature=0)
-    # Vmap and optionally compile.
+    # Optionally compile.
     probs_fn = compile_fn(distrib.probs)
     # Optionally convert to device array.
     preferences = place_fn(self.preferences)
     # Test greedy output in batch.
     actual = probs_fn(preferences)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
+
+    # Optionally compile.
+    logprob_fn = compile_fn(distrib.logprob)
+    # Optionally convert to device array.
+    preferences, samples = tree_map(place_fn, (self.preferences, self.samples))
+    # Test greedy output in batch.
+    actual = logprob_fn(samples, preferences)
+    np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
+
+    # Optionally compile.
+    sample_fn = compile_fn(distrib.sample)
+    # Optionally convert to device array.
+    preferences = place_fn(self.preferences)
+    key = np.array([1, 2], dtype=np.uint32)
+    actions = sample_fn(key, preferences)
+    # test just the shape
+    self.assertEqual(actions.shape, (2,))
 
 
 class GaussianDiagonalTest(parameterized.TestCase):
@@ -532,7 +549,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
   def test_gaussian_prob_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    # Vmap and optionally compile.
+    # Optionally compile.
     prob_fn = compile_fn(distrib.prob)
     # Optionally convert to device array.
     mu, sigma, sample = tree_map(place_fn, (self.mu, self.sigma, self.sample))
@@ -567,7 +584,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
   def test_gaussian_logprob_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    # Vmap and optionally compile.
+    # Optionally compile.
     logprob_fn = compile_fn(distrib.logprob)
     # Optionally convert to device array.
     mu, sigma, sample = tree_map(place_fn, (self.mu, self.sigma, self.sample))
@@ -602,7 +619,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
   def test_gaussian_entropy_batch(self, compile_fn, place_fn):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    # Vmap and optionally compile.
+    # Optionally compile.
     entropy_fn = compile_fn(distrib.entropy)
     # Optionally convert to device array.
     mu, sigma = tree_map(place_fn, (self.mu, self.sigma))

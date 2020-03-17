@@ -157,8 +157,8 @@ def safe_epsilon_softmax(epsilon, temperature):
 
   def sample_fn(key: ArrayLike, logits: ArrayLike):
     return jax.lax.cond(temperature > 0,
-                        (key, logits), unsafe.sample,
-                        (key, logits), egreedy.sample)
+                        (key, logits), lambda tup: unsafe.sample(*tup),
+                        (key, logits), lambda tup: egreedy.sample(*tup))
 
   def probs_fn(logits: ArrayLike):
     return jax.lax.cond(temperature > 0,
@@ -167,8 +167,8 @@ def safe_epsilon_softmax(epsilon, temperature):
 
   def log_prob_fn(sample: ArrayLike, logits: ArrayLike):
     return jax.lax.cond(temperature > 0,
-                        (sample, logits), unsafe.logprob,
-                        (sample, logits), egreedy.logprob)
+                        (sample, logits), lambda tup: unsafe.logprob(*tup),
+                        (sample, logits), lambda tup: egreedy.logprob(*tup))
 
   def entropy_fn(logits: ArrayLike):
     return jax.lax.cond(temperature > 0,

@@ -20,7 +20,7 @@ import jax.numpy as jnp
 import numpy as np
 
 Scalar = Union[float, int]
-ArrayLike = Union[Scalar, np.ndarray, jnp.DeviceArray]
+ArrayLike = Union[np.ndarray, jnp.DeviceArray]
 
 
 def batched_index(

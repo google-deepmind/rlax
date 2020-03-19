@@ -28,11 +28,13 @@ import rlax
 FLAGS = flags.FLAGS
 
 flags.DEFINE_integer("train_episodes", 500, "Number of train episodes.")
+flags.DEFINE_integer("evaluate_every", 50,
+                     "Number of episodes between evaluations.")
 flags.DEFINE_integer("eval_episodes", 100, "Number of evaluation episodes.")
 flags.DEFINE_integer("hidden_units", 50, "Number of network hidden units.")
 flags.DEFINE_float("epsilon", 0.01, "eps-greedy exploration probability.")
 flags.DEFINE_float("discount_factor", 0.99, "Q-learning discount factor.")
-flags.DEFINE_float("learning_rate", 0.01, "Optimizer learning rate.")
+flags.DEFINE_float("learning_rate", 0.005, "Optimizer learning rate.")
 flags.DEFINE_integer("seed", 1234, "Random seed.")
 
 
@@ -89,8 +91,9 @@ def main_loop(unused_arg):
     net_params = optix.apply_updates(net_params, updates)
     return net_params, opt_state
 
-  print(f"Training agent for {FLAGS.train_episodes} episodes...")
-  for _ in range(FLAGS.train_episodes):
+  print(f"Training agent for {FLAGS.train_episodes} episodes")
+  print("Returns range [-1.0, 1.0]")
+  for episode in range(FLAGS.train_episodes):
     timestep = env.reset()
     obs_tm1 = timestep.observation
 
@@ -100,7 +103,7 @@ def main_loop(unused_arg):
       new_timestep = env.step(int(a_tm1))
       obs_t = new_timestep.observation
 
-      # Sample action from agent policy.
+      # Sample action from stochastic policy.
       q_t, a_t = policy(net_params, next(rng), obs_t)
 
       # Update Q-values.
@@ -113,20 +116,21 @@ def main_loop(unused_arg):
       obs_tm1 = obs_t
       a_tm1 = a_t
 
-  print(f"Evaluating agent for {FLAGS.eval_episodes} episodes...")
-  returns = 0.
-  for _ in range(FLAGS.eval_episodes):
-    timestep = env.reset()
-    obs = timestep.observation
+    if not episode % FLAGS.evaluate_every:
+      # Evaluate agent with deterministic policy.
+      returns = 0.
+      for _ in range(FLAGS.eval_episodes):
+        timestep = env.reset()
+        obs = timestep.observation
 
-    while not timestep.last():
-      action = eval_policy(net_params, next(rng), obs)
-      timestep = env.step(int(action))
-      obs = timestep.observation
-      returns += timestep.reward
+        while not timestep.last():
+          action = eval_policy(net_params, next(rng), obs)
+          timestep = env.step(int(action))
+          obs = timestep.observation
+          returns += timestep.reward
 
-  avg_returns = returns / FLAGS.eval_episodes
-  print(f"Done! Average returns: {avg_returns} (range [-1.0, 1.0])")
+      avg_returns = returns / FLAGS.eval_episodes
+      print(f"Episode {episode:4d}: Average returns: {avg_returns:.2f}")
 
 
 if __name__ == "__main__":

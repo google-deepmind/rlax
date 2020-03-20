@@ -18,12 +18,26 @@
 from setuptools import find_namespace_packages
 from setuptools import setup
 
+
+def _get_version():
+  with open('rlax/__init__.py') as fp:
+    for line in fp:
+      if line.startswith('__version__'):
+        g = {}
+        exec(line, g)  # pylint: disable=exec-used
+        return g['__version__']
+    raise ValueError('`__version__` not defined in `rlax/__init__.py`')
+
+
 setup(
     name='rlax',
+    version=_get_version(),
     url='https://github.com/deepmind/rlax',
     license='Apache 2.0',
     author='DeepMind',
     description=('A library of reinforcement learning building blocks in JAX.'),
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     author_email='rlax-dev@google.com',
     keywords='reinforcement-learning python machine learning',
     packages=find_namespace_packages(exclude=['*_test.py']),

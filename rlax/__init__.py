@@ -80,6 +80,8 @@ from rlax._src.value_learning import td_learning
 from rlax._src.value_learning import vtrace
 from rlax._src.vtrace import vtrace_td_error_and_advantage
 
+__version__ = "0.0.1"
+
 __all__ = (
     "add_gaussian_noise",
     "add_ornstein_uhlenbeck_noise",

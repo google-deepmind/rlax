@@ -219,10 +219,10 @@ def gaussian_diagonal(sigma=None):
 
   def kl_to_standard_normal_fn(mu: ArrayLike, sigma: ArrayLike = sigma):
     v = jnp.clip(sigma**2, 1e-6, 1e6)
-    return -0.5 * (jnp.sum(v) + jnp.sum(mu**2) - 1 - jnp.sum(jnp.log(v)))
+    return 0.5 * (jnp.sum(v) + jnp.sum(mu**2) - 1 - jnp.sum(jnp.log(v)))
 
-  return ContinuousDistribution(sample_fn, prob_fn, logprob_fn, entropy_fn,
-                                kl_to_standard_normal_fn)
+  return ContinuousDistribution(
+      sample_fn, prob_fn, logprob_fn, entropy_fn, kl_to_standard_normal_fn)
 
 
 def categorical_importance_sampling_ratios(

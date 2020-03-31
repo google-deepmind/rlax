@@ -62,6 +62,7 @@ from rlax._src.transforms import signed_expm1
 from rlax._src.transforms import signed_hyperbolic
 from rlax._src.transforms import signed_logp1
 from rlax._src.transforms import signed_parabolic
+from rlax._src.tree_util import tree_split_key
 from rlax._src.value_learning import categorical_double_q_learning
 from rlax._src.value_learning import categorical_q_learning
 from rlax._src.value_learning import categorical_td_learning
@@ -142,6 +143,7 @@ __all__ = (
     "transformed_lambda_returns",
     "transformed_q_lambda",
     "transformed_retrace",
+    "tree_split_key",
     "type_assert",
     "TxPair",
     "vtrace",

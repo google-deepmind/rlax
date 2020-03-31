@@ -36,6 +36,7 @@ from rlax._src.general_value_functions import pixel_control_rewards
 from rlax._src.losses import l2_loss
 from rlax._src.losses import likelihood
 from rlax._src.losses import log_loss
+from rlax._src.losses import pixel_control_loss
 from rlax._src.multistep import discounted_returns
 from rlax._src.multistep import general_off_policy_returns_from_action_values
 from rlax._src.multistep import general_off_policy_returns_from_q_and_v

@@ -21,10 +21,16 @@ collected in the environment. In this subpackage we collate common mathematical
 transformations used to construct such losses.
 """
 
-from typing import Optional
+import functools
+
+from typing import Optional, Union
+import jax
 import jax.numpy as jnp
 from rlax._src import base
+from rlax._src import general_value_functions
+from rlax._src import value_learning
 
+Scalar = base.Scalar
 ArrayLike = base.ArrayLike
 
 
@@ -84,3 +90,102 @@ def log_loss(
   """
   base.type_assert([predictions, targets], float)
   return -jnp.log(likelihood(predictions, targets))
+
+
+def pixel_control_loss(
+    observations: ArrayLike,
+    actions: ArrayLike,
+    action_values: ArrayLike,
+    discount_factor: Union[ArrayLike, Scalar],
+    cell_size: int):
+  """Calculate n-step Q-learning loss for pixel control auxiliary task.
+
+  For each pixel-based pseudo reward signal, the corresponding action-value
+  function is trained off-policy, using Q(lambda). A discount of 0.9 is
+  commonly used for learning the value functions.
+
+  Note that, since pseudo rewards have a spatial structure, with neighbouring
+  cells exhibiting strong correlations, it is convenient to predict the action
+  values for all the cells through a deconvolutional head.
+
+  See "Reinforcement Learning with Unsupervised Auxiliary Tasks" by Jaderberg,
+  Mnih, Czarnecki et al. (https://arxiv.org/abs/1611.05397).
+
+  Args:
+    observations: A tensor of shape `[T+1, ...]`; `...` is the observation
+      shape, `T` the sequence length.
+    actions: A tensor, shape `[T,]`, of the actions across each sequence.
+    action_values: A tensor, shape `[T+1, H, W, N]` of pixel control action
+      values, where `H`, `W` are the number of pixel control cells/tasks, and
+      `N` is the number of actions.
+    discount_factor: discount used for learning the value function associated
+      to the pseudo rewards; must be a scalar or a Tensor of shape [T].
+    cell_size: size of the cells used to derive the pixel based pseudo-rewards.
+
+  Returns:
+    a tensor containing the spatial loss, shape [T, H, W].
+
+  Raises:
+    ValueError: if the shape of `action_values` is not compatible with that of
+      the pseudo-rewards derived from the observations.
+  """
+  # Check shapes
+  assert len(actions.shape) == 1
+  assert len(action_values.shape) == 4
+  # Check types
+  base.type_assert([observations], float)
+  base.type_assert([actions], int)
+  # Useful shapes.
+  sequence_length = actions.shape[0]
+  num_actions = action_values.shape[-1]
+  height_width_q = action_values.shape[1:-1]
+  # Calculate rewards using the observations.
+  # Compute pseudo-rewards and get their shape.
+  pseudo_rewards = general_value_functions.pixel_control_rewards(
+      observations, cell_size)
+  height_width = pseudo_rewards.shape[1:]
+  # Check that pseudo-rewards and Q-values are compatible in shape.
+  if height_width != height_width_q:
+    raise ValueError(
+        "Pixel Control values are not compatible with the shape of the"
+        "pseudo-rewards derived from the observation. Pseudo-rewards have shape"
+        "{}, while Pixel Control values have shape {}".format(
+            height_width, height_width_q))
+  # We now have Q(s,a) and rewards, so can calculate the n-step loss. The
+  # QLambda loss op expects inputs of shape [T,N] and [T], but our tensors
+  # are in a variety of incompatible shapes. The state-action values have
+  # shape [T,H,W,N] and rewards have shape [T,H,W]. We can think of the
+  # [H,W] dimensions as extra batch dimensions for the purposes of the loss
+  # calculation, so we first collapse [H,W] into a single dimension.
+  q_tm1 = jnp.reshape(action_values[:-1], (sequence_length, -1, num_actions))
+  r_t = jnp.reshape(pseudo_rewards, (sequence_length, -1))
+  q_t = jnp.reshape(action_values[1:], (sequence_length, -1, num_actions))
+  # The actions tensor is of shape [T], and is the same for each H and W.
+  # We thus expand it to be same shape as the reward tensor, [T,HW].
+  expanded_actions = actions[..., None, None]
+  a_tm1 = jnp.tile(expanded_actions, (1,) + height_width)
+  a_tm1 = jnp.reshape(a_tm1, (sequence_length, -1))
+  # We similarly expand-and-tile the discount to [T,HW].
+  discount_factor = jnp.asarray(discount_factor)
+  if not discount_factor.shape:
+    pcont_t = jnp.reshape(discount_factor, (1,))
+    pcont_t = jnp.tile(pcont_t, a_tm1.shape)
+  elif len(discount_factor.shape) == 1:
+    tiled_pcont = jnp.tile(
+        discount_factor[:, None, None], (1,) + height_width)
+    pcont_t = jnp.reshape(tiled_pcont, (sequence_length, -1))
+  else:
+    raise ValueError(
+        "The discount_factor must be a scalar or a tensor of rank 1. "
+        "instead is a tensor of shape {}".format(
+            discount_factor.shape))
+  # Compute a QLambda loss of shape [T,HW]
+  batched_q_lambda = jax.vmap(
+      functools.partial(
+          value_learning.q_lambda, lambda_=1.0),
+      in_axes=1, out_axes=1)
+  td_error = batched_q_lambda(q_tm1, a_tm1, r_t, pcont_t, q_t)
+  loss = 0.5 * td_error**2
+  expanded_shape = (sequence_length,) + height_width
+  spatial_loss = jnp.reshape(loss, expanded_shape)  # [T,H,W].
+  return spatial_loss

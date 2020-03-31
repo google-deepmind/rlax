@@ -34,8 +34,15 @@ def polynomial_schedule(
     transition_steps: int,
     transition_begin: int = 0):
   """Construct a schedule with polynomial transition from init to end value."""
-  def schedule(step_count):
-    count = jnp.clip(step_count - transition_begin, 0, transition_steps)
-    frac = 1 - count/transition_steps
-    return (init_value - end_value) * (frac**power) + end_value
-  return schedule
+  if transition_steps < 0:
+    raise ValueError('transition_steps must be a non-negative integer.')
+
+  elif transition_steps == 0:
+    return lambda step_count: end_value
+
+  else:
+    def schedule(step_count):
+      count = jnp.clip(step_count - transition_begin, 0, transition_steps)
+      frac = 1 - count / transition_steps
+      return (init_value - end_value) * (frac**power) + end_value
+    return schedule

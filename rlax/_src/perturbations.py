@@ -41,7 +41,6 @@ def add_gaussian_noise(
   Returns:
     noisy action, of the same shape as input action.
   """
-  base.rank_assert(action, [[0, 1]])
   base.type_assert(action, float)
 
   noise = jax.random.normal(key, shape=action.shape) * stddev

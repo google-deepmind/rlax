@@ -80,5 +80,226 @@ class PixelControlTest(parameterized.TestCase):
     np.testing.assert_allclose(self.expected, rs, rtol=1e-5)
 
 
+class FeatureControlTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(FeatureControlTest, self).setUp()
+    self.potential_discount = .99
+
+    self.features = np.array([
+        [[1., 2.], [2., 4.], [3., 6.]],
+        [[1., 2.], [0., 0.], [-1., -2.]]])
+
+    self.exp_feature = np.array([
+        [[2., 4.], [3., 6.]],
+        [[0., 0.], [-1., -2.]]])
+    self.exp_abs_change = np.array([
+        [[1., 2.], [1., 2.]],
+        [[1., 2.], [1., 2.]]])
+    self.exp_increase = np.array([
+        [[1., 2.], [1., 2.]],
+        [[-1., -2.], [-1., -2.]]])
+    self.exp_decrease = np.array([
+        [[-1., -2.], [-1., -2.]],
+        [[1., 2.], [1., 2.]]])
+
+    g = self.potential_discount
+    self.exp_potential = np.array([
+        [[g*2.-1., g*4.-2.], [g*3.-2., g*6.-4.]],
+        [[-1., -2.], [-g, -2.*g]]])
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_feature_control_rewards_features(self, compile_fn, place_fn):
+    """Tests for a single element."""
+    # Optionally compile.
+    feature_control_rewards = functools.partial(
+        general_value_functions.feature_control_rewards,
+        cumulant_type='feature')
+    feature_control_rewards = compile_fn(feature_control_rewards)
+    # Optionally convert into device arrays.
+    features = place_fn(self.features)
+    # Test pseudo rewards.
+    for i in range(features.shape[0]):
+      rs = feature_control_rewards(features[i, :])
+      np.testing.assert_allclose(self.features[i, 1:, :], rs, rtol=1e-5)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_feature_control_rewards_absolute_change(self, compile_fn, place_fn):
+    """Tests for a single element."""
+    # Optionally compile.
+    feature_control_rewards = functools.partial(
+        general_value_functions.feature_control_rewards,
+        cumulant_type='absolute_change')
+    feature_control_rewards = compile_fn(feature_control_rewards)
+    # Optionally convert into device arrays.
+    features = place_fn(self.features)
+    # Test pseudo rewards.
+    for i in range(features.shape[0]):
+      rs = feature_control_rewards(features[i, :])
+      np.testing.assert_allclose(self.exp_abs_change[i, :], rs, rtol=1e-5)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_feature_control_rewards_increase(self, compile_fn, place_fn):
+    """Tests for a single element."""
+    # Optionally compile.
+    feature_control_rewards = functools.partial(
+        general_value_functions.feature_control_rewards,
+        cumulant_type='increase')
+    feature_control_rewards = compile_fn(feature_control_rewards)
+    # Optionally convert into device arrays.
+    features = place_fn(self.features)
+    # Test pseudo rewards.
+    for i in range(features.shape[0]):
+      rs = feature_control_rewards(features[i, :])
+      np.testing.assert_allclose(self.exp_increase[i, :], rs, rtol=1e-5)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_feature_control_rewards_decrease(self, compile_fn, place_fn):
+    """Tests for a single element."""
+    # Optionally compile.
+    feature_control_rewards = functools.partial(
+        general_value_functions.feature_control_rewards,
+        cumulant_type='decrease')
+    feature_control_rewards = compile_fn(feature_control_rewards)
+    # Optionally convert into device arrays.
+    features = place_fn(self.features)
+    # Test pseudo rewards.
+    for i in range(features.shape[0]):
+      rs = feature_control_rewards(features[i, :])
+      np.testing.assert_allclose(self.exp_decrease[i, :], rs, rtol=1e-5)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_feature_control_rewards_potential(self, compile_fn, place_fn):
+    """Tests for a single element."""
+    # Optionally compile.
+    feature_control_rewards = functools.partial(
+        general_value_functions.feature_control_rewards,
+        cumulant_type='potential',
+        discount=self.potential_discount)
+    feature_control_rewards = compile_fn(feature_control_rewards)
+    # Optionally convert into device arrays.
+    features = place_fn(self.features)
+    # Test pseudo rewards.
+    for i in range(features.shape[0]):
+      rs = feature_control_rewards(features[i, :])
+      np.testing.assert_allclose(self.exp_potential[i, :], rs, rtol=1e-5)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_feature_control_rewards_feature_batch(self, compile_fn, place_fn):
+    """Tests for a batch, cumulant_type='feature'."""
+    # Vmap and optionally compile.
+    feature_control_rewards = functools.partial(
+        general_value_functions.feature_control_rewards,
+        cumulant_type='feature')
+    feature_control_rewards = compile_fn(jax.vmap(
+        feature_control_rewards, in_axes=(0,), out_axes=0))
+    # Optionally convert into device arrays.
+    features = place_fn(self.features)
+    # Test pseudo rewards.
+    rs = feature_control_rewards(features)
+    np.testing.assert_allclose(self.exp_feature, rs, rtol=1e-5)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_feature_control_rewards_abs_change_batch(self, compile_fn, place_fn):
+    """Tests for a batch, cumulant_type='absolute_change'."""
+    # Vmap and optionally compile.
+    feature_control_rewards = functools.partial(
+        general_value_functions.feature_control_rewards,
+        cumulant_type='absolute_change')
+    feature_control_rewards = compile_fn(jax.vmap(
+        feature_control_rewards, in_axes=(0,), out_axes=0))
+    # Optionally convert into device arrays.
+    features = place_fn(self.features)
+    # Test pseudo rewards.
+    rs = feature_control_rewards(features)
+    np.testing.assert_allclose(self.exp_abs_change, rs, rtol=1e-5)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_feature_control_rewards_increase_batch(self, compile_fn, place_fn):
+    """Tests for a batch, cumulant_type='increase'."""
+    # Vmap and optionally compile.
+    feature_control_rewards = functools.partial(
+        general_value_functions.feature_control_rewards,
+        cumulant_type='increase')
+    feature_control_rewards = compile_fn(jax.vmap(
+        feature_control_rewards, in_axes=(0,), out_axes=0))
+    # Optionally convert into device arrays.
+    features = place_fn(self.features)
+    # Test pseudo rewards.
+    rs = feature_control_rewards(features)
+    np.testing.assert_allclose(self.exp_increase, rs, rtol=1e-5)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_feature_control_rewards_decrease_batch(self, compile_fn, place_fn):
+    """Tests for a batch, cumulant_type='decrease'."""
+    # Vmap and optionally compile.
+    feature_control_rewards = functools.partial(
+        general_value_functions.feature_control_rewards,
+        cumulant_type='decrease')
+    feature_control_rewards = compile_fn(jax.vmap(
+        feature_control_rewards, in_axes=(0,), out_axes=0))
+    # Optionally convert into device arrays.
+    features = place_fn(self.features)
+    # Test pseudo rewards.
+    rs = feature_control_rewards(features)
+    np.testing.assert_allclose(self.exp_decrease, rs, rtol=1e-5)
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_feature_control_rewards_potential_batch(self, compile_fn, place_fn):
+    """Tests for a batch, cumulant_type='potential'."""
+    # Vmap and optionally compile.
+    feature_control_rewards = functools.partial(
+        general_value_functions.feature_control_rewards,
+        cumulant_type='potential',
+        discount=self.potential_discount)
+    feature_control_rewards = compile_fn(jax.vmap(
+        feature_control_rewards, in_axes=(0,), out_axes=0))
+    # Optionally convert into device arrays.
+    features = place_fn(self.features)
+    # Test pseudo rewards.
+    rs = feature_control_rewards(features)
+    np.testing.assert_allclose(self.exp_potential, rs, rtol=1e-5)
+
+
 if __name__ == '__main__':
   absltest.main()

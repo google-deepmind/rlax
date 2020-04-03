@@ -69,3 +69,46 @@ def pixel_control_rewards(
   abs_diff = abs_diff.reshape(
       (-1, h, cell_size, w, cell_size, observations.shape[3]))
   return abs_diff.mean(axis=(2, 4, 5))
+
+
+def feature_control_rewards(
+    features: ArrayLike,
+    cumulant_type='absolute_change',
+    discount=None,
+) -> base.ArrayLike:
+  """Calculates cumulants for feature control tasks from a sequence of features.
+
+  For each feature dimension, a distinct pseudo reward is computed based on the
+  change in the feature value between consecutive timesteps. Depending on
+  `cumulant_type`, cumulants may be equal the features themselves, the absolute
+  difference between their values in consecutive steps, their increase/decrease,
+  or may take the form of a potential-based reward discounted by `discount`.
+
+  See "Reinforcement Learning with Unsupervised Auxiliary Tasks" by Jaderberg,
+  Mnih, Czarnecki et al. (https://arxiv.org/abs/1611.05397).
+
+  Args:
+    features: A tensor of shape `[T+1,D]` of features.
+    cumulant_type: either 'feature' (feature is the reward), `absolute_change`
+      (the reward equals the absolute difference between consecutive
+      timesteps), `increase` (the reward equals the increase in the
+      value of the feature), `decrease` (the reward equals the decrease in the
+      value of the feature), or 'potential' (r=gamma*phi_{t+1} - phi_t).
+    discount: (optional) discount for potential based rewards.
+
+  Returns:
+    A tensor of cumulants calculated from the features. The shape is `[T,D]`.
+  """
+  base.rank_assert(features, 2)
+  base.type_assert(features, float)
+
+  if cumulant_type == 'feature':
+    return features[1:]
+  elif cumulant_type == 'absolute_change':
+    return jnp.abs(features[1:] - features[:-1])
+  elif cumulant_type == 'increase':
+    return features[1:] - features[:-1]
+  elif cumulant_type == 'decrease':
+    return features[:-1] - features[1:]
+  elif cumulant_type == 'potential':
+    return discount * features[1:] - features[:-1]

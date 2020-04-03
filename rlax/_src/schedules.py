@@ -20,6 +20,7 @@ instance, they may be used to anneal the learning rate used to update an agent's
 parameters or the exploration factor used to select actions.
 """
 
+from typing import Dict
 import jax.numpy as jnp
 from rlax._src import base
 
@@ -46,3 +47,33 @@ def polynomial_schedule(
       frac = 1 - count / transition_steps
       return (init_value - end_value) * (frac**power) + end_value
     return schedule
+
+
+def piecewise_constant_schedule(
+    init_value: float,
+    boundaries_and_scales: Dict[int, float] = None):
+  """Returns a function which implements a piecewise constant schedule.
+
+  Args:
+    init_value: An initial value `init_v`.
+    boundaries_and_scales: A map from boundaries `b_i` to non-negative scaling
+      factors `f_i`. For any step count `s`, the schedule returns `init_v`
+      scaled by the product of all factors `f_i` such that `b_i` < `s`.
+
+  schedule:
+    step_size_fn: A function that maps step counts to values.
+  """
+  all_positive = all(scale >= 0. for scale in boundaries_and_scales.values())
+  if not all_positive:
+    raise ValueError(
+        'The `piecewise_constant_schedule` expects non-negative scale factors')
+
+  def schedule(count):
+    v = init_value
+    if boundaries_and_scales is not None:
+      for threshold, scale in sorted(boundaries_and_scales.items()):
+        indicator = jnp.max([0., jnp.sign(threshold - count)])
+        v = v * indicator + (1 - indicator) * scale * v
+    return v
+
+  return schedule

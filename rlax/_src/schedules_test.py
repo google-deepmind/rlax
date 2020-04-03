@@ -109,5 +109,57 @@ class PolynomialTest(parameterized.TestCase):
         10., 20., 1, negative_num_steps)
 
 
+@parameterized.named_parameters(
+    ('JitOnp', jax.jit, lambda t: t),
+    ('NoJitOnp', lambda fn: fn, lambda t: t),
+    ('JitJnp', jax.jit, jax.device_put),
+    ('NoJitJnp', lambda fn: fn, jax.device_put))
+class PiecewiseConstantTest(parameterized.TestCase):
+
+  def test_positive(self, compile_fn, place_fn):
+    """Check piecewise constant schedule of positive values."""
+    # Get schedule function.
+    schedule_fn = schedules.piecewise_constant_schedule(0.1, {3: 2., 6: 0.5})
+    # Optionally compile.
+    schedule_fn = compile_fn(schedule_fn)
+    # Test that generated values equal the expected schedule values.
+    generated_vals = []
+    for count in range(10):
+      # Optionally convert to device array.
+      step_count = place_fn(count)
+      # Compute next value.
+      generated_vals.append(schedule_fn(step_count))
+    # Test output.
+    expected_vals = np.array(
+        [0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1])
+    np.testing.assert_allclose(
+        expected_vals, np.array(generated_vals), atol=1e-3)
+
+  def test_negative(self, compile_fn, place_fn):
+    """Check piecewise constant schedule of negative values."""
+    # Get schedule function.
+    schedule_fn = schedules.piecewise_constant_schedule(-0.1, {3: 2., 6: 0.5})
+    # Optionally compile.
+    schedule_fn = compile_fn(schedule_fn)
+    # Test that generated values equal the expected schedule values.
+    generated_vals = []
+    for count in range(10):
+      # Optionally convert to device array.
+      step_count = place_fn(count)
+      # Compute next value.
+      generated_vals.append(schedule_fn(step_count))
+    # Test output.
+    expected_vals = -1 * np.array(
+        [0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1])
+    np.testing.assert_allclose(
+        expected_vals, np.array(generated_vals), atol=1e-3)
+
+  def test_argument_correctness(self, unused_compile_fn, unused_place_fn):
+    self.assertRaises(
+        ValueError,
+        schedules.piecewise_constant_schedule,
+        0.1, {3: -2., 6: 0.5})
+
+
 if __name__ == '__main__':
   absltest.main()

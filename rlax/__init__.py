@@ -32,6 +32,7 @@ from rlax._src.distributions import gaussian_diagonal
 from rlax._src.distributions import greedy
 from rlax._src.distributions import safe_epsilon_softmax
 from rlax._src.distributions import softmax
+from rlax._src.general_value_functions import feature_control_rewards
 from rlax._src.general_value_functions import pixel_control_rewards
 from rlax._src.losses import l2_loss
 from rlax._src.losses import likelihood
@@ -104,6 +105,7 @@ __all__ = (
     "epsilon_greedy",
     "epsilon_softmax",
     "expected_sarsa",
+    "feature_control_rewards",
     "gaussian_diagonal",
     "greedy",
     "huber_loss",

@@ -21,6 +21,7 @@ parameters or the exploration factor used to select actions.
 """
 
 from typing import Dict
+from absl import logging
 import jax.numpy as jnp
 from rlax._src import base
 
@@ -35,11 +36,12 @@ def polynomial_schedule(
     transition_steps: int,
     transition_begin: int = 0):
   """Construct a schedule with polynomial transition from init to end value."""
-  if transition_steps < 0:
-    raise ValueError('transition_steps must be a non-negative integer.')
-
-  elif transition_steps == 0:
-    return lambda step_count: end_value
+  if transition_steps <= 0:
+    logging.info(
+        'A polynomial schedule was set with a non-positive `transition_steps` '
+        'value; this will result in a constant schedule with value '
+        '`init_value`.')
+    return lambda step_count: init_value
 
   else:
     def schedule(step_count):

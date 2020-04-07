@@ -52,13 +52,17 @@ class PolynomialTest(parameterized.TestCase):
   def test_zero_steps_schedule(self, compile_fn, place_fn):
     # Get schedule function.
     num_steps = 0
+    initial_value = 10.
     final_value = 20.
-    schedule_fn = schedules.polynomial_schedule(10., final_value, 1, num_steps)
-    # Optionally compile.
-    schedule_fn = compile_fn(schedule_fn)
-    for count in range(15):
-      step_count = place_fn(count)
-      np.testing.assert_allclose(schedule_fn(step_count), final_value)
+
+    for num_steps in [-1, 0]:
+      schedule_fn = schedules.polynomial_schedule(
+          initial_value, final_value, 1, num_steps)
+      # Optionally compile.
+      schedule_fn = compile_fn(schedule_fn)
+      for count in range(15):
+        step_count = place_fn(count)
+        np.testing.assert_allclose(schedule_fn(step_count), initial_value)
 
   def test_nonlinear(self, compile_fn, place_fn):
     """Check non-linear (quadratic) schedule."""
@@ -100,13 +104,6 @@ class PolynomialTest(parameterized.TestCase):
         dtype=np.float32)
     np.testing.assert_allclose(
         expected_vals, np.array(generated_vals), atol=1e-3)
-
-  def test_argument_correctness(self, unused_compile_fn, unused_place_fn):
-    negative_num_steps = -1
-    self.assertRaises(
-        ValueError,
-        schedules.polynomial_schedule,
-        10., 20., 1, negative_num_steps)
 
 
 @parameterized.named_parameters(
@@ -153,12 +150,6 @@ class PiecewiseConstantTest(parameterized.TestCase):
         [0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1])
     np.testing.assert_allclose(
         expected_vals, np.array(generated_vals), atol=1e-3)
-
-  def test_argument_correctness(self, unused_compile_fn, unused_place_fn):
-    self.assertRaises(
-        ValueError,
-        schedules.piecewise_constant_schedule,
-        0.1, {3: -2., 6: 0.5})
 
 
 if __name__ == '__main__':

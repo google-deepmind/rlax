@@ -219,7 +219,9 @@ def gaussian_diagonal(sigma=None):
 
   def kl_to_standard_normal_fn(mu: ArrayLike, sigma: ArrayLike = sigma):
     v = jnp.clip(sigma**2, 1e-6, 1e6)
-    return 0.5 * (jnp.sum(v) + jnp.sum(mu**2) - 1 - jnp.sum(jnp.log(v)))
+    return 0.5 * (
+        jnp.sum(v) + jnp.sum(mu**2) - jnp.sum(jnp.ones_like(mu)) -
+        jnp.sum(jnp.log(v)))
 
   return ContinuousDistribution(
       sample_fn, prob_fn, logprob_fn, entropy_fn, kl_to_standard_normal_fn)
@@ -292,3 +294,32 @@ def categorical_kl_divergence(
   log_q = jax.nn.log_softmax(q_logits)
   kl = jnp.sum(p * (log_p - log_q), axis=-1)
   return jax.nn.relu(kl)  # Guard against numerical issues giving negative KL.
+
+
+def multivariate_normal_kl_divergence(
+    mu_1: ArrayLike,
+    mu_0: ArrayLike,
+    sigma_1: ArrayLike,
+    sigma_0: ArrayLike,
+) -> ArrayLike:
+  """Compute the KL between two gaussian distribution with diagonal covariance matrices.
+
+  Args:
+    mu_1: array like of mean values for policy 1
+    mu_0: array like of mean values for policy 0
+    sigma_1: array like of std values for policy 1
+    sigma_0: array like of std values for policy 0
+
+  Returns:
+    the kl divergence between the distributions.
+  """
+  # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
+  sigma_1 = jnp.ones_like(mu_1) * sigma_1
+  sigma_0 = jnp.ones_like(mu_0) * sigma_0
+  v1 = jnp.clip(sigma_1**2, 1e-6, 1e6)
+  v0 = jnp.clip(sigma_0**2, 1e-6, 1e6)
+  mu = mu_1 - mu_0
+
+  return 0.5 * (
+      jnp.sum(jnp.divide(v0, v1)) + jnp.sum(jnp.divide(mu**2, v1)) - jnp.sum(
+          jnp.ones_like(mu_1)) + jnp.sum(jnp.log(v1)) - jnp.sum(jnp.log(v0)))

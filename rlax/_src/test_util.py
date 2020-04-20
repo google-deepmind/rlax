@@ -83,6 +83,7 @@ def _produce_variant_factory(raw_factory):
 
 def _get_variant_factories():
   factories = dict(
+      nodevice=_without_device,
       jit=lambda f: _without_device(jax.jit(f)),
       device=_with_device,
       device_jit=lambda f: _with_device(jax.jit(f)),

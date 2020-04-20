@@ -20,6 +20,7 @@ from absl.testing import parameterized
 import jax
 import numpy as np
 from rlax._src import perturbations
+from rlax._src import test_util
 
 
 class GaussianTest(parameterized.TestCase):
@@ -29,19 +30,13 @@ class GaussianTest(parameterized.TestCase):
     self._num_actions = 3
     self._rng_key = jax.random.PRNGKey(42)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_deterministic(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_deterministic(self, variant):
     """Check that noisy and noisless actions match for zero stddev."""
-    # Optionally compile.
-    add_noise = compile_fn(perturbations.add_gaussian_noise)
+    add_noise = variant(perturbations.add_gaussian_noise)
     # Test that noisy and noisless actions match for zero stddev
     for _ in range(10):
-      # Optionally convert to device array.
-      action = place_fn(np.random.normal(0., 1., self._num_actions))
+      action = np.random.normal(0., 1., self._num_actions)
       # Test output.
       self._rng_key, key = jax.random.split(self._rng_key)
       noisy_action = add_noise(key, action, 0.)
@@ -55,20 +50,14 @@ class OrnsteinUhlenbeckTest(parameterized.TestCase):
     self._num_actions = 3
     self._rng_key = jax.random.PRNGKey(42)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_deterministic(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_deterministic(self, variant):
     """Check that noisy and noisless actions match for zero stddev."""
-    # Optionally compile.
-    add_noise = compile_fn(perturbations.add_ornstein_uhlenbeck_noise)
+    add_noise = variant(perturbations.add_ornstein_uhlenbeck_noise)
     # Test that noisy and noisless actions match for zero stddev
     noise_tm1 = np.zeros((self._num_actions,))
     for _ in range(10):
-      # Optionally convert to device array.
-      action = place_fn(np.random.normal(0., 1., self._num_actions))
+      action = np.random.normal(0., 1., self._num_actions)
       # Test output.
       self._rng_key, key = jax.random.split(self._rng_key)
       noisy_action = add_noise(key, action, noise_tm1, 1., 0.)

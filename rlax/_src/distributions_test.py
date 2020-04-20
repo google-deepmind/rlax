@@ -18,9 +18,9 @@
 from absl.testing import absltest
 from absl.testing import parameterized
 import jax
-from jax.tree_util import tree_map
 import numpy as np
 from rlax._src import distributions
+from rlax._src import test_util
 
 
 class CategoricalSampleTest(parameterized.TestCase):
@@ -53,107 +53,65 @@ class SoftmaxTest(parameterized.TestCase):
         [logprobs[0][self.samples[0]], logprobs[1][self.samples[1]]])
     self.expected_entropy = -np.sum(probs * logprobs, axis=-1)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_softmax_probs(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_softmax_probs(self, variant):
     """Tests for a single element."""
     distrib = distributions.softmax(temperature=10.)
-    # Optionally compile.
-    softmax = compile_fn(distrib.probs)
+    softmax = variant(distrib.probs)
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_probs):
-      # Optionally convert to device array.
-      logits = place_fn(logits)
       # Test outputs.
       actual = softmax(logits)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_softmax_probs_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_softmax_probs_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.softmax(temperature=10.)
-    # Optionally compile.
-    softmax = compile_fn(distrib.probs)
-    # Optionally convert to device array.
-    logits = place_fn(self.logits)
+    softmax = variant(distrib.probs)
     # Test softmax output in batch.
-    actual = softmax(logits)
+    actual = softmax(self.logits)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_softmax_logprob(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_softmax_logprob(self, variant):
     """Tests for a single element."""
     distrib = distributions.softmax()
-    # Optionally compile.
-    logprob_fn = compile_fn(distrib.logprob)
+    logprob_fn = variant(distrib.logprob)
     # For each element in the batch.
     for logits, samples, expected in zip(
         self.logits, self.samples, self.expected_logprobs):
-      # Optionally convert to device array.
-      logits, samples = tree_map(place_fn, (logits, samples))
       # Test output.
       actual = logprob_fn(samples, logits)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_softmax_logprob_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_softmax_logprob_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.softmax()
-    # Optionally compile.
-    logprob_fn = compile_fn(distrib.logprob)
-    # Optionally convert to device array.
-    logits, samples = tree_map(place_fn, (self.logits, self.samples))
+    logprob_fn = variant(distrib.logprob)
     # Test softmax output in batch.
-    actual = logprob_fn(samples, logits)
+    actual = logprob_fn(self.samples, self.logits)
     np.testing.assert_allclose(self.expected_logprobs, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_softmax_entropy(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_softmax_entropy(self, variant):
     """Tests for a single element."""
     distrib = distributions.softmax()
-    # Optionally compile.
-    entropy_fn = compile_fn(distrib.entropy)
+    entropy_fn = variant(distrib.entropy)
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_entropy):
-      # Optionally convert to device array.
-      logits = place_fn(logits)
       # Test outputs.
       actual = entropy_fn(logits)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_softmax_entropy_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_softmax_entropy_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.softmax()
-    # Optionally compile.
-    entropy_fn = compile_fn(distrib.entropy)
-    # Optionally convert to device array.
-    logits = place_fn(self.logits)
+    entropy_fn = variant(distrib.entropy)
     # Test softmax output in batch.
-    actual = entropy_fn(logits)
+    actual = entropy_fn(self.logits)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
 
 
@@ -179,56 +137,35 @@ class EpsilonSoftmaxTest(parameterized.TestCase):
         [logprobs[0][self.samples[0]], logprobs[1][self.samples[1]]])
     self.expected_entropy = -np.sum(probs * logprobs, axis=-1)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_softmax_probs(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_softmax_probs(self, variant):
     """Tests for a single element."""
     distrib = distributions.epsilon_softmax(epsilon=0.1,
                                             temperature=10.)
-    # Optionally compile.
-    softmax = compile_fn(distrib.probs)
+    softmax = variant(distrib.probs)
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_probs):
-      # Optionally convert to device array.
-      logits = place_fn(logits)
       # Test outputs.
       actual = softmax(logits)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_softmax_probs_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_softmax_probs_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.epsilon_softmax(epsilon=0.1,
                                             temperature=10.)
-    # Optionally compile.
-    softmax = compile_fn(distrib.probs)
-    # Optionally convert to device array.
-    logits = place_fn(self.logits)
+    softmax = variant(distrib.probs)
     # Test softmax output in batch.
-    actual = softmax(logits)
+    actual = softmax(self.logits)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_safe_epsilon_softmax_equivalence(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_safe_epsilon_softmax_equivalence(self, variant):
     distrib = distributions.safe_epsilon_softmax(epsilon=0.1,
                                                  temperature=10.)
-    # Optionally compile.
-    softmax = compile_fn(distrib.probs)
-    # Optionally convert to device array.
-    logits = place_fn(self.logits)
+    softmax = variant(distrib.probs)
     # Test softmax output in batch.
-    actual = softmax(logits)
+    actual = softmax(self.logits)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
 
@@ -247,107 +184,65 @@ class GreedyTest(parameterized.TestCase):
     self.expected_entropy = np.array(
         [0.6931472, 0.], dtype=np.float32)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_probs(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_probs(self, variant):
     """Tests for a single element."""
     distrib = distributions.greedy()
-    # Optionally compile.
-    greedy = compile_fn(distrib.probs)
+    greedy = variant(distrib.probs)
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_probs):
-      # Optionally convert to device array.
-      preferences = place_fn(preferences)
       # Test outputs.
       actual = greedy(preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_probs_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_probs_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    # Optionally compile.
-    greedy = compile_fn(distrib.probs)
-    # Optionally convert to device array.
-    preferences = place_fn(self.preferences)
+    greedy = variant(distrib.probs)
     # Test greedy output in batch.
-    actual = greedy(preferences)
+    actual = greedy(self.preferences)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_logprob(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_logprob(self, variant):
     """Tests for a single element."""
     distrib = distributions.greedy()
-    # Optionally compile.
-    logprob_fn = compile_fn(distrib.logprob)
+    logprob_fn = variant(distrib.logprob)
     # For each element in the batch.
     for preferences, samples, expected in zip(
         self.preferences, self.samples, self.expected_logprob):
-      # Optionally convert to device array.
-      preferences, samples = tree_map(place_fn, (preferences, samples))
       # Test output.
       actual = logprob_fn(samples, preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_logprob_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_logprob_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    # Optionally compile.
-    logprob_fn = compile_fn(distrib.logprob)
-    # Optionally convert to device array.
-    preferences, samples = tree_map(place_fn, (self.preferences, self.samples))
+    logprob_fn = variant(distrib.logprob)
     # Test greedy output in batch.
-    actual = logprob_fn(samples, preferences)
+    actual = logprob_fn(self.samples, self.preferences)
     np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_entropy(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_entropy(self, variant):
     """Tests for a single element."""
     distrib = distributions.greedy()
-    # Optionally compile.
-    entropy_fn = compile_fn(distrib.entropy)
+    entropy_fn = variant(distrib.entropy)
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_entropy):
-      # Optionally convert to device array.
-      preferences = place_fn(preferences)
       # Test outputs.
       actual = entropy_fn(preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_entropy_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_entropy_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    # Optionally compile.
-    entropy_fn = compile_fn(distrib.entropy)
-    # Optionally convert to device array.
-    preferences = place_fn(self.preferences)
+    entropy_fn = variant(distrib.entropy)
     # Test greedy output in batch.
-    actual = entropy_fn(preferences)
+    actual = entropy_fn(self.preferences)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
 
 
@@ -367,139 +262,85 @@ class EpsilonGreedyTest(parameterized.TestCase):
     self.expected_entropy = np.array(
         [1.01823008, 0.58750093], dtype=np.float32)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_probs(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_probs(self, variant):
     """Tests for a single element."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    # Optionally compile.
-    probs_fn = compile_fn(distrib.probs)
+    probs_fn = variant(distrib.probs)
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_probs):
-      # Optionally convert to device array.
-      preferences = place_fn(preferences)
       # Test outputs.
       actual = probs_fn(preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_probs_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_probs_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    # Optionally compile.
-    probs_fn = compile_fn(distrib.probs)
-    # Optionally convert to device array.
-    preferences = place_fn(self.preferences)
+    probs_fn = variant(distrib.probs)
     # Test greedy output in batch.
-    actual = probs_fn(preferences)
+    actual = probs_fn(self.preferences)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_logprob(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_logprob(self, variant):
     """Tests for a single element."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    # Optionally compile.
-    logprob_fn = compile_fn(distrib.logprob)
+    logprob_fn = variant(distrib.logprob)
     # For each element in the batch.
     for preferences, samples, expected in zip(
         self.preferences, self.samples, self.expected_logprob):
-      # Optionally convert to device array.
-      preferences, samples = tree_map(place_fn, (preferences, samples))
       # Test output.
       actual = logprob_fn(samples, preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_logprob_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_logprob_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    # Optionally compile.
-    logprob_fn = compile_fn(distrib.logprob)
-    # Optionally convert to device array.
-    preferences, samples = tree_map(place_fn, (self.preferences, self.samples))
+    logprob_fn = variant(distrib.logprob)
     # Test greedy output in batch.
-    actual = logprob_fn(samples, preferences)
+    actual = logprob_fn(self.samples, self.preferences)
     np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_entropy(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_entropy(self, variant):
     """Tests for a single element."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    # Optionally compile.
-    entropy_fn = compile_fn(distrib.entropy)
+    entropy_fn = variant(distrib.entropy)
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_entropy):
-      # Optionally convert to device array.
-      preferences = place_fn(preferences)
       # Test outputs.
       actual = entropy_fn(preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_greedy_entropy_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_greedy_entropy_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    # Optionally compile.
-    entropy_fn = compile_fn(distrib.entropy)
-    # Optionally convert to device array.
-    preferences = place_fn(self.preferences)
+    entropy_fn = variant(distrib.entropy)
     # Test greedy output in batch.
-    actual = entropy_fn(preferences)
+    actual = entropy_fn(self.preferences)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_safe_epsilon_softmax_equivalence(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_safe_epsilon_softmax_equivalence(self, variant):
     distrib = distributions.safe_epsilon_softmax(epsilon=self.epsilon,
                                                  temperature=0)
-    # Optionally compile.
-    probs_fn = compile_fn(distrib.probs)
-    # Optionally convert to device array.
-    preferences = place_fn(self.preferences)
+    probs_fn = variant(distrib.probs)
     # Test greedy output in batch.
-    actual = probs_fn(preferences)
+    actual = probs_fn(self.preferences)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
-    # Optionally compile.
-    logprob_fn = compile_fn(distrib.logprob)
-    # Optionally convert to device array.
-    preferences, samples = tree_map(place_fn, (self.preferences, self.samples))
+    logprob_fn = variant(distrib.logprob)
     # Test greedy output in batch.
-    actual = logprob_fn(samples, preferences)
+    actual = logprob_fn(self.samples, self.preferences)
     np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
 
-    # Optionally compile.
-    sample_fn = compile_fn(distrib.sample)
+    sample_fn = variant(distrib.sample)
     # Optionally convert to device array.
-    preferences = place_fn(self.preferences)
     key = np.array([1, 2], dtype=np.uint32)
-    actions = sample_fn(key, preferences)
+    actions = sample_fn(key, self.preferences)
     # test just the shape
     self.assertEqual(actions.shape, (2,))
 
@@ -522,109 +363,67 @@ class GaussianDiagonalTest(parameterized.TestCase):
     self.expected_entropy = np.array(
         [-1.7672932, 0.02446628], dtype=np.float32)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_gaussian_prob(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_gaussian_prob(self, variant):
     """Tests for a single element."""
     distrib = distributions.gaussian_diagonal()
-    # Optionally compile.
-    prob_fn = compile_fn(distrib.prob)
+    prob_fn = variant(distrib.prob)
     # For each element in the batch.
     for mu, sigma, sample, expected in zip(
         self.mu, self.sigma, self.sample, self.expected_prob_a):
-      # Optionally convert to device array.
-      mu, sigma, sample = tree_map(place_fn, (mu, sigma, sample))
       # Test outputs.
       actual = prob_fn(sample, mu, sigma)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_gaussian_prob_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_gaussian_prob_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    # Optionally compile.
-    prob_fn = compile_fn(distrib.prob)
-    # Optionally convert to device array.
-    mu, sigma, sample = tree_map(place_fn, (self.mu, self.sigma, self.sample))
+    prob_fn = variant(distrib.prob)
     # Test greedy output in batch.
-    actual = prob_fn(sample, mu, sigma)
+    actual = prob_fn(self.sample, self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_prob_a, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_gaussian_logprob(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_gaussian_logprob(self, variant):
     """Tests for a single element."""
     distrib = distributions.gaussian_diagonal()
-    # Optionally compile.
-    logprob_fn = compile_fn(distrib.logprob)
+    logprob_fn = variant(distrib.logprob)
     # For each element in the batch.
     for mu, sigma, sample, expected in zip(
         self.mu, self.sigma, self.sample, self.expected_logprob_a):
-      # Optionally convert to device array.
-      mu, sigma, sample = tree_map(place_fn, (mu, sigma, sample))
       # Test output.
       actual = logprob_fn(sample, mu, sigma)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_gaussian_logprob_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_gaussian_logprob_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    # Optionally compile.
-    logprob_fn = compile_fn(distrib.logprob)
-    # Optionally convert to device array.
-    mu, sigma, sample = tree_map(place_fn, (self.mu, self.sigma, self.sample))
+    logprob_fn = variant(distrib.logprob)
     # Test greedy output in batch.
-    actual = logprob_fn(sample, mu, sigma)
+    actual = logprob_fn(self.sample, self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_logprob_a, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_gaussian_entropy(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_gaussian_entropy(self, variant):
     """Tests for a single element."""
     distrib = distributions.gaussian_diagonal()
-    # Optionally compile.
-    entropy_fn = compile_fn(distrib.entropy)
+    entropy_fn = variant(distrib.entropy)
     # For each element in the batch.
-    for mu, sigma, sample, expected in zip(
-        self.mu, self.sigma, self.sample, self.expected_entropy):
-      # Optionally convert to device array.
-      mu, sigma, sample = tree_map(place_fn, (mu, sigma, sample))
+    for mu, sigma, expected in zip(
+        self.mu, self.sigma, self.expected_entropy):
       # Test outputs.
       actual = entropy_fn(mu, sigma)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_gaussian_entropy_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def test_gaussian_entropy_batch(self, variant):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    # Optionally compile.
-    entropy_fn = compile_fn(distrib.entropy)
-    # Optionally convert to device array.
-    mu, sigma = tree_map(place_fn, (self.mu, self.sigma))
+    entropy_fn = variant(distrib.entropy)
     # Test greedy output in batch.
-    actual = entropy_fn(mu, sigma)
+    actual = entropy_fn(self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
 
 
@@ -642,40 +441,13 @@ class ImportanceSamplingTest(parameterized.TestCase):
     self.expected_rhos = np.array(
         [pi[0][1] / mu[0][1], pi[1][0] / mu[1][0]], dtype=np.float32)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_importance_sampling_ratios(self, compile_fn, place_fn):
-    """Tests for a single element."""
-    # Optionally compile.
-    ratios_fn = compile_fn(distributions.categorical_importance_sampling_ratios)
-    # For each element in the batch.
-    for pi_logits, mu_logits, actions, expected in zip(
-        self.pi_logits, self.mu_logits, self.actions, self.expected_rhos):
-      # Optionally convert to device array.
-      pi_logits, mu_logits, actions = tree_map(
-          place_fn, (pi_logits, mu_logits, actions))
-      # Test outputs.
-      actual = ratios_fn(pi_logits, mu_logits, actions)
-      np.testing.assert_allclose(expected, actual, atol=1e-4)
-
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_importance_sampling_ratios_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_vmap_variant()
+  def test_importance_sampling_ratios_batch(self, variant):
     """Tests for a full batch."""
-    # Vmap and optionally compile.
-    ratios_fn = compile_fn(
-        jax.vmap(distributions.categorical_importance_sampling_ratios))
-    # Optionally convert to device array.
-    pi_logits, mu_logits, actions = tree_map(
-        place_fn, (self.pi_logits, self.mu_logits, self.actions))
+    ratios_fn = variant(
+        distributions.categorical_importance_sampling_ratios)
     # Test softmax output in batch.
-    actual = ratios_fn(pi_logits, mu_logits, actions)
+    actual = ratios_fn(self.pi_logits, self.mu_logits, self.actions)
     np.testing.assert_allclose(self.expected_rhos, actual, atol=1e-4)
 
 
@@ -696,37 +468,12 @@ class CategoricalKLTest(parameterized.TestCase):
 
     self.expected_kl = np.sum(p_probs * (p_logprobs - q_logprobs), axis=-1)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_categorical_kl_divergence(self, compile_fn, place_fn):
-    """Tests for a single element."""
-    # Optionally compile.
-    kl_fn = compile_fn(distributions.categorical_kl_divergence)
-    # For each element in the batch.
-    for p_logits, q_logits, expected in zip(
-        self.p_logits, self.q_logits, self.expected_kl):
-      # Optionally convert to device array.
-      p_logits, q_logits = tree_map(place_fn, (p_logits, q_logits))
-      # Test outputs.
-      actual = kl_fn(p_logits, q_logits)
-      np.testing.assert_allclose(expected, actual, atol=1e-4)
-
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_categorical_kl_divergence_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_vmap_variant()
+  def test_categorical_kl_divergence_batch(self, variant):
     """Tests for a full batch."""
-    # Vmap and optionally compile.
-    kl_fn = compile_fn(jax.vmap(distributions.categorical_kl_divergence))
-    # Optionally convert to device array.
-    p_logits, q_logits = tree_map(place_fn, (self.p_logits, self.q_logits))
+    kl_fn = variant(distributions.categorical_kl_divergence)
     # Test softmax output in batch.
-    actual = kl_fn(p_logits, q_logits)
+    actual = kl_fn(self.p_logits, self.q_logits)
     np.testing.assert_allclose(self.expected_kl, actual, atol=1e-4)
 
 
@@ -740,38 +487,12 @@ class CategoricalCrossEntropyTest(parameterized.TestCase):
 
     self.expected = np.array([9.00013, 3.0696733], dtype=np.float32)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_categorical_cross_entropy(self, compile_fn, place_fn):
-    """Tests for a single element."""
-    # Optionally compile.
-    cross_entropy = compile_fn(distributions.categorical_cross_entropy)
-    # Test outputs.
-    for labels, logits, expected in zip(
-        self.labels, self.logits, self.expected):
-      # Optionally convert to device array.
-      labels, logits = tree_map(place_fn, (labels, logits))
-      # Test outputs.
-      actual = cross_entropy(labels=labels, logits=logits)
-      np.testing.assert_allclose(expected, actual, atol=1e-4)
-
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_categorical_cross_entropy_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_vmap_variant()
+  def test_categorical_cross_entropy_batch(self, variant):
     """Tests for a full batch."""
-    # Vmap and optionally compile.
-    cross_entropy = jax.vmap(distributions.categorical_cross_entropy)
-    cross_entropy = compile_fn(cross_entropy)
-    # Optionally convert to device array.
-    labels, logits = tree_map(place_fn, (self.labels, self.logits))
+    cross_entropy = variant(distributions.categorical_cross_entropy)
     # Test outputs.
-    actual = cross_entropy(labels, logits)
+    actual = cross_entropy(self.labels, self.logits)
     np.testing.assert_allclose(self.expected, actual, atol=1e-4)
 
 

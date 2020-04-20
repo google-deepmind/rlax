@@ -15,12 +15,11 @@
 # ==============================================================================
 """Unit tests for `nonlinear_bellman.py`."""
 
-import functools
 from absl.testing import absltest
 from absl.testing import parameterized
-import jax
 import numpy as np
 from rlax._src import nonlinear_bellman
+from rlax._src import test_util
 
 
 class IdentityTest(parameterized.TestCase):
@@ -75,48 +74,18 @@ class TransformedQLambdaTest(parameterized.TestCase):
          [[-1.6179, 0.4633, -0.7576], [-1.1097, 1.6509, 0.3598]]],
         dtype=np.float32)
 
-  @parameterized.parameters(
-      (nonlinear_bellman.IDENTITY_PAIR, 0, lambda fn: fn),
-      (nonlinear_bellman.IDENTITY_PAIR, 0, jax.jit),
-      (nonlinear_bellman.SIGNED_LOGP1_PAIR, 1, lambda fn: fn),
-      (nonlinear_bellman.SIGNED_LOGP1_PAIR, 1, jax.jit),
-      (nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2, lambda fn: fn),
-      (nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2, jax.jit))
-  def test_transformed_q_lambda(self, tx_pair, td_index, compile_fn):
-    """Tests correctness for single element."""
-    # Optionally compile.
-    transformed_q_lambda = functools.partial(
-        nonlinear_bellman.transformed_q_lambda, tx_pair=tx_pair)
-    transformed_q_lambda = compile_fn(transformed_q_lambda)
-    # For each element in the batch.
-    for expected_td, q_tm1, a_tm1, r_t, discount_t, q_t in zip(
-        self.expected_td[td_index], self.q_tm1, self.a_tm1, self.r_t,
-        self.discount_t, self.q_t):
-      # Compute transformed Q-lambda td-errors.
-      actual_td = transformed_q_lambda(
-          q_tm1, a_tm1, r_t, discount_t, q_t, self.lambda_)
-      # Test output.
-      np.testing.assert_allclose(actual_td, expected_td, rtol=1e-3)
-
-  @parameterized.parameters(
-      (nonlinear_bellman.IDENTITY_PAIR, 0, lambda fn: fn),
-      (nonlinear_bellman.IDENTITY_PAIR, 0, jax.jit),
-      (nonlinear_bellman.SIGNED_LOGP1_PAIR, 1, lambda fn: fn),
-      (nonlinear_bellman.SIGNED_LOGP1_PAIR, 1, jax.jit),
-      (nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2, lambda fn: fn),
-      (nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2, jax.jit))
-  def test_transformed_q_lambda_batch(self, tx_pair, td_index, compile_fn):
+  @test_util.parameterize_vmap_variant(
+      ('identity0', nonlinear_bellman.IDENTITY_PAIR, 0),
+      ('signed_logp11', nonlinear_bellman.SIGNED_LOGP1_PAIR, 1),
+      ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2))
+  def test_transformed_q_lambda_batch(self, tx_pair, td_index, variant):
     """Tests correctness for full batch."""
-    # Vmap function and optionally compile.
-    transformed_q_lambda = functools.partial(
-        nonlinear_bellman.transformed_q_lambda, tx_pair=tx_pair)
-    transformed_q_lambda = jax.vmap(
-        transformed_q_lambda, in_axes=(0, 0, 0, 0, 0, None))
-    transformed_q_lambda = compile_fn(transformed_q_lambda)
+    transformed_q_lambda = variant(
+        nonlinear_bellman.transformed_q_lambda, tx_pair=tx_pair,
+        lambda_=self.lambda_)
     # Compute vtrace output.
     actual_td = transformed_q_lambda(
-        self.q_tm1, self.a_tm1, self.r_t, self.discount_t, self.q_t,
-        self.lambda_)
+        self.q_tm1, self.a_tm1, self.r_t, self.discount_t, self.q_t)
     # Test output.
     np.testing.assert_allclose(self.expected_td[td_index], actual_td, rtol=1e-3)
 
@@ -162,49 +131,15 @@ class TransformedRetraceTest(parameterized.TestCase):
          [[-1.6179, -3.0165, -5.2699], [-2.7742, -9.9544, 2.3167]]],
         dtype=np.float32)
 
-  @parameterized.parameters(
-      (nonlinear_bellman.IDENTITY_PAIR, 0, lambda fn: fn),
-      (nonlinear_bellman.IDENTITY_PAIR, 0, jax.jit),
-      (nonlinear_bellman.SIGNED_LOGP1_PAIR, 1, lambda fn: fn),
-      (nonlinear_bellman.SIGNED_LOGP1_PAIR, 1, jax.jit),
-      (nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2, lambda fn: fn),
-      (nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2, jax.jit))
-  def test_transformed_retrace(self, tx_pair, td_index, compile_fn):
-    """Tests correctness for single element."""
-    # Optionally compile.
-    transformed_retrace = functools.partial(
-        nonlinear_bellman.transformed_retrace,
-        tx_pair=tx_pair, lambda_=self._lambda)
-    transformed_retrace = compile_fn(transformed_retrace)
-    # For each element in the batch.
-    for (expected_td, qs, targnet_qs, actions, rewards, pcontinues,
-         target_policy_probs, behavior_policy_probs) in zip(
-             self.expected_td[td_index], self._qs, self._targnet_qs,
-             self._actions, self._rewards, self._pcontinues,
-             self._target_policy_probs, self._behavior_policy_probs):
-      # Compute transformed retrace td errors.
-      actual_td = transformed_retrace(
-          q_tm1=qs[:-1], q_t=targnet_qs[1:], a_tm1=actions[:-1],
-          a_t=actions[1:], r_t=rewards[:-1], discount_t=pcontinues[:-1],
-          pi_t=target_policy_probs[1:], mu_t=behavior_policy_probs[1:])
-      # Test output.
-      np.testing.assert_allclose(expected_td, actual_td, rtol=1e-3)
-
-  @parameterized.parameters(
-      (nonlinear_bellman.IDENTITY_PAIR, 0, lambda fn: fn),
-      (nonlinear_bellman.IDENTITY_PAIR, 0, jax.jit),
-      (nonlinear_bellman.SIGNED_LOGP1_PAIR, 1, lambda fn: fn),
-      (nonlinear_bellman.SIGNED_LOGP1_PAIR, 1, jax.jit),
-      (nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2, lambda fn: fn),
-      (nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2, jax.jit))
-  def test_transformed_retrace_batch(self, tx_pair, td_index, compile_fn):
+  @test_util.parameterize_vmap_variant(
+      ('identity0', nonlinear_bellman.IDENTITY_PAIR, 0),
+      ('signed_logp11', nonlinear_bellman.SIGNED_LOGP1_PAIR, 1),
+      ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2))
+  def test_transformed_retrace_batch(self, tx_pair, td_index, variant):
     """Tests correctness for full batch."""
-    # Vmap function and optionally compile.
-    transformed_retrace = functools.partial(
+    transformed_retrace = variant(
         nonlinear_bellman.transformed_retrace,
         tx_pair=tx_pair, lambda_=self._lambda)
-    transformed_retrace = jax.vmap(transformed_retrace)
-    transformed_retrace = compile_fn(transformed_retrace)
     # Compute transformed vtrace td errors in batch.
     actual_td = transformed_retrace(
         self._qs[:, :-1], self._targnet_qs[:, 1:], self._actions[:, :-1],

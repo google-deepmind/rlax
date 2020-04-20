@@ -1,4 +1,4 @@
-# Lint as: python3
+
 # Copyright 2019 DeepMind Technologies Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,10 +17,9 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
-import jax
-from jax.tree_util import tree_map
 import numpy as np
 from rlax._src import multistep
+from rlax._src import test_util
 
 
 class LambdaReturnsTest(parameterized.TestCase):
@@ -41,39 +40,12 @@ class LambdaReturnsTest(parameterized.TestCase):
          [0.7866317, 0.9913063, 0.1101501, 2.834, 3.99]],
         dtype=np.float32)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_lambda_returns(self, compile_fn, place_fn):
-    """Tests for a single element."""
-    # Optionally compile.
-    lambda_returns = compile_fn(multistep.lambda_returns)
-    # For each element in the batch.
-    for r_t, discount_t, v_t, expected in zip(
-        self.r_t, self.discount_t, self.v_t, self.expected):
-      # Optionally convert to device array.
-      r_t, discount_t, v_t = tree_map(place_fn, (r_t, discount_t, v_t))
-      # Test outputs.
-      actual = lambda_returns(r_t, discount_t, v_t, self.lambda_)
-      np.testing.assert_allclose(expected, actual, rtol=1e-5)
-
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_lambda_returns_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_vmap_variant()
+  def test_lambda_returns_batch(self, variant):
     """Tests for a full batch."""
-    # Vmap and optionally compile.
-    lambda_returns = compile_fn(jax.vmap(
-        multistep.lambda_returns, in_axes=(0, 0, 0, None)))
-    # Optionally convert to device array.
-    r_t, discount_t, v_t = tree_map(
-        place_fn, (self.r_t, self.discount_t, self.v_t))
+    lambda_returns = variant(multistep.lambda_returns, lambda_=self.lambda_)
     # Compute lambda return in batch.
-    actual = lambda_returns(r_t, discount_t, v_t, self.lambda_)
+    actual = lambda_returns(self.r_t, self.discount_t, self.v_t)
     # Test return estimate.
     np.testing.assert_allclose(self.expected, actual, rtol=1e-5)
 
@@ -96,43 +68,14 @@ class DiscountedReturnsTest(parameterized.TestCase):
          [1.33592, 0.9288, 0.2576, 3.192, 3.9899998]],
         dtype=np.float32)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_discounted_returns(self, compile_fn, place_fn):
+  @test_util.parameterize_vmap_variant()
+  def test_discounted_returns_batch(self, variant):
     """Tests for a single element."""
-    # Optionally compile.
-    discounted_returns = compile_fn(multistep.discounted_returns)
-    # For each element in the batch.
-    for r_t, discount_t, v_t, bootstrap_v, expected in zip(
-        self.r_t, self.discount_t, self.v_t, self.bootstrap_v, self.expected):
-      # Optionally convert to device array.
-      r_t, discount_t, bootstrap_v, v_t = tree_map(
-          place_fn, (r_t, discount_t, bootstrap_v, v_t))
-      # Compute discounted return.
-      actual_scalar = discounted_returns(r_t, discount_t, bootstrap_v)
-      actual_vector = discounted_returns(r_t, discount_t, v_t)
-      # Test output.
-      np.testing.assert_allclose(expected, actual_scalar, rtol=1e-5)
-      np.testing.assert_allclose(expected, actual_vector, rtol=1e-5)
-
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_discounted_returns_batch(self, compile_fn, place_fn):
-    """Tests for a single element."""
-    # Vmap and optionally compile.
-    discounted_returns = compile_fn(jax.vmap(multistep.discounted_returns))
-    # Optionally convert to device array.
-    r_t, discount_t, bootstrap_v, v_t = tree_map(
-        place_fn, (self.r_t, self.discount_t, self.bootstrap_v, self.v_t))
+    discounted_returns = variant(multistep.discounted_returns)
     # Compute discounted return.
-    actual_scalar = discounted_returns(r_t, discount_t, bootstrap_v)
-    actual_vector = discounted_returns(r_t, discount_t, v_t)
+    actual_scalar = discounted_returns(self.r_t, self.discount_t,
+                                       self.bootstrap_v)
+    actual_vector = discounted_returns(self.r_t, self.discount_t, self.v_t)
     # Test output.
     np.testing.assert_allclose(self.expected, actual_scalar, rtol=1e-5)
     np.testing.assert_allclose(self.expected, actual_vector, rtol=1e-5)
@@ -152,53 +95,20 @@ class TDErrorTest(parameterized.TestCase):
     self.values = np.array(
         [[3.0, 1.0, 5.0, -5.0, 3.0, 1.], [-1.7, 1.2, 2.3, 2.2, 2.7, 2.]])
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_importance_corrected_td_errors(self, compile_fn, place_fn):
-    """Tests equivalence to computing the error from a the lambda-return."""
-    # Optionally compile.
-    lambda_returns = compile_fn(multistep.lambda_returns)
-    importance_corrected_td_errors = compile_fn(
-        multistep.importance_corrected_td_errors)
-    # For each element in the batch.
-    for r_t, discount_t, rho_tm1, values in zip(
-        self.r_t, self.discount_t, self.rho_tm1, self.values):
-      # Optionally convert to device array.
-      r_t, discount_t, rho_tm1, values = tree_map(
-          place_fn, (r_t, discount_t, rho_tm1, values))
-      # Compute multistep td-error with recursion on deltas.
-      td_direct = importance_corrected_td_errors(
-          r_t, discount_t, rho_tm1, np.ones_like(discount_t), values)
-      # Compute off-policy corrected return, and derive td-error from it.
-      lambdas = np.concatenate((rho_tm1[1:], [1.]))
-      td_from_returns = rho_tm1 * (
-          lambda_returns(r_t, discount_t, values[1:], lambdas) - values[:-1])
-      # Check equivalence.
-      np.testing.assert_allclose(td_direct, td_from_returns, rtol=1e-5)
-
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_importance_corrected_td_errors_batch(self, compile_fn, place_fn):
+  @test_util.parameterize_vmap_variant()
+  def test_importance_corrected_td_errors_batch(self, variant):
     """Tests equivalence to computing the error from a the lambda-return."""
     # Vmap and optionally compile.
-    lambda_returns = compile_fn(jax.vmap(multistep.lambda_returns))
-    td_errors = compile_fn(jax.vmap(multistep.importance_corrected_td_errors))
-    # Optionally convert to device array.
-    r_t, discount_t, rho_tm1, values = tree_map(
-        place_fn, (self.r_t, self.discount_t, self.rho_tm1, self.values))
+    lambda_returns = variant(multistep.lambda_returns)
+    td_errors = variant(multistep.importance_corrected_td_errors)
     # Compute multistep td-error with recursion on deltas.
-    td_direct = td_errors(
-        r_t, discount_t, rho_tm1, np.ones_like(self.discount_t), values)
+    td_direct = td_errors(self.r_t, self.discount_t, self.rho_tm1,
+                          np.ones_like(self.discount_t), self.values)
     # Compute off-policy corrected return, and derive td-error from it.
     ls_ = np.concatenate((self.rho_tm1[:, 1:], [[1.], [1.]]), axis=1)
     td_from_returns = self.rho_tm1 * (
-        lambda_returns(r_t, discount_t, values[:, 1:], ls_) - values[:, :-1])
+        lambda_returns(self.r_t, self.discount_t, self.values[:, 1:], ls_) -
+        self.values[:, :-1])
     # Check equivalence.
     np.testing.assert_allclose(td_direct, td_from_returns, rtol=1e-5)
 

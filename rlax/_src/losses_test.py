@@ -15,14 +15,13 @@
 # ==============================================================================
 """Tests for losses.py."""
 
-import functools
-
 from absl.testing import absltest
 from absl.testing import parameterized
 import jax
 import jax.numpy as jnp
 import numpy as np
 from rlax._src import losses
+from rlax._src import test_util
 
 
 class L2LossTest(parameterized.TestCase):
@@ -33,58 +32,32 @@ class L2LossTest(parameterized.TestCase):
     self.ys = jnp.array([2., 0.5, 0.125, 0, 0.125, 0.5, 2.])
     self.dys = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_l2_loss_scalar(self, compile_fn, place_fn):
-    # Optionally compile.
-    l2_loss = compile_fn(losses.l2_loss)
-    # Optionally convert to device array.
-    x = place_fn(jnp.array(0.5))
+  @test_util.parameterize_variant()
+  def test_l2_loss_scalar(self, variant):
+    l2_loss = variant(losses.l2_loss)
+    x = jnp.array(0.5)
     # Test output.
     np.testing.assert_allclose(l2_loss(x), 0.125)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_l2_loss_vector(self, compile_fn, place_fn):
-    # Optionally compile.
-    l2_loss = compile_fn(losses.l2_loss)
-    # Optionally convert to device array.
-    xs = place_fn(self.xs)
+  @test_util.parameterize_variant()
+  def test_l2_loss_vector(self, variant):
+    l2_loss = variant(losses.l2_loss)
     # Test output.
-    np.testing.assert_allclose(l2_loss(xs), self.ys)
+    np.testing.assert_allclose(l2_loss(self.xs), self.ys)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_l2_regularizer(self, compile_fn, place_fn):
-    # Optionally compile.
-    l2_loss = compile_fn(losses.l2_loss)
-    # Optionally convert to device array.
-    xs = place_fn(self.xs)
+  @test_util.parameterize_variant()
+  def test_l2_regularizer(self, variant):
+    l2_loss = variant(losses.l2_loss)
     # Test output.
-    np.testing.assert_allclose(l2_loss(xs), l2_loss(xs, jnp.zeros_like(xs)))
+    np.testing.assert_allclose(
+        l2_loss(self.xs), l2_loss(self.xs, jnp.zeros_like(self.xs)))
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_gradients(self, compile_fn, place_fn):
-    # Optionally compile.
-    l2_loss = compile_fn(losses.l2_loss)
-    # Optionally convert to device array.
-    xs = place_fn(self.xs)
+  @test_util.parameterize_variant()
+  def test_gradients(self, variant):
+    l2_loss = variant(losses.l2_loss)
     # Compute gradient in batch
     batch_grad_func = jax.vmap(jax.grad(l2_loss), (0))
-    actual = batch_grad_func(xs)
+    actual = batch_grad_func(self.xs)
     np.testing.assert_allclose(actual, self.dys)
 
 
@@ -96,35 +69,21 @@ class LogLossTest(parameterized.TestCase):
     self.targets = jnp.array([1., 0., 0., 1., 1., 0])
     self.expected = jnp.array([0., np.inf, 0., np.inf, 0.6931472, 0.6931472])
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_log_loss_scalar(self, compile_fn, place_fn):
-    # Optionally compile.
-    log_loss = compile_fn(losses.log_loss)
-    # Optionally convert to device array.
-    preds = place_fn(self.preds[2])
-    targets = place_fn(self.targets[2])
+  @test_util.parameterize_variant()
+  def test_log_loss_scalar(self, variant):
+    log_loss = variant(losses.log_loss)
+    preds = self.preds[2]
+    targets = self.targets[2]
     # Test output.
     np.testing.assert_allclose(
         log_loss(preds, targets), self.expected[2], atol=1e-4)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def test_log_loss_vector(self, compile_fn, place_fn):
-    # Optionally compile.
-    log_loss = compile_fn(losses.log_loss)
-    # Optionally convert to device array.
-    preds = place_fn(self.preds)
-    targets = place_fn(self.targets)
+  @test_util.parameterize_variant()
+  def test_log_loss_vector(self, variant):
+    log_loss = variant(losses.log_loss)
     # Test output.
     np.testing.assert_allclose(
-        log_loss(preds, targets), self.expected, atol=1e-4)
+        log_loss(self.preds, self.targets), self.expected, atol=1e-4)
 
 
 class PixelControlLossTest(parameterized.TestCase):
@@ -186,66 +145,54 @@ class PixelControlLossTest(parameterized.TestCase):
     self.action_values = self.observations
     self.actions = np.array([action1, action2, action3])
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def testPixelControlLossScalarDiscount(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def testPixelControlLossScalarDiscount(self, variant):
     """Compute loss for given observations, actions, values, scalar discount."""
-    loss_fn = functools.partial(
+    loss_fn = variant(
         losses.pixel_control_loss, cell_size=self.cell_size)
-    loss = compile_fn(loss_fn)(
-        place_fn(self.observations),
-        place_fn(self.actions),
-        place_fn(self.action_values),
+    loss = loss_fn(
+        self.observations,
+        self.actions,
+        self.action_values,
         self.discount)
     loss = jnp.sum(loss)
     np.testing.assert_allclose(loss, self.error, rtol=1e-3)
 
-  @parameterized.named_parameters(
-      ('JitOnp', jax.jit, lambda t: t),
-      ('NoJitOnp', lambda fn: fn, lambda t: t),
-      ('JitJnp', jax.jit, jax.device_put),
-      ('NoJitJnp', lambda fn: fn, jax.device_put))
-  def testPixelControlLossTensorDiscount(self, compile_fn, place_fn):
+  @test_util.parameterize_variant()
+  def testPixelControlLossTensorDiscount(self, variant):
     """Compute loss for given observations, actions, values, tensor discount."""
     zero_discount = np.zeros((1,))
     non_zero_discount = self.discount * np.ones(self.seq_length - 1)
     discount = np.concatenate([zero_discount, non_zero_discount], axis=0)
-    loss_fn = functools.partial(
+    loss_fn = variant(
         losses.pixel_control_loss, cell_size=self.cell_size)
-    loss = compile_fn(loss_fn)(
-        place_fn(self.observations),
-        place_fn(self.actions),
-        place_fn(self.action_values),
-        place_fn(discount))
+    loss = loss_fn(
+        self.observations,
+        self.actions,
+        self.action_values,
+        discount)
     loss = jnp.sum(loss)
     np.testing.assert_allclose(loss, self.error_term, rtol=1e-3)
 
-  @parameterized.named_parameters(
-      ('Jit', jax.jit),
-      ('NoJit', lambda fn: fn))
-  def testPixelControlLossShapes(self, compile_fn):
+  @test_util.parameterize_variant()
+  def testPixelControlLossShapes(self, variant):
     with self.assertRaisesRegex(
         ValueError, 'Pixel Control values are not compatible'):
-      loss_fn = functools.partial(
+      loss_fn = variant(
           losses.pixel_control_loss, cell_size=self.cell_size)
-      compile_fn(loss_fn)(
+      loss_fn(
           self.observations, self.actions,
           self.action_values[:, :-1], self.discount)
 
-  @parameterized.named_parameters(
-      ('Jit', jax.jit),
-      ('NoJit', lambda fn: fn))
-  def testTensorDiscountShape(self, compile_fn):
+  @test_util.parameterize_variant()
+  def testTensorDiscountShape(self, variant):
     with self.assertRaisesRegex(
         ValueError, 'discount_factor must be a scalar or a tensor of rank 1'):
       discount = np.tile(
           np.reshape(self.discount, (1, 1)), (self.seq_length, 1))
-      loss_fn = functools.partial(
+      loss_fn = variant(
           losses.pixel_control_loss, cell_size=self.cell_size)
-      compile_fn(loss_fn)(
+      loss_fn(
           self.observations, self.actions, self.action_values, discount)
 
 

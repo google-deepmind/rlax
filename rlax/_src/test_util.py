@@ -16,49 +16,92 @@
 """Utilities for tests."""
 
 import functools
+from absl.testing import parameterized
 import jax
+import jax.numpy as jnp
 import numpy as np
 
 
-def check_output(fn, *args, **kwargs):
-  """Wraps the function to check the function outputs from different usages.
+def parameterize_variant(*testcases):
+  """A decorator to test each test case with all variants.
 
-  On each call of the wrapper, the function will be called with or without vmap,
-  with or without jit and with or without device_put. The outputs will be
-  compared to the output from vmap.
+  This decorator is an enhanced version of `parameterized.named_parameters`.
+  The variant factory is appended to the end of the tuple of the function
+  parameters.
 
   Args:
-    fn: Function to wrap.
-    *args: Extra args to the function.
-    **kwargs: Extra kwargs to the function.
+    *testcases: Tuples to pass to `parameterized.named_parameters`.
+      An empty list of testcases will produce one test for each variant.
 
   Returns:
-    The wrapped function.
+    A test generator to test each test case with all variants.
   """
-  fn = functools.partial(fn, *args, **kwargs)
-  base_variant = jax.vmap(fn)
-  variants = [
-      ("jit", jax.jit(base_variant)),
-      ("device", _with_device(base_variant)),
-      ("device_jit", _with_device(jax.jit(base_variant))),
-      ("iteration", _with_iteration(fn)),
-      ("iteration_jit", _with_iteration(jax.jit(fn))),
-      ("iteration_device", _with_iteration(_with_device(fn))),
-      ("iteration_device_jit", _with_iteration(_with_device(jax.jit(fn)))),
-  ]
+  factories = _get_variant_factories()
+  return _enhance_named_parameters(factories, testcases)
 
-  def wrapper(*args):
-    expected = base_variant(*args)
-    for name, variant in variants:
-      try:
-        got = variant(*args)
-      except Exception as e:
-        raise ValueError("failed variant: {}, cause: {}".format(name, e)
-                         ).with_traceback(e.__traceback__)
-      err_msg = "variant: {}".format(name)
-      np.testing.assert_allclose(expected, got, rtol=1e-3, err_msg=err_msg)
-    return expected
-  return wrapper
+
+def parameterize_vmap_variant(*testcases):
+  """A decorator to test each test case with all variants of vmap.
+
+  This decorator is an enhanced version of `parameterized.named_parameters`.
+  The variant factory is appended to the end of the tuple of the function
+  parameters.
+
+  Args:
+    *testcases: Tuples to pass to `parameterized.named_parameters`.
+      An empty list of testcases will produce one test for each variant.
+
+  Returns:
+    A test generator to test each test case with all variants.
+  """
+  factories = _get_vmap_variant_factories()
+  return _enhance_named_parameters(factories, testcases)
+
+
+def _enhance_named_parameters(factories, testcases):
+  """Calls parameterized.named_parameters() with enhanced testcases."""
+  if not testcases:
+    testcases = [("variant",)]
+  enhanced_testcases = []
+  for testcase in testcases:
+    name = testcase[0]
+    test_args = tuple(testcase[1:])
+    for variant_name, raw_factory in factories.items():
+      variant_factory = _produce_variant_factory(raw_factory)
+      # The variant_factory will be the last argument.
+      case = (name + "_" + variant_name,) + test_args + (variant_factory,)
+      enhanced_testcases.append(case)
+  return parameterized.named_parameters(
+      *enhanced_testcases)
+
+
+def _produce_variant_factory(raw_factory):
+  def variant_factory(fn, *args, **kwargs):
+    return raw_factory(functools.partial(fn, *args, **kwargs))
+  return variant_factory
+
+
+def _get_variant_factories():
+  factories = dict(
+      jit=lambda f: _without_device(jax.jit(f)),
+      device=_with_device,
+      device_jit=lambda f: _with_device(jax.jit(f)),
+  )
+  return factories
+
+
+def _get_vmap_variant_factories():
+  """Returns factories for variants operating on batch data."""
+  factories = dict(
+      jit_vmap=lambda f: _without_device(jax.jit(jax.vmap(f))),
+      device_vmap=lambda f: _with_device(jax.vmap(f)),
+      device_jit_vmap=lambda f: _with_device(jax.jit(jax.vmap(f))),
+      iteration=lambda f: _with_iteration(_without_device(f)),
+      iteration_jit=lambda f: _with_iteration(_without_device(jax.jit(f))),
+      iteration_device=lambda f: _with_iteration(_with_device(f)),
+      iteration_device_jit=lambda f: _with_iteration(_with_device(jax.jit(f))),
+  )
+  return factories
 
 
 def strict_zip(*args):
@@ -70,19 +113,32 @@ def strict_zip(*args):
 
 
 def _with_iteration(fn):
+  """Uses iteration to produce vmap-like output."""
   def wrapper(*args):
     outputs = []
     # Iterating over the first axis.
     for inputs in strict_zip(*args):
       outputs.append(fn(*inputs))
-    return jax.tree_util.tree_multimap(lambda *x: np.stack(x), *outputs)
+    return jax.tree_util.tree_multimap(lambda *x: jnp.stack(x), *outputs)
   return wrapper
 
 
 def _with_device(fn):
+  """Puts all inputs to a device."""
   def wrapper(*args):
     converted = jax.device_put(args)
     return fn(*converted)
   return wrapper
 
+
+def _without_device(fn):
+  """Moves all inputs outside of a device."""
+  def wrapper(*args):
+    def get(x):
+      if isinstance(x, jnp.DeviceArray):
+        return jax.device_get(x)
+      return x
+    converted = jax.tree_util.tree_map(get, args)
+    return fn(*converted)
+  return wrapper
 

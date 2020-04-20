@@ -63,9 +63,10 @@ class VTraceTest(parameterized.TestCase):
          [1.4662433, 3.6116405, -8.3369283e-05, -1.3540000e+1]],
         dtype=np.float32)
 
-  def test_vtrace_td_error_and_advantage(self):
+  @test_util.parameterize_vmap_variant()
+  def test_vtrace_td_error_and_advantage(self, variant):
     """Tests for a full batch."""
-    vtrace_td_error_and_advantage = test_util.check_output(
+    vtrace_td_error_and_advantage = variant(
         vtrace.vtrace_td_error_and_advantage,
         clip_rho_threshold=self._clip_rho_threshold, lambda_=self._lambda)
     # Get function arguments.
@@ -80,10 +81,11 @@ class VTraceTest(parameterized.TestCase):
     np.testing.assert_allclose(
         self._expected_pg, vtrace_output.pg_advantage, rtol=1e-3)
 
-  def test_lambda_q_estimate(self):
+  @test_util.parameterize_vmap_variant()
+  def test_lambda_q_estimate(self, variant):
     """Tests for a full batch."""
     lambda_ = 0.8
-    vtrace_td_error_and_advantage = test_util.check_output(
+    vtrace_td_error_and_advantage = variant(
         vtrace.vtrace_td_error_and_advantage,
         clip_rho_threshold=self._clip_rho_threshold, lambda_=lambda_)
     # Get function arguments.

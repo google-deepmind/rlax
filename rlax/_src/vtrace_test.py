@@ -123,6 +123,35 @@ class VTraceTest(parameterized.TestCase):
     np.testing.assert_allclose(
         self._expected_pg, vtrace_output.pg_advantage, rtol=1e-3)
 
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_lambda_q_estimate(self, compile_fn, place_fn):
+    """Tests for a full batch."""
+    lambda_ = 0.8
+    # Vmap function and optionally compile.
+    vtrace_td_error_and_advantage = functools.partial(
+        vtrace.vtrace_td_error_and_advantage,
+        clip_rho_threshold=self._clip_rho_threshold, lambda_=lambda_)
+    vtrace_td_error_and_advantage = jax.vmap(vtrace_td_error_and_advantage)
+    vtrace_td_error_and_advantage = compile_fn(vtrace_td_error_and_advantage)
+    # Get function arguments.
+    r_t, discount_t, rho_t, v_tm1, bootstrap_value = self._inputs
+    v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)
+    # Optionally make inputs into device arrays.
+    (v_tm1, v_t, r_t, discount_t, rho_t) = tree_multimap(
+        place_fn, (v_tm1, v_t, r_t, discount_t, rho_t))
+    # Compute vtrace output.
+    vtrace_output = vtrace_td_error_and_advantage(
+        v_tm1, v_t, r_t, discount_t, rho_t)
+    expected_vs = vtrace_output.errors + v_tm1
+    clipped_rho_t = np.minimum(self._clip_rho_threshold, rho_t)
+    vs_from_q = v_tm1 + clipped_rho_t * (vtrace_output.q_estimate - v_tm1)
+    # Test output.
+    np.testing.assert_allclose(expected_vs, vs_from_q, rtol=1e-3)
+
 
 if __name__ == '__main__':
   absltest.main()

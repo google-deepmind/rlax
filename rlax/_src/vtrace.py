@@ -70,8 +70,11 @@ def vtrace_td_error_and_advantage(
       v_tm1, v_t, r_t, discount_t, rho_t,
       lambda_, clip_rho_threshold, stop_target_gradients)
   targets_tm1 = errors + v_tm1
-  targets_t = jnp.concatenate([targets_tm1[1:], v_t[-1:]], axis=0)
-  q_estimate = r_t + discount_t * targets_t
+  q_bootstrap = jnp.concatenate([
+      lambda_ * targets_tm1[1:] + (1 - lambda_) * v_tm1[1:],
+      v_t[-1:],
+  ], axis=0)
+  q_estimate = r_t + discount_t * q_bootstrap
   clipped_pg_rho_tm1 = jnp.minimum(clip_pg_rho_threshold, rho_t)
   pg_advantages = clipped_pg_rho_tm1 * (q_estimate - v_tm1)
   return VTraceOutput(

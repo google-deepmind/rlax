@@ -17,7 +17,7 @@
 
 from absl import app
 from absl import flags
-from bsuite.experiments.catch import catch
+from bsuite.environments import catch
 import haiku as hk
 from haiku import nets
 import jax

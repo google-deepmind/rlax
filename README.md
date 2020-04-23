@@ -40,6 +40,9 @@ See `examples/catch.py` for an example of using some of the functions in RLax
 to implement a Q-learning agent capable of learning to play Catch (a common
 unit-test for agent learning in the reinforcement learning literature).
 
+Other examples of JAX reinforcement learning agents using `rlax` can be found in
+[bsuite](`https://github.com/deepmind/bsuite/tree/master/bsuite/baselines`).
+
 ## Background
 
 Reinforcement learning studies the problem of a learning system (the *agent*),

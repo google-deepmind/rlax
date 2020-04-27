@@ -31,7 +31,9 @@ class DpgLossTest(parameterized.TestCase):
 
     self.s_t = np.array([[0, 1, 0], [1, 1, 2]], dtype=np.float32)  # [B, T]
     self.w_s = np.ones([3, 2], dtype=np.float32)
-    self.b_s = np.zeros([2], dtype=np.float32)
+    b_s = np.zeros([2], dtype=np.float32)
+    # Add batch dimension to satisfy shape assertions.
+    self.b_s = jnp.expand_dims(b_s, 0)
     self.w = np.ones([2, 1], dtype=np.float32)
     self.b = np.zeros([1], dtype=np.float32)
 
@@ -102,4 +104,5 @@ class EntropyLossTest(parameterized.TestCase):
 
 
 if __name__ == '__main__':
+  jax.config.update('jax_numpy_rank_promotion', 'raise')
   absltest.main()

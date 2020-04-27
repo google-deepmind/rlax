@@ -17,6 +17,7 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
+import jax
 import jax.numpy as jnp
 import numpy as np
 from rlax._src import distributions
@@ -635,7 +636,9 @@ class CategoricalDoubleQLearningTest(parameterized.TestCase):
           q_logits_t=q_logits_t)
     # Double Q-learning estimate with q_t_selector=q_t
     distrib = distributions.softmax()
-    q_t_selector = jnp.sum(distrib.probs(self.q_logits_t) * self.atoms, axis=-1)
+    # Add batch and time dimension to atoms.
+    atoms = jnp.expand_dims(jnp.expand_dims(self.atoms, 0), 0)
+    q_t_selector = jnp.sum(distrib.probs(self.q_logits_t) * atoms, axis=-1)
     actual = batch_categorical_double_q_learning(
         self.q_logits_tm1, self.a_tm1, self.r_t, self.discount_t,
         self.q_logits_t, q_t_selector)
@@ -766,4 +769,5 @@ class QuantileQLearningTest(parameterized.TestCase):
 
 
 if __name__ == '__main__':
+  jax.config.update('jax_numpy_rank_promotion', 'raise')
   absltest.main()

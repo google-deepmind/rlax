@@ -650,7 +650,7 @@ def categorical_q_learning(
 
   # Convert logits to distribution, then find greedy action in state s_t.
   q_t_probs = jax.nn.softmax(q_logits_t)
-  q_t_mean = jnp.sum(q_t_probs * q_atoms_t, axis=1)
+  q_t_mean = jnp.sum(q_t_probs * q_atoms_t[jnp.newaxis, :], axis=1)
   pi_t = jnp.argmax(q_t_mean)
 
   # Compute distribution for greedy action.

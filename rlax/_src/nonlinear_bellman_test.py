@@ -17,6 +17,7 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
+import jax
 import numpy as np
 from rlax._src import nonlinear_bellman
 from rlax._src import test_util
@@ -150,4 +151,5 @@ class TransformedRetraceTest(parameterized.TestCase):
 
 
 if __name__ == '__main__':
+  jax.config.update('jax_numpy_rank_promotion', 'raise')
   absltest.main()

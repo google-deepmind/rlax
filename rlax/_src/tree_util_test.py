@@ -30,4 +30,5 @@ class TreeUtilTest(absltest.TestCase):
 
 
 if __name__ == '__main__':
+  jax.config.update('jax_numpy_rank_promotion', 'raise')
   absltest.main()

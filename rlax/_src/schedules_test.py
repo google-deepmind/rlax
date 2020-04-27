@@ -18,6 +18,7 @@
 from absl.testing import absltest
 from absl.testing import parameterized
 
+import jax
 import numpy as np
 
 from rlax._src import schedules
@@ -128,4 +129,5 @@ class PiecewiseConstantTest(parameterized.TestCase):
 
 
 if __name__ == '__main__':
+  jax.config.update('jax_numpy_rank_promotion', 'raise')
   absltest.main()

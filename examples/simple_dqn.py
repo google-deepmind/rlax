@@ -6,7 +6,6 @@ import haiku as hk
 import rlax
 
 import gym
-from functools import partial
 import numpy as np
 
 import random

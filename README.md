@@ -13,8 +13,9 @@ All RLax code may then be just in time compiled for different hardware
 (e.g. CPU, GPU, TPU) using `jax.jit`.
 
 In order to run the `examples/` you will also need to install
-[haiku](https://github.com/deepmind/haiku) and
-[bsuite](https://github.com/deepmind/bsuite).
+[haiku](https://github.com/deepmind/haiku),
+[bsuite](https://github.com/deepmind/bsuite), [OpenAI gym](https://github.com/openai/gym)
+and [Matplotlib](https://github.com/matplotlib/matplotlib).
 
 ## Content
 

@@ -53,8 +53,11 @@ def one_hot(indices, num_classes, dtype=jnp.float32):
     The one-hot tensor. If indices' shape is [A, B, ...], shape is
       [A, B, ..., num_classes].
   """
+  labels = jnp.arange(num_classes)
+  for _ in range(indices.ndim):
+    labels = jnp.expand_dims(labels, axis=0)
   return jnp.array(
-      indices[..., jnp.newaxis] == jnp.arange(num_classes), dtype=dtype)
+      indices[..., jnp.newaxis] == labels, dtype=dtype)
 
 
 def rank_assert(

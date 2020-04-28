@@ -30,14 +30,15 @@ from rlax._src import distributions
 from rlax._src import multistep
 
 ArrayLike = base.ArrayLike
+ArrayOrScalar = base.ArrayOrScalar
 
 
 def td_learning(
-    v_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
-    v_t: ArrayLike,
-) -> ArrayLike:
+    v_tm1: ArrayOrScalar,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
+    v_t: ArrayOrScalar,
+) -> ArrayOrScalar:
   """Calculates the TD-learning temporal difference error.
 
   See "Learning to Predict by the Methods of Temporal Differences" by Sutton.
@@ -65,7 +66,7 @@ def td_lambda(
     r_t: ArrayLike,
     discount_t: ArrayLike,
     v_t: ArrayLike,
-    lambda_: ArrayLike,
+    lambda_: ArrayOrScalar,
 ) -> ArrayLike:
   """Calculates the TD(lambda) temporal difference error.
 
@@ -91,12 +92,12 @@ def td_lambda(
 
 def sarsa(
     q_tm1: ArrayLike,
-    a_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
+    a_tm1: ArrayOrScalar,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
     q_t: ArrayLike,
-    a_t: ArrayLike,
-) -> ArrayLike:
+    a_t: ArrayOrScalar,
+) -> ArrayOrScalar:
   """Calculates the SARSA temporal difference error.
 
   See "Reinforcement Learning: An Introduction" by Sutton and Barto.
@@ -124,12 +125,12 @@ def sarsa(
 
 def expected_sarsa(
     q_tm1: ArrayLike,
-    a_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
+    a_tm1: ArrayOrScalar,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
     q_t: ArrayLike,
     probs_a_t: ArrayLike,
-) -> ArrayLike:
+) -> ArrayOrScalar:
   """Calculates the expected SARSA (SARSE) temporal difference error.
 
   See "A Theoretical and Empirical Analysis of Expected Sarsa" by Seijen,
@@ -163,7 +164,7 @@ def sarsa_lambda(
     discount_t: ArrayLike,
     q_t: ArrayLike,
     a_t: ArrayLike,
-    lambda_: ArrayLike,
+    lambda_: ArrayOrScalar,
     stop_target_gradients: bool = True,
 ) -> ArrayLike:
   """Calculates the SARSA(lambda) temporal difference error.
@@ -201,11 +202,11 @@ def sarsa_lambda(
 
 def q_learning(
     q_tm1: ArrayLike,
-    a_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
+    a_tm1: ArrayOrScalar,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
     q_t: ArrayLike,
-) -> ArrayLike:
+) -> ArrayOrScalar:
   """Calculates the Q-learning temporal difference error.
 
   See "Reinforcement Learning: An Introduction" by Sutton and Barto.
@@ -231,12 +232,12 @@ def q_learning(
 
 def double_q_learning(
     q_tm1: ArrayLike,
-    a_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
+    a_tm1: ArrayOrScalar,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
     q_t_value: ArrayLike,
     q_t_selector: ArrayLike,
-) -> ArrayLike:
+) -> ArrayOrScalar:
   """Calculates the double Q-learning temporal difference error.
 
   See "Double Q-learning" by van Hasselt.
@@ -264,12 +265,12 @@ def double_q_learning(
 
 def persistent_q_learning(
     q_tm1: ArrayLike,
-    a_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
+    a_tm1: ArrayOrScalar,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
     q_t: ArrayLike,
     action_gap_scale: float,
-) -> ArrayLike:
+) -> ArrayOrScalar:
   """Calculates the persistent Q-learning temporal difference error.
 
   See "Increasing the Action Gap: New Operators for Reinforcement Learning"
@@ -300,11 +301,11 @@ def persistent_q_learning(
 
 def qv_learning(
     q_tm1: ArrayLike,
-    a_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
-    v_t: ArrayLike,
-) -> ArrayLike:
+    a_tm1: ArrayOrScalar,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
+    v_t: ArrayOrScalar,
+) -> ArrayOrScalar:
   """Calculates the QV-learning temporal difference error.
 
   See "Two Novel On-policy Reinforcement Learning Algorithms based on
@@ -330,11 +331,11 @@ def qv_learning(
 
 
 def qv_max(
-    v_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
+    v_tm1: ArrayOrScalar,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
     q_t: ArrayLike,
-) -> ArrayLike:
+) -> ArrayOrScalar:
   """Calculates the QVMAX temporal difference error.
 
   See "The QV Family Compared to Other Reinforcement Learning Algorithms" by
@@ -363,7 +364,7 @@ def q_lambda(
     r_t: ArrayLike,
     discount_t: ArrayLike,
     q_t: ArrayLike,
-    lambda_: ArrayLike,
+    lambda_: ArrayOrScalar,
     stop_target_gradients: bool = True,
 ) -> ArrayLike:
   """Calculates Peng's or Watkins' Q(lambda) temporal difference error.
@@ -569,11 +570,11 @@ def _categorical_l2_project(
 def categorical_td_learning(
     v_atoms_tm1: ArrayLike,
     v_logits_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
     v_atoms_t: ArrayLike,
     v_logits_t: ArrayLike
-) -> ArrayLike:
+) -> ArrayOrScalar:
   """Implements TD-learning for categorical value distributions.
 
   See "A Distributional Perspective on Reinforcement Learning", by
@@ -615,12 +616,12 @@ def categorical_td_learning(
 def categorical_q_learning(
     q_atoms_tm1: ArrayLike,
     q_logits_tm1: ArrayLike,
-    a_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
+    a_tm1: ArrayOrScalar,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
     q_atoms_t: ArrayLike,
     q_logits_t: ArrayLike,
-) -> ArrayLike:
+) -> ArrayOrScalar:
   """Implements Q-learning for categorical Q distributions.
 
   See "A Distributional Perspective on Reinforcement Learning", by
@@ -669,13 +670,13 @@ def categorical_q_learning(
 def categorical_double_q_learning(
     q_atoms_tm1: ArrayLike,
     q_logits_tm1: ArrayLike,
-    a_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
+    a_tm1: ArrayOrScalar,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
     q_atoms_t: ArrayLike,
     q_logits_t: ArrayLike,
     q_t_selector: ArrayLike,
-) -> ArrayLike:
+) -> ArrayOrScalar:
   """Implements double Q-learning for categorical Q distributions.
 
   See "A Distributional Perspective on Reinforcement Learning", by
@@ -726,7 +727,7 @@ def _quantile_regression_loss(
     tau_src: ArrayLike,
     dist_target: ArrayLike,
     huber_param: float = 0.
-) -> ArrayLike:
+) -> ArrayOrScalar:
   """Compute (Huber) QR loss between two discrete quantile-valued distributions.
 
   See "Distributional Reinforcement Learning with Quantile Regression" by
@@ -764,13 +765,13 @@ def _quantile_regression_loss(
 def quantile_q_learning(
     dist_q_tm1: ArrayLike,
     tau_q_tm1: ArrayLike,
-    a_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
+    a_tm1: ArrayOrScalar,
+    r_t: ArrayOrScalar,
+    discount_t: ArrayOrScalar,
     dist_q_t_selector: ArrayLike,
     dist_q_t: ArrayLike,
     huber_param: float = 0.
-) -> ArrayLike:
+) -> ArrayOrScalar:
   """Implements Q-learning for quantile-valued Q distributions.
 
   See "Distributional Reinforcement Learning with Quantile Regression" by

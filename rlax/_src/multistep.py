@@ -22,12 +22,11 @@ of experience; trajectories are not assumed to align with episode boundaries,
 and bootstrapping is used to estimate returns beyond the end of a trajectory.
 """
 
-from typing import Union
 import jax.numpy as jnp
 from rlax._src import base
 
 ArrayLike = base.ArrayLike
-ArrayOrScalar = Union[base.ArrayLike, base.Scalar]
+ArrayOrScalar = base.ArrayOrScalar
 
 
 def lambda_returns(

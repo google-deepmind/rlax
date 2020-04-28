@@ -21,6 +21,7 @@ import numpy as np
 
 Scalar = Union[float, int]
 ArrayLike = Union[np.ndarray, jnp.DeviceArray]
+ArrayOrScalar = Union[ArrayLike, Scalar]
 
 
 def batched_index(

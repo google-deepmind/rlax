@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""A simple Q-learning agent trained to play Catch."""
+"""A simple online Q-learning agent trained to play Catch."""
 
 from absl import app
 from absl import flags

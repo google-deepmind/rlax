@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""A simple online Q-learning agent trained to play Catch."""
+"""A simple online Q-learning agent trained to play BSuite's Catch env."""
 
 from absl import app
 from absl import flags
@@ -27,15 +27,15 @@ import rlax
 
 FLAGS = flags.FLAGS
 
+flags.DEFINE_integer("seed", 42, "Random seed.")
 flags.DEFINE_integer("train_episodes", 500, "Number of train episodes.")
-flags.DEFINE_integer("evaluate_every", 50,
-                     "Number of episodes between evaluations.")
-flags.DEFINE_integer("eval_episodes", 100, "Number of evaluation episodes.")
 flags.DEFINE_integer("hidden_units", 50, "Number of network hidden units.")
 flags.DEFINE_float("epsilon", 0.01, "eps-greedy exploration probability.")
 flags.DEFINE_float("discount_factor", 0.99, "Q-learning discount factor.")
 flags.DEFINE_float("learning_rate", 0.005, "Optimizer learning rate.")
-flags.DEFINE_integer("seed", 1234, "Random seed.")
+flags.DEFINE_integer("eval_episodes", 100, "Number of evaluation episodes.")
+flags.DEFINE_integer("evaluate_every", 50,
+                     "Number of episodes between evaluations.")
 
 
 def build_network(num_actions: int) -> hk.Transformed:
@@ -85,8 +85,8 @@ def main_loop(unused_arg):
       td_error = rlax.q_learning(q_tm1, a_tm1, r_t, discount_t, q_t)
       return rlax.l2_loss(td_error)
 
-    dloss_dtheta = jax.grad(q_learning_loss)(net_params, obs_tm1, a_tm1, r_t,
-                                             discount_t, q_t)
+    dloss_dtheta = jax.grad(q_learning_loss)(
+        net_params, obs_tm1, a_tm1, r_t, discount_t, q_t)
     updates, opt_state = optimizer.update(dloss_dtheta, opt_state)
     net_params = optix.apply_updates(net_params, updates)
     return net_params, opt_state
@@ -109,8 +109,8 @@ def main_loop(unused_arg):
       # Update Q-values.
       r_t = new_timestep.reward
       discount_t = FLAGS.discount_factor * new_timestep.discount
-      net_params, opt_state = update(net_params, opt_state, obs_tm1, a_tm1, r_t,
-                                     discount_t, q_t)
+      net_params, opt_state = update(
+          net_params, opt_state, obs_tm1, a_tm1, r_t, discount_t, q_t)
 
       timestep = new_timestep
       obs_tm1 = obs_t

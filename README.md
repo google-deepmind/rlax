@@ -15,8 +15,7 @@ All RLax code may then be just in time compiled for different hardware
 In order to run the `examples/` you will also need to install
 [haiku](https://github.com/deepmind/haiku),
 [bsuite](https://github.com/deepmind/bsuite),
-[OpenAI gym](https://github.com/openai/gym)
-and [Matplotlib](https://github.com/matplotlib/matplotlib).
+[OpenAI gym](https://github.com/openai/gym).
 
 ## Content
 
@@ -38,9 +37,18 @@ functions and for references to the papers that introduced and/or used them.
 
 ## Usage
 
-See `examples/catch.py` for an example of using some of the functions in RLax
-to implement a Q-learning agent capable of learning to play Catch (a common
-unit-test for agent learning in the reinforcement learning literature).
+See `examples/` for an example of using some of the functions in RLax to
+implement a few simple reinforcement learning agents. Rlax is agnostic to
+the specific framework you use to train agents or run environments (e.g. we
+include both agents running on BSuite and the OpenAI Gym):
+
+* `examples/online_q_learning` shows a simple online Q-learning agent capable
+  of learning to play BSuite's version of the Catch environment (a common
+  unit-test for agent learning in the reinforcement learning literature).
+
+* `examples/simple_dqn` shows a DQN agent (double Q-learning with experience
+  replay and target network switching) capable of learning to play OpenAI Gym's
+  version of CartPole (another common unit-test domain for agent learning).
 
 Other examples of JAX reinforcement learning agents using `rlax` can be found in
 [bsuite](`https://github.com/deepmind/bsuite/tree/master/bsuite/baselines`).

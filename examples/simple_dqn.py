@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""A simple DQN agent trained to play cartpole."""
+"""A simple DQN agent trained to play Gym's Cartpole env."""
 
 import collections
 import random
@@ -24,17 +24,22 @@ import haiku as hk
 import jax
 from jax.experimental import optix
 import jax.numpy as jnp
-import matplotlib.pyplot as plt
 import numpy as np
 import rlax
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_integer("num_episodes", 5000, "Number of train episodes.")
+flags.DEFINE_integer("seed", 42, "Random seed.")
+flags.DEFINE_integer("train_steps", 5000, "Number of train episodes.")
 flags.DEFINE_integer("batch_size", 32, "Size of the training batch")
+flags.DEFINE_float("target_period", 100, "How often to update the target net.")
+flags.DEFINE_integer("replay_capacity", 2000, "Capacity of the replay buffer.")
+flags.DEFINE_float("epsilon_begin", 1., "Initial eps-greedy exploration.")
+flags.DEFINE_float("epsilon_end", 0.01, "Final eps-greedy exploration.")
+flags.DEFINE_integer("epsilon_steps", 1000, "Steps over which to anneal eps.")
 flags.DEFINE_float("discount_factor", 0.99, "Q-learning discount factor.")
 flags.DEFINE_float("learning_rate", 1e-3, "Optimizer learning rate.")
-flags.DEFINE_integer("seed", 1729, "Random seed.")
+flags.DEFINE_integer("log_every", 200, "How often to log performance.")
 
 
 class ReplayBuffer(object):
@@ -74,31 +79,17 @@ def build_network(num_actions: int) -> hk.Transformed:
   return hk.transform(q)
 
 
-def plot(frame_idx, rewards, losses):
-  plt.figure(figsize=(20, 5))
-  plt.subplot(131)
-  plt.title("frame %s. reward: %s" % (frame_idx, np.mean(rewards[-10:])))
-  plt.plot(rewards)
-  plt.subplot(132)
-  plt.title("loss")
-  plt.plot(losses)
-  plt.show()
-
-
 def main_loop(unused_args):
   env_id = "CartPole-v0"
   env = gym.make(env_id)
 
   # Initialize replay buffer.
-  replay_buffer = ReplayBuffer(2000)
+  replay_buffer = ReplayBuffer(FLAGS.replay_capacity)
 
   # Epsilon-schedule for policy.
-  epsilon_start = 1.0
-  epsilon_final = 0.01
-  epsilon_decay = 500
-  def epsilon_by_frame(frame_idx):
-    return epsilon_final + (epsilon_start - \
-      epsilon_final) * jnp.exp(-1. * frame_idx / epsilon_decay)
+  epsilon_by_frame = rlax.polynomial_schedule(
+      init_value=FLAGS.epsilon_begin, end_value=FLAGS.epsilon_end,
+      transition_steps=FLAGS.epsilon_steps, power=1.)
 
   # Logging.
   losses = []
@@ -121,8 +112,7 @@ def main_loop(unused_args):
   def policy(net_params, key, obs, epsilon):
     """Sample action from epsilon-greedy policy."""
     q = network.apply(net_params, obs)
-    a = rlax.epsilon_greedy(epsilon).sample(key, q)
-    return a
+    return rlax.epsilon_greedy(epsilon).sample(key, q)
 
   batched_loss = jax.vmap(rlax.double_q_learning)
   @jax.jit
@@ -146,8 +136,8 @@ def main_loop(unused_args):
     return net_params, opt_state, loss
 
   state = env.reset()
-  print(f"Training agent for {FLAGS.num_episodes} episodes...")
-  for idx in range(1, FLAGS.num_episodes+1):
+  print(f"Training agent for {FLAGS.train_steps} steps...")
+  for idx in range(1, FLAGS.train_steps+1):
     epsilon = epsilon_by_frame(idx)
 
     # Act in the environment and update replay_buffer
@@ -170,14 +160,11 @@ def main_loop(unused_args):
       losses.append(float(loss))
 
     # Update Target model parameters
-    if idx % 100 == 0:
+    if idx % FLAGS.target_period == 0:
       target_params = net_params
 
-    if idx % 200 == 0:
+    if idx % FLAGS.log_every == 0:
       print("Average rewards:", np.mean(all_rewards[-10:]))
-
-  # Plot learning curve.
-  plot(idx, all_rewards, losses)
 
 
 if __name__ == "__main__":

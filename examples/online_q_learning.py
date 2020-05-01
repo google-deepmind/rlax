@@ -15,6 +15,7 @@
 # ==============================================================================
 """A simple online Q-learning agent trained to play BSuite's Catch env."""
 
+import collections
 from absl import app
 from absl import flags
 from bsuite.environments import catch
@@ -24,9 +25,14 @@ import jax
 from jax.experimental import optix
 import jax.numpy as jnp
 import rlax
+from rlax.examples import experiment
+
+ActorOutput = collections.namedtuple(
+    "ActorOutput", "actions q_values")
+Transition = collections.namedtuple(
+    "Transition", "obs_tm1 a_tm1 r_t discount_t obs_t")
 
 FLAGS = flags.FLAGS
-
 flags.DEFINE_integer("seed", 42, "Random seed.")
 flags.DEFINE_integer("train_episodes", 500, "Number of train episodes.")
 flags.DEFINE_integer("hidden_units", 50, "Number of network hidden units.")
@@ -39,6 +45,7 @@ flags.DEFINE_integer("evaluate_every", 50,
 
 
 def build_network(num_actions: int) -> hk.Transformed:
+  """Factory for a simple MLP network for approximating Q-values."""
 
   def q(obs):
     flatten = lambda x: jnp.reshape(x, (-1,))
@@ -49,89 +56,85 @@ def build_network(num_actions: int) -> hk.Transformed:
   return hk.transform(q)
 
 
-def main_loop(unused_arg):
+class TransitionAccumulator:
+  """Simple Python accumulator for transitions."""
+
+  def __init__(self):
+    self._prev = None
+    self._action = None
+    self._latest = None
+
+  def push(self, env_output, action):
+    self._prev = self._latest
+    self._action = action
+    self._latest = env_output
+
+  def sample(self, batch_size):
+    assert batch_size == 1
+    return Transition(
+        self._prev.observation, self._action, self._latest.reward,
+        self._latest.discount, self._latest.observation)
+
+  def is_ready(self, batch_size):
+    assert batch_size == 1
+    return self._prev is not None
+
+
+class OnlineQ:
+  """An online Q-learning deep RL agent."""
+
+  def __init__(self, obs_spec, action_spec, epsilon, learning_rate):
+    self._obs_spec = obs_spec
+    self._action_spec = action_spec
+    self._epsilon = epsilon
+    # Neural net and optimiser.
+    self._network = build_network(action_spec.num_values)
+    self._optimizer = optix.adam(learning_rate)
+    # Jitting for speed.
+    self.actor_step = jax.jit(self.actor_step)
+    self.learner_step = jax.jit(self.learner_step)
+
+  def initial_params(self, key):
+    sample_input = self._obs_spec.generate_value()
+    return self._network.init(key, sample_input)
+
+  def initial_actor_state(self):
+    return ()
+
+  def initial_learner_state(self, params):
+    return self._optimizer.init(params)
+
+  def actor_step(self, params, env_output, actor_state, key, evaluation):
+    q = self._network.apply(params, env_output.observation)
+    train_a = rlax.epsilon_greedy(self._epsilon).sample(key, q)
+    eval_a = rlax.greedy().sample(key, q)
+    a = jax.lax.select(evaluation, eval_a, train_a)
+    return ActorOutput(actions=a, q_values=q), actor_state
+
+  def learner_step(self, params, data, learner_state, unused_key):
+    dloss_dtheta = jax.grad(self._loss)(params, *data)
+    updates, learner_state = self._optimizer.update(dloss_dtheta, learner_state)
+    params = optix.apply_updates(params, updates)
+    return params, learner_state
+
+  def _loss(self, params, obs_tm1, a_tm1, r_t, discount_t, obs_t):
+    q_tm1 = self._network.apply(params, obs_tm1)
+    q_t = self._network.apply(params, obs_t)
+    td_error = rlax.q_learning(q_tm1, a_tm1, r_t, discount_t, q_t)
+    return rlax.l2_loss(td_error)
+
+
+def main(unused_arg):
   env = catch.Catch(seed=FLAGS.seed)
-  rng = hk.PRNGSequence(jax.random.PRNGKey(FLAGS.seed))
+  agent = OnlineQ(
+      env.observation_spec(), env.action_spec(),
+      FLAGS.learning_rate, FLAGS.epsilon)
 
-  # Build and initialize Q-network.
-  num_actions = env.action_spec().num_values
-  network = build_network(num_actions)
-  sample_input = env.observation_spec().generate_value()
-  net_params = network.init(next(rng), sample_input)
-
-  # Build and initialize optimizer.
-  optimizer = optix.adam(FLAGS.learning_rate)
-  opt_state = optimizer.init(net_params)
-
-  @jax.jit
-  def policy(net_params, key, obs):
-    """Sample action from epsilon-greedy policy."""
-    q = network.apply(net_params, obs)
-    a = rlax.epsilon_greedy(epsilon=FLAGS.epsilon).sample(key, q)
-    return q, a
-
-  @jax.jit
-  def eval_policy(net_params, key, obs):
-    """Sample action from greedy policy."""
-    q = network.apply(net_params, obs)
-    return rlax.greedy().sample(key, q)
-
-  @jax.jit
-  def update(net_params, opt_state, obs_tm1, a_tm1, r_t, discount_t, q_t):
-    """Update network weights wrt Q-learning loss."""
-
-    def q_learning_loss(net_params, obs_tm1, a_tm1, r_t, discount_t, q_t):
-      q_tm1 = network.apply(net_params, obs_tm1)
-      td_error = rlax.q_learning(q_tm1, a_tm1, r_t, discount_t, q_t)
-      return rlax.l2_loss(td_error)
-
-    dloss_dtheta = jax.grad(q_learning_loss)(
-        net_params, obs_tm1, a_tm1, r_t, discount_t, q_t)
-    updates, opt_state = optimizer.update(dloss_dtheta, opt_state)
-    net_params = optix.apply_updates(net_params, updates)
-    return net_params, opt_state
-
-  print(f"Training agent for {FLAGS.train_episodes} episodes")
-  print("Returns range [-1.0, 1.0]")
-  for episode in range(FLAGS.train_episodes):
-    timestep = env.reset()
-    obs_tm1 = timestep.observation
-
-    _, a_tm1 = policy(net_params, next(rng), obs_tm1)
-
-    while not timestep.last():
-      new_timestep = env.step(int(a_tm1))
-      obs_t = new_timestep.observation
-
-      # Sample action from stochastic policy.
-      q_t, a_t = policy(net_params, next(rng), obs_t)
-
-      # Update Q-values.
-      r_t = new_timestep.reward
-      discount_t = FLAGS.discount_factor * new_timestep.discount
-      net_params, opt_state = update(
-          net_params, opt_state, obs_tm1, a_tm1, r_t, discount_t, q_t)
-
-      timestep = new_timestep
-      obs_tm1 = obs_t
-      a_tm1 = a_t
-
-    if not episode % FLAGS.evaluate_every:
-      # Evaluate agent with deterministic policy.
-      returns = 0.
-      for _ in range(FLAGS.eval_episodes):
-        timestep = env.reset()
-        obs = timestep.observation
-
-        while not timestep.last():
-          action = eval_policy(net_params, next(rng), obs)
-          timestep = env.step(int(action))
-          obs = timestep.observation
-          returns += timestep.reward
-
-      avg_returns = returns / FLAGS.eval_episodes
-      print(f"Episode {episode:4d}: Average returns: {avg_returns:.2f}")
+  accumulator = TransitionAccumulator()
+  experiment.run_loop(
+      agent, env, accumulator, FLAGS.seed,
+      1, FLAGS.train_episodes, FLAGS.evaluate_every, FLAGS.eval_episodes)
 
 
 if __name__ == "__main__":
-  app.run(main_loop)
+  app.run(main)

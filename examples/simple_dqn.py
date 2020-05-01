@@ -13,159 +13,165 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""A simple DQN agent trained to play Gym's Cartpole env."""
+"""A simple double-DQN agent trained to play BSuite's Catch env."""
 
 import collections
 import random
 from absl import app
 from absl import flags
-import gym
+from bsuite.environments import catch
 import haiku as hk
+from haiku import nets
 import jax
 from jax.experimental import optix
 import jax.numpy as jnp
-import numpy as np
 import rlax
+from rlax.examples import experiment
+
+Params = collections.namedtuple("Params", "online target")
+ActorState = collections.namedtuple("ActorState", "count")
+ActorOutput = collections.namedtuple("ActorOutput", "actions q_values")
+LearnerState = collections.namedtuple("LearnerState", "count opt_state")
+Data = collections.namedtuple("Data", "obs_tm1 a_tm1 r_t discount_t obs_t")
 
 FLAGS = flags.FLAGS
-
 flags.DEFINE_integer("seed", 42, "Random seed.")
-flags.DEFINE_integer("train_steps", 5000, "Number of train episodes.")
+flags.DEFINE_integer("train_episodes", 301, "Number of train episodes.")
 flags.DEFINE_integer("batch_size", 32, "Size of the training batch")
-flags.DEFINE_float("target_period", 100, "How often to update the target net.")
+flags.DEFINE_float("target_period", 50, "How often to update the target net.")
 flags.DEFINE_integer("replay_capacity", 2000, "Capacity of the replay buffer.")
+flags.DEFINE_integer("hidden_units", 50, "Number of network hidden units.")
 flags.DEFINE_float("epsilon_begin", 1., "Initial eps-greedy exploration.")
 flags.DEFINE_float("epsilon_end", 0.01, "Final eps-greedy exploration.")
 flags.DEFINE_integer("epsilon_steps", 1000, "Steps over which to anneal eps.")
 flags.DEFINE_float("discount_factor", 0.99, "Q-learning discount factor.")
-flags.DEFINE_float("learning_rate", 1e-3, "Optimizer learning rate.")
-flags.DEFINE_integer("log_every", 200, "How often to log performance.")
+flags.DEFINE_float("learning_rate", 0.005, "Optimizer learning rate.")
+flags.DEFINE_integer("eval_episodes", 100, "Number of evaluation episodes.")
+flags.DEFINE_integer("evaluate_every", 50,
+                     "Number of episodes between evaluations.")
+
+
+def build_network(num_actions: int) -> hk.Transformed:
+  """Factory for a simple MLP network for approximating Q-values."""
+
+  def q(obs):
+    network = hk.Sequential(
+        [hk.Flatten(), nets.MLP([FLAGS.hidden_units, num_actions])])
+    return network(obs)
+
+  return hk.transform(q)
 
 
 class ReplayBuffer(object):
   """A simple Python replay buffer."""
 
   def __init__(self, capacity):
+    self._prev = None
+    self._action = None
+    self._latest = None
     self.buffer = collections.deque(maxlen=capacity)
 
-  def push(self, state, action, reward, next_state, done):
-    state = jnp.expand_dims(state, 0)
-    next_state = jnp.expand_dims(next_state, 0)
+  def push(self, env_output, action):
+    self._prev = self._latest
+    self._action = action
+    self._latest = env_output
 
-    self.buffer.append((state, action, reward, next_state, done))
+    if action is not None:
+      self.buffer.append((
+          self._prev.observation, self._action, self._latest.reward,
+          self._latest.discount, self._latest.observation))
 
   def sample(self, batch_size):
-    state, action, reward, next_state, done = zip(
+    obs_tm1, a_tm1, r_t, discount_t, obs_t = zip(
         *random.sample(self.buffer, batch_size))
     return (
-        jnp.concatenate(state),
-        jnp.concatenate(next_state),
-        jnp.asarray(action),
-        jnp.asarray(reward),
-        (1. - jnp.asarray(done, dtype=jnp.float32)) * FLAGS.discount_factor)
+        jnp.stack(obs_tm1),
+        jnp.asarray(a_tm1),
+        jnp.asarray(r_t),
+        jnp.asarray(discount_t) * FLAGS.discount_factor,
+        jnp.stack(obs_t))
 
-  def __len__(self):
-    return len(self.buffer)
-
-
-def build_network(num_actions: int) -> hk.Transformed:
-
-  def q(obs):
-    network = hk.Sequential(
-        [hk.Linear(128), jax.nn.relu, hk.Linear(128), jax.nn.relu,
-         hk.Linear(num_actions)])
-    return network(obs)
-
-  return hk.transform(q)
+  def is_ready(self, batch_size):
+    return batch_size <= len(self.buffer)
 
 
-def main_loop(unused_args):
-  env_id = "CartPole-v0"
-  env = gym.make(env_id)
+class DQN:
+  """A simple DQN agent."""
 
-  # Initialize replay buffer.
-  replay_buffer = ReplayBuffer(FLAGS.replay_capacity)
+  def __init__(
+      self, obs_spec, action_spec, epsilon_cfg, target_period, learning_rate):
+    self._obs_spec = obs_spec
+    self._action_spec = action_spec
+    self._target_period = target_period
+    # Neural net and optimiser.
+    self._network = build_network(action_spec.num_values)
+    self._optimizer = optix.adam(learning_rate)
+    self._epsilon_by_frame = rlax.polynomial_schedule(**epsilon_cfg)
+    # Jitting for speed.
+    self.actor_step = jax.jit(self.actor_step)
+    self.learner_step = jax.jit(self.learner_step)
 
-  # Epsilon-schedule for policy.
-  epsilon_by_frame = rlax.polynomial_schedule(
+  def initial_params(self, key):
+    sample_input = self._obs_spec.generate_value()
+    sample_input = jnp.expand_dims(sample_input, 0)
+    online_params = self._network.init(key, sample_input)
+    return Params(online_params, online_params)
+
+  def initial_actor_state(self):
+    actor_count = jnp.zeros((), dtype=jnp.float32)
+    return ActorState(actor_count)
+
+  def initial_learner_state(self, params):
+    learner_count = jnp.zeros((), dtype=jnp.float32)
+    opt_state = self._optimizer.init(params.online)
+    return LearnerState(learner_count, opt_state)
+
+  def actor_step(self, params, env_output, actor_state, key, evaluation):
+    obs = jnp.expand_dims(env_output.observation, 0)  # add dummy batch
+    q = self._network.apply(params.online, obs)[0]  # remove dummy batch
+    epsilon = self._epsilon_by_frame(actor_state.count)
+    train_a = rlax.epsilon_greedy(epsilon).sample(key, q)
+    eval_a = rlax.greedy().sample(key, q)
+    a = jax.lax.select(evaluation, eval_a, train_a)
+    return ActorOutput(actions=a, q_values=q), ActorState(actor_state.count + 1)
+
+  def learner_step(self, params, data, learner_state, unused_key):
+    is_update_time = (learner_state.count % self._target_period == 0)
+    target_params = rlax.periodic_update(
+        params.online, params.target, is_update_time)
+    dloss_dtheta = jax.grad(self._loss)(params.online, target_params, *data)
+    updates, opt_state = self._optimizer.update(
+        dloss_dtheta, learner_state.opt_state)
+    online_params = optix.apply_updates(params.online, updates)
+    return (
+        Params(online_params, target_params),
+        LearnerState(learner_state.count + 1, opt_state))
+
+  def _loss(self, online_params, target_params,
+            obs_tm1, a_tm1, r_t, discount_t, obs_t):
+    q_tm1 = self._network.apply(online_params, obs_tm1)
+    q_t_val = self._network.apply(target_params, obs_t)
+    q_t_select = self._network.apply(online_params, obs_t)
+    batched_loss = jax.vmap(rlax.double_q_learning)
+    td_error = batched_loss(q_tm1, a_tm1, r_t, discount_t, q_t_val, q_t_select)
+    return jnp.mean(rlax.l2_loss(td_error))
+
+
+def main(unused_arg):
+  env = catch.Catch(seed=FLAGS.seed)
+  epsilon_cfg = dict(
       init_value=FLAGS.epsilon_begin, end_value=FLAGS.epsilon_end,
       transition_steps=FLAGS.epsilon_steps, power=1.)
+  agent = DQN(
+      env.observation_spec(), env.action_spec(), epsilon_cfg,
+      FLAGS.target_period, FLAGS.learning_rate)
 
-  # Logging.
-  losses = []
-  all_rewards = []
-  episode_reward = 0
-
-  # Build and initialize Q-networks (online net and target net).
-  num_actions = env.action_space.n
-  network = build_network(num_actions)
-  sample_input = env.reset()
-  rng = hk.PRNGSequence(jax.random.PRNGKey(FLAGS.seed))
-  net_params = network.init(next(rng), sample_input)
-  target_params = net_params
-
-  # Build and initialize optimizer.
-  optimizer = optix.adam(FLAGS.learning_rate)
-  opt_state = optimizer.init(net_params)
-
-  @jax.jit
-  def policy(net_params, key, obs, epsilon):
-    """Sample action from epsilon-greedy policy."""
-    q = network.apply(net_params, obs)
-    return rlax.epsilon_greedy(epsilon).sample(key, q)
-
-  batched_loss = jax.vmap(rlax.double_q_learning)
-  @jax.jit
-  def update(net_params, target_params, opt_state, batch):
-    """Update network weights wrt Q-learning loss."""
-
-    def dqn_learning_loss(net_params, target_params, batch):
-      obs_tm1, obs_t, a_tm1, r_t, discount_t = batch
-      q_tm1 = network.apply(net_params, obs_tm1)
-      q_t_value = network.apply(target_params, obs_t)
-      q_t_selector = network.apply(net_params, obs_t)
-
-      td_error = batched_loss(
-          q_tm1, a_tm1, r_t, discount_t, q_t_value, q_t_selector)
-      return jnp.mean(rlax.l2_loss(td_error))
-
-    loss, dloss_dtheta = jax.value_and_grad(dqn_learning_loss)(
-        net_params, target_params, batch)
-    updates, opt_state = optimizer.update(dloss_dtheta, opt_state)
-    net_params = optix.apply_updates(net_params, updates)
-    return net_params, opt_state, loss
-
-  state = env.reset()
-  print(f"Training agent for {FLAGS.train_steps} steps...")
-  for idx in range(1, FLAGS.train_steps+1):
-    epsilon = epsilon_by_frame(idx)
-
-    # Act in the environment and update replay_buffer
-    action = policy(net_params, next(rng), state, epsilon)
-    next_state, reward, done, _ = env.step(int(action))
-    replay_buffer.push(state, action, reward, next_state, done)
-
-    state = next_state
-    episode_reward += reward
-
-    if done:
-      state = env.reset()
-      all_rewards.append(episode_reward)
-      episode_reward = 0
-
-    if len(replay_buffer) > FLAGS.batch_size:
-      batch = replay_buffer.sample(FLAGS.batch_size)
-      net_params, opt_state, loss = update(
-          net_params, target_params, opt_state, batch)
-      losses.append(float(loss))
-
-    # Update Target model parameters
-    if idx % FLAGS.target_period == 0:
-      target_params = net_params
-
-    if idx % FLAGS.log_every == 0:
-      print("Average rewards:", np.mean(all_rewards[-10:]))
+  accumulator = ReplayBuffer(FLAGS.replay_capacity)
+  experiment.run_loop(
+      agent, env, accumulator, FLAGS.seed,
+      FLAGS.batch_size, FLAGS.train_episodes,
+      FLAGS.evaluate_every, FLAGS.eval_episodes)
 
 
 if __name__ == "__main__":
-  app.run(main_loop)
+  app.run(main)

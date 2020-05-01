@@ -42,6 +42,8 @@ from rlax._src.multistep import discounted_returns
 from rlax._src.multistep import general_off_policy_returns_from_action_values
 from rlax._src.multistep import general_off_policy_returns_from_q_and_v
 from rlax._src.multistep import lambda_returns
+from rlax._src.nested_updates import incremental_update
+from rlax._src.nested_updates import periodic_update
 from rlax._src.nonlinear_bellman import IDENTITY_PAIR
 from rlax._src.nonlinear_bellman import SIGNED_HYPERBOLIC_PAIR
 from rlax._src.nonlinear_bellman import SIGNED_LOGP1_PAIR
@@ -111,12 +113,14 @@ __all__ = (
     "huber_loss",
     "identity",
     "IDENTITY_PAIR",
+    "incremental_update",
     "l2_loss",
     "lambda_returns",
     "likelihood",
     "log_loss",
     "logit",
     "one_hot",
+    "periodic_update",
     "persistent_q_learning",
     "piecewise_constant_schedule",
     "pixel_control_rewards",

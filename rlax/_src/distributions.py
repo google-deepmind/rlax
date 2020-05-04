@@ -28,6 +28,7 @@ import jax.numpy as jnp
 from rlax._src import base
 
 ArrayLike = base.ArrayLike
+ArrayOrScalar = base.ArrayOrScalar
 
 
 DiscreteDistribution = collections.namedtuple(
@@ -299,8 +300,8 @@ def categorical_kl_divergence(
 def multivariate_normal_kl_divergence(
     mu_1: ArrayLike,
     mu_0: ArrayLike,
-    sigma_1: ArrayLike,
-    sigma_0: ArrayLike,
+    sigma_1: ArrayOrScalar,
+    sigma_0: ArrayOrScalar,
 ) -> ArrayLike:
   """Compute the KL between two gaussian distribution with diagonal covariance matrices.
 

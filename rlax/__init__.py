@@ -30,6 +30,7 @@ from rlax._src.distributions import epsilon_greedy
 from rlax._src.distributions import epsilon_softmax
 from rlax._src.distributions import gaussian_diagonal
 from rlax._src.distributions import greedy
+from rlax._src.distributions import multivariate_normal_kl_divergence
 from rlax._src.distributions import safe_epsilon_softmax
 from rlax._src.distributions import softmax
 from rlax._src.general_value_functions import feature_control_rewards
@@ -119,6 +120,7 @@ __all__ = (
     "likelihood",
     "log_loss",
     "logit",
+    "multivariate_normal_kl_divergence",
     "one_hot",
     "periodic_update",
     "persistent_q_learning",

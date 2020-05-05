@@ -452,59 +452,6 @@ def retrace(
   return target_tm1 - q_a_tm1
 
 
-def vtrace(
-    v_tm1: ArrayLike,
-    v_t: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
-    rho_t: ArrayLike,
-    lambda_: float = 1.0,
-    clip_rho_threshold: float = 1.0,
-    stop_target_gradients: bool = True,
-) -> ArrayLike:
-  """Calculates V-Trace errors from policy logits.
-
-  Args:
-    v_tm1: values at time t-1.
-    v_t: values at time t.
-    r_t: reward at time t.
-    discount_t: discount at time t.
-    rho_t: importance sampling ratios.
-    lambda_: scalar mixing parameter lambda.
-    clip_rho_threshold: clip threshold for importance weights.
-    stop_target_gradients: whether or not to apply stop gradient to targets.
-
-  Returns:
-    V-Trace error.
-  """
-  base.rank_assert(
-      [v_tm1, v_t, r_t, discount_t, rho_t], [1, 1, 1, 1, 1])
-  base.type_assert(
-      [v_tm1, v_t, r_t, discount_t, rho_t], [float, float, float, float, float])
-
-  # Clip importance sampling ratios.
-  c_t = jnp.minimum(1.0, rho_t) * lambda_
-  clipped_rhos = jnp.minimum(clip_rho_threshold, rho_t)
-
-  # Compute the temporal difference errors.
-  td_errors = clipped_rhos * (r_t + discount_t * v_t - v_tm1)
-
-  # Work backwards computing the td-errors.
-  err = 0.0
-  errors = []
-  for i in jnp.arange(v_t.shape[0] - 1, -1, -1):
-    err = td_errors[i] + discount_t[i] * c_t[i] * err
-    errors.insert(0, err)
-
-  # Add the value of the initial state to get the estimates of the returns.
-  target_tm1 = jnp.array(errors) + v_tm1
-
-  # Stop gradients and return temporal difference error.
-  if stop_target_gradients:
-    target_tm1 = jax.lax.stop_gradient(target_tm1)
-  return target_tm1 - v_tm1
-
-
 def _categorical_l2_project(
     z_p: ArrayLike,
     probs: ArrayLike,

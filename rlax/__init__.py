@@ -84,7 +84,8 @@ from rlax._src.value_learning import sarsa
 from rlax._src.value_learning import sarsa_lambda
 from rlax._src.value_learning import td_lambda
 from rlax._src.value_learning import td_learning
-from rlax._src.value_learning import vtrace
+from rlax._src.vtrace import leaky_vtrace
+from rlax._src.vtrace import vtrace
 from rlax._src.vtrace import vtrace_td_error_and_advantage
 
 __version__ = "0.0.1"
@@ -117,6 +118,7 @@ __all__ = (
     "incremental_update",
     "l2_loss",
     "lambda_returns",
+    "leaky_vtrace",
     "likelihood",
     "log_loss",
     "logit",

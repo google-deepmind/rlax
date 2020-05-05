@@ -40,12 +40,18 @@ class VTraceTest(parameterized.TestCase):
     actions = np.array([[0, 1, 0, 0], [1, 0, 0, 1]], dtype=np.int32)
     self._rho_t = distributions.categorical_importance_sampling_ratios(
         target_policy_logits, behavior_policy_logits, actions)
-    self._rewards = np.array([[-1.3, -1.3, 2.3, 42.0], [1.3, 5.3, -3.3, -5.0]],
-                             dtype=np.float32)
-    self._discounts = np.array([[0., 0.89, 0.85, 0.99], [0.88, 1., 0.83, 0.95]],
-                               dtype=np.float32)
-    self._values = np.array([[2.1, 1.1, -3.1, 0.0], [3.1, 0.1, -1.1, 7.4]],
-                            dtype=np.float32)
+    self._rewards = np.array(
+        [[-1.3, -1.3, 2.3, 42.0],
+         [1.3, 5.3, -3.3, -5.0]],
+        dtype=np.float32)
+    self._discounts = np.array(
+        [[0., 0.89, 0.85, 0.99],
+         [0.88, 1., 0.83, 0.95]],
+        dtype=np.float32)
+    self._values = np.array(
+        [[2.1, 1.1, -3.1, 0.0],
+         [3.1, 0.1, -1.1, 7.4]],
+        dtype=np.float32)
     self._bootstrap_value = np.array([8.4, -1.2], dtype=np.float32)
     self._inputs = [
         self._rewards, self._discounts, self._rho_t,
@@ -100,6 +106,21 @@ class VTraceTest(parameterized.TestCase):
     vs_from_q = v_tm1 + clipped_rho_t * (vtrace_output.q_estimate - v_tm1)
     # Test output.
     np.testing.assert_allclose(expected_vs, vs_from_q, rtol=1e-3)
+
+  @test_util.parameterize_vmap_variant()
+  def test_leaky_and_non_leaky_vtrace(self, variant):
+    """Tests for a full batch."""
+    vtrace_fn = variant(vtrace.vtrace, lambda_=self._lambda)
+    leaky_vtrace_fn = variant(
+        vtrace.leaky_vtrace, alpha_=1., lambda_=self._lambda)
+    # Get function arguments.
+    r_t, discount_t, rho_t, v_tm1, bootstrap_value = self._inputs
+    v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)
+    # Compute vtrace and leaky vtrace output.
+    vtrace_output = vtrace_fn(v_tm1, v_t, r_t, discount_t, rho_t)
+    leaky_vtrace_output = leaky_vtrace_fn(v_tm1, v_t, r_t, discount_t, rho_t)
+    # Test output.
+    np.testing.assert_allclose(vtrace_output, leaky_vtrace_output, rtol=1e-3)
 
 
 if __name__ == '__main__':

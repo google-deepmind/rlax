@@ -112,3 +112,5 @@ def feature_control_rewards(
     return features[:-1] - features[1:]
   elif cumulant_type == 'potential':
     return discount * features[1:] - features[:-1]
+  else:
+    raise ValueError('Unknown cumulant_type {}'.format(cumulant_type))

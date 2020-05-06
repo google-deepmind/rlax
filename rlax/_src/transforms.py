@@ -24,6 +24,7 @@ import jax.numpy as jnp
 from rlax._src import base
 
 ArrayLike = base.ArrayLike
+ArrayOrScalar = base.ArrayOrScalar
 
 
 def identity(x: ArrayLike) -> ArrayLike:
@@ -32,7 +33,7 @@ def identity(x: ArrayLike) -> ArrayLike:
   return x
 
 
-def sigmoid(x: ArrayLike) -> ArrayLike:
+def sigmoid(x: ArrayOrScalar) -> ArrayLike:
   """Sigmoid transform."""
   base.type_assert(x, float)
   return jax.nn.sigmoid(x)

@@ -17,10 +17,9 @@
 
 from typing import List, Type, Union
 import jax.numpy as jnp
-import numpy as np
 
 Scalar = Union[float, int]
-ArrayLike = Union[np.ndarray, jnp.DeviceArray]
+ArrayLike = jnp.ndarray
 ArrayOrScalar = Union[ArrayLike, Scalar]
 
 

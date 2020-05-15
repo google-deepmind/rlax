@@ -26,6 +26,7 @@ from rlax._src.clipping import huber_loss
 from rlax._src.distributions import categorical_cross_entropy
 from rlax._src.distributions import categorical_importance_sampling_ratios
 from rlax._src.distributions import categorical_kl_divergence
+from rlax._src.distributions import clipped_entropy_softmax
 from rlax._src.distributions import epsilon_greedy
 from rlax._src.distributions import epsilon_softmax
 from rlax._src.distributions import gaussian_diagonal
@@ -33,6 +34,7 @@ from rlax._src.distributions import greedy
 from rlax._src.distributions import multivariate_normal_kl_divergence
 from rlax._src.distributions import safe_epsilon_softmax
 from rlax._src.distributions import softmax
+from rlax._src.distributions import squashed_gaussian
 from rlax._src.general_value_functions import feature_control_rewards
 from rlax._src.general_value_functions import pixel_control_rewards
 from rlax._src.losses import l2_loss
@@ -111,6 +113,8 @@ __all__ = (
     "expected_sarsa",
     "feature_control_rewards",
     "gaussian_diagonal",
+    "squashed_gaussian",
+    "clipped_entropy_softmax",
     "greedy",
     "huber_loss",
     "identity",

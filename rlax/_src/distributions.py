@@ -32,10 +32,10 @@ ArrayOrScalar = base.ArrayOrScalar
 
 
 DiscreteDistribution = collections.namedtuple(
-    "DiscreteDistribution", ["sample", "probs", "logprob", "entropy"])
+    "DiscreteDistribution", ["sample", "probs", "logprob", "entropy", "kl"])
 ContinuousDistribution = collections.namedtuple(
     "ContinuousDistribution", ["sample", "prob", "logprob", "entropy",
-                               "kl_to_standard_normal"])
+                               "kl_to_standard_normal", "kl"])
 
 
 def _categorical_sample(key, probs):
@@ -64,7 +64,40 @@ def softmax(temperature=1.):
     logprobs = jax.nn.log_softmax(logits / temperature)
     return -jnp.sum(probs * logprobs, axis=-1)
 
-  return DiscreteDistribution(sample_fn, probs_fn, logprob_fn, entropy_fn)
+  def kl_fn(p_logits: ArrayLike, q_logits: ArrayLike):
+    return categorical_kl_divergence(p_logits, q_logits, temperature)
+
+  return DiscreteDistribution(sample_fn, probs_fn, logprob_fn, entropy_fn,
+                              kl_fn)
+
+
+def clipped_entropy_softmax(temperature=1., entropy_clip=1.):
+  """A softmax distribution with clipped entropy (1 is eq to not clipping)."""
+
+  def sample_fn(key: ArrayLike, action_spec, logits: ArrayLike):
+    del action_spec
+    probs = jax.nn.softmax(logits / temperature)
+    return _categorical_sample(key, probs)
+
+  def probs_fn(logits: ArrayLike):
+    return jax.nn.softmax(logits / temperature)
+
+  def logprob_fn(sample: ArrayLike, logits: ArrayLike):
+    logprobs = jax.nn.log_softmax(logits / temperature)
+    return base.batched_index(logprobs, sample)
+
+  def entropy_fn(logits: ArrayLike):
+    e_max = jnp.log(logits.shape[-1])
+    probs = jax.nn.softmax(logits / temperature)
+    logprobs = jax.nn.log_softmax(logits / temperature)
+    entropy = -jnp.sum(probs * logprobs, axis=-1)
+    return -jnp.minimum(entropy, entropy_clip * e_max)
+
+  def kl_fn(p_logits: ArrayLike, q_logits: ArrayLike):
+    return categorical_kl_divergence(p_logits, q_logits, temperature)
+
+  return DiscreteDistribution(sample_fn, probs_fn, logprob_fn, entropy_fn,
+                              kl_fn)
 
 
 def _mix_with_uniform(probs, epsilon):
@@ -96,7 +129,11 @@ def epsilon_softmax(epsilon, temperature):
     probs = _mix_with_uniform(probs, epsilon)
     return -jnp.sum(probs * jnp.log(probs), axis=-1)
 
-  return DiscreteDistribution(sample_fn, probs_fn, log_prob_fn, entropy_fn)
+  def kl_fn(p_logits: ArrayLike, q_logits: ArrayLike):
+    return categorical_kl_divergence(p_logits, q_logits, temperature)
+
+  return DiscreteDistribution(sample_fn, probs_fn, log_prob_fn, entropy_fn,
+                              kl_fn)
 
 
 def _argmax_with_random_tie_breaking(preferences):
@@ -123,7 +160,8 @@ def greedy():
     probs = _argmax_with_random_tie_breaking(preferences)
     return -jnp.nansum(probs * jnp.log(probs), axis=-1)
 
-  return DiscreteDistribution(sample_fn, probs_fn, log_prob_fn, entropy_fn)
+  return DiscreteDistribution(sample_fn, probs_fn, log_prob_fn, entropy_fn,
+                              None)
 
 
 def epsilon_greedy(epsilon=None):
@@ -148,7 +186,7 @@ def epsilon_greedy(epsilon=None):
     probs = _mix_with_uniform(probs, epsilon)
     return -jnp.nansum(probs * jnp.log(probs), axis=-1)
 
-  return DiscreteDistribution(sample_fn, probs_fn, logprob_fn, entropy_fn)
+  return DiscreteDistribution(sample_fn, probs_fn, logprob_fn, entropy_fn, None)
 
 
 def safe_epsilon_softmax(epsilon, temperature):
@@ -176,7 +214,11 @@ def safe_epsilon_softmax(epsilon, temperature):
                         logits, unsafe.entropy,
                         logits, egreedy.entropy)
 
-  return DiscreteDistribution(sample_fn, probs_fn, log_prob_fn, entropy_fn)
+  def kl_fn(p_logits: ArrayLike, q_logits: ArrayLike):
+    return categorical_kl_divergence(p_logits, q_logits, temperature)
+
+  return DiscreteDistribution(sample_fn, probs_fn, log_prob_fn, entropy_fn,
+                              kl_fn)
 
 
 def _add_gaussian_noise(key, sample, sigma):
@@ -224,15 +266,101 @@ def gaussian_diagonal(sigma=None):
         jnp.sum(v) + jnp.sum(mu**2) - jnp.sum(jnp.ones_like(mu)) -
         jnp.sum(jnp.log(v)))
 
-  return ContinuousDistribution(
-      sample_fn, prob_fn, logprob_fn, entropy_fn, kl_to_standard_normal_fn)
+  def kl_fn(mu_1: ArrayLike, sigma_1: ArrayOrScalar, mu_0: ArrayLike,
+            sigma_0: ArrayOrScalar):
+    return multivariate_normal_kl_divergence(mu_1, sigma_1, mu_0, sigma_0)
+
+  return ContinuousDistribution(sample_fn, prob_fn, logprob_fn, entropy_fn,
+                                kl_to_standard_normal_fn, kl_fn)
 
 
-def categorical_importance_sampling_ratios(
-    pi_logits_t: ArrayLike,
-    mu_logits_t: ArrayLike,
-    a_t: ArrayLike
-) -> ArrayLike:
+def squashed_gaussian(sigma_min=-4, sigma_max=0.):
+  """A squashed gaussian distribution with diagonal covariance matrix."""
+
+  def sigma_activation(sigma, sigma_min=sigma_min, sigma_max=sigma_max):
+    return jnp.exp(sigma_min + 0.5 * (sigma_max - sigma_min) *
+                   (jnp.tanh(sigma) + 1.))
+
+  def mu_activation(mu):
+    return jnp.tanh(mu)
+
+  def transform(a):
+    return jnp.tanh(a)
+
+  def inv_transform(a):
+    return jnp.arctanh(a)
+
+  def log_det_jacobian(a):
+    return jnp.sum(2. * (jnp.log(2.) - a - jax.nn.softplus(-2. * a)))
+
+  def sample_fn(key: ArrayLike,
+                action_spec,
+                mu: ArrayLike,
+                sigma: ArrayLike,
+                ):
+    mu = mu_activation(mu)
+    sigma = sigma_activation(sigma)
+    action = _add_gaussian_noise(key, mu, sigma)
+    min_vals = jnp.tile(action_spec.minimum, (action.shape[0], 1))
+    max_vals = jnp.tile(action_spec.maximum, (action.shape[0], 1))
+    actions = jax.lax.clamp(min_vals, transform(action), max_vals)
+    return actions
+
+  def prob_fn(sample: ArrayLike, mu: ArrayLike, sigma: ArrayLike):
+    # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
+    mu = mu_activation(mu)
+    sigma = sigma_activation(sigma)
+    # Compute pdf for multivariate gaussian.
+    d = mu.shape[-1]
+    det = jnp.prod(sigma**2, axis=-1)
+    z = ((2 * jnp.pi)**(0.5 * d)) * (det**0.5)
+    exp = jnp.exp(-0.5 * jnp.sum(
+        ((mu - inv_transform(sample)) / sigma)**2, axis=-1))
+    det_jacobian = jnp.prod(jnp.clip(1 - sample**2, 0., 1.) + 1e-6)
+    return exp / (z * det_jacobian)
+
+  def logprob_fn(sample: ArrayLike, mu: ArrayLike, sigma: ArrayLike):
+    # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
+    mu = mu_activation(mu)
+    sigma = sigma_activation(sigma)
+    # Compute logpdf for multivariate gaussian in a numerically safe way.
+    d = mu.shape[-1]
+    half_logdet = jnp.sum(jnp.log(sigma), axis=-1)
+    logz = half_logdet + 0.5 * d * jnp.log(2 * jnp.pi)
+    logexp = -0.5 * jnp.sum(((mu - inv_transform(sample)) / sigma)**2, axis=-1)
+    return logexp - logz - log_det_jacobian(sample)
+
+  def entropy_fn(mu: ArrayLike, sigma: ArrayLike):
+    # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
+    mu = mu_activation(mu)
+    sigma = sigma_activation(sigma)
+    # Compute entropy in a numerically safe way.
+    d = mu.shape[-1]
+    half_logdet = jnp.sum(jnp.log(sigma), axis=-1)
+    return half_logdet + 0.5 * d * (1 + jnp.log(2 * jnp.pi))
+
+  def kl_to_standard_normal_fn(mu: ArrayLike, sigma: ArrayLike):
+    mu = mu_activation(mu)
+    sigma = sigma_activation(sigma)
+    v = jnp.clip(sigma**2, 1e-6, 1e6)
+    return 0.5 * (jnp.sum(v) + jnp.sum(mu**2) - jnp.sum(jnp.ones_like(mu)) -
+                  jnp.sum(jnp.log(v)))
+
+  def kl_fn(mu_1: ArrayLike, sigma_1: ArrayOrScalar, mu_0: ArrayLike,
+            sigma_0: ArrayOrScalar):
+    sigma_0 = sigma_activation(sigma_0)
+    mu_0 = mu_activation(mu_0)
+    sigma_1 = sigma_activation(sigma_1)
+    mu_1 = mu_activation(mu_1)
+    return multivariate_normal_kl_divergence(mu_1, sigma_1, mu_0, sigma_0)
+
+  return ContinuousDistribution(sample_fn, prob_fn, logprob_fn, entropy_fn,
+                                kl_to_standard_normal_fn, kl_fn)
+
+
+def categorical_importance_sampling_ratios(pi_logits_t: ArrayLike,
+                                           mu_logits_t: ArrayLike,
+                                           a_t: ArrayLike) -> ArrayLike:
   """Compute importance sampling ratios from logits.
 
   Args:
@@ -299,16 +427,16 @@ def categorical_kl_divergence(
 
 def multivariate_normal_kl_divergence(
     mu_1: ArrayLike,
-    mu_0: ArrayLike,
     sigma_1: ArrayOrScalar,
+    mu_0: ArrayLike,
     sigma_0: ArrayOrScalar,
 ) -> ArrayLike:
   """Compute the KL between two gaussian distribution with diagonal covariance matrices.
 
   Args:
     mu_1: array like of mean values for policy 1
-    mu_0: array like of mean values for policy 0
     sigma_1: array like of std values for policy 1
+    mu_0: array like of mean values for policy 0
     sigma_0: array like of std values for policy 0
 
   Returns:

@@ -28,7 +28,7 @@ class CategoricalSampleTest(parameterized.TestCase):
   def test_categorical_sample(self):
     key = np.array([1, 2], dtype=np.uint32)
     probs = np.array([0.2, 0.3, 0.5])
-    sample = distributions._categorical_sample(key, probs)
+    sample = distributions.categorical_sample(key, probs)
     self.assertEqual(sample, 0)
 
 

@@ -38,7 +38,7 @@ ContinuousDistribution = collections.namedtuple(
                                "kl_to_standard_normal", "kl"])
 
 
-def _categorical_sample(key, probs):
+def categorical_sample(key, probs):
   """Sample from a set of discrete probabilities."""
   cpi = jnp.cumsum(probs, axis=-1)
   rnds = jax.random.uniform(key, shape=probs.shape[:-1] + (1,))
@@ -50,7 +50,7 @@ def softmax(temperature=1.):
 
   def sample_fn(key: ArrayLike, logits: ArrayLike):
     probs = jax.nn.softmax(logits / temperature)
-    return _categorical_sample(key, probs)
+    return categorical_sample(key, probs)
 
   def probs_fn(logits: ArrayLike):
     return jax.nn.softmax(logits / temperature)
@@ -77,7 +77,7 @@ def clipped_entropy_softmax(temperature=1., entropy_clip=1.):
   def sample_fn(key: ArrayLike, action_spec, logits: ArrayLike):
     del action_spec
     probs = jax.nn.softmax(logits / temperature)
-    return _categorical_sample(key, probs)
+    return categorical_sample(key, probs)
 
   def probs_fn(logits: ArrayLike):
     return jax.nn.softmax(logits / temperature)
@@ -113,7 +113,7 @@ def epsilon_softmax(epsilon, temperature):
   def sample_fn(key: ArrayLike, logits: ArrayLike):
     probs = jax.nn.softmax(logits / temperature)
     probs = _mix_with_uniform(probs, epsilon)
-    return _categorical_sample(key, probs)
+    return categorical_sample(key, probs)
 
   def probs_fn(logits: ArrayLike):
     probs = jax.nn.softmax(logits / temperature)
@@ -147,7 +147,7 @@ def greedy():
 
   def sample_fn(key: ArrayLike, preferences: ArrayLike):
     probs = _argmax_with_random_tie_breaking(preferences)
-    return _categorical_sample(key, probs)
+    return categorical_sample(key, probs)
 
   def probs_fn(preferences: ArrayLike):
     return _argmax_with_random_tie_breaking(preferences)
@@ -170,7 +170,7 @@ def epsilon_greedy(epsilon=None):
   def sample_fn(key: ArrayLike, preferences: ArrayLike, epsilon=epsilon):
     probs = _argmax_with_random_tie_breaking(preferences)
     probs = _mix_with_uniform(probs, epsilon)
-    return _categorical_sample(key, probs)
+    return categorical_sample(key, probs)
 
   def probs_fn(preferences: ArrayLike, epsilon=epsilon):
     probs = _argmax_with_random_tie_breaking(preferences)

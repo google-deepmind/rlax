@@ -26,6 +26,7 @@ from rlax._src.clipping import huber_loss
 from rlax._src.distributions import categorical_cross_entropy
 from rlax._src.distributions import categorical_importance_sampling_ratios
 from rlax._src.distributions import categorical_kl_divergence
+from rlax._src.distributions import categorical_sample
 from rlax._src.distributions import clipped_entropy_softmax
 from rlax._src.distributions import epsilon_greedy
 from rlax._src.distributions import epsilon_softmax

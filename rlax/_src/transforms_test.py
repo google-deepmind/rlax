@@ -24,6 +24,21 @@ from rlax._src import test_util
 from rlax._src import transforms
 
 
+TWO_HOT_BINS = 5
+TWO_HOT_SCALARS = [-5.0, -3.0, -1.0, -0.4, 0.0, 0.3, 1.0, 4.5, 10.0]
+TWO_HOT_PROBABILITIES = [
+    [1.0, 0.0, 0.0, 0.0, 0.0],
+    [1.0, 0.0, 0.0, 0.0, 0.0],
+    [1.0, 0.0, 0.0, 0.0, 0.0],
+    [0.0, 0.8, 0.2, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 0.4, 0.6, 0.0],
+    [0.0, 0.0, 0.0, 0.0, 1.0],
+    [0.0, 0.0, 0.0, 0.0, 1.0],
+    [0.0, 0.0, 0.0, 0.0, 1.0]
+]
+
+
 class TransformsTest(parameterized.TestCase):
 
   def setUp(self):
@@ -106,6 +121,39 @@ class TransformsTest(parameterized.TestCase):
     sqrt = variant(transforms.power, p=1/2.)
     # Test inverse.
     np.testing.assert_allclose(square(sqrt(self.xs)), self.xs, atol=1e-3)
+
+  def test_transform_to_2hot(self):
+    y = transforms.transform_to_2hot(
+        scalar=jnp.array(TWO_HOT_SCALARS),
+        min_value=-1.0,
+        max_value=1.0,
+        num_bins=TWO_HOT_BINS)
+
+    np.testing.assert_allclose(y, np.array(TWO_HOT_PROBABILITIES), atol=1e-4)
+
+  def test_transform_from_2hot(self):
+    y = transforms.transform_from_2hot(
+        probs=jnp.array(TWO_HOT_PROBABILITIES),
+        min_value=-1.0,
+        max_value=1.0,
+        num_bins=TWO_HOT_BINS)
+
+    np.testing.assert_allclose(
+        y, np.clip(np.array(TWO_HOT_SCALARS), -1, 1), atol=1e-4)
+
+  def test_2hot_roundtrip(self):
+    min_value = -1.0
+    max_value = 1.0
+    num_bins = 11
+
+    value = np.arange(min_value, max_value, 0.01)
+
+    transformed = transforms.transform_to_2hot(
+        value, min_value, max_value, num_bins)
+    restored = transforms.transform_from_2hot(
+        transformed, min_value, max_value, num_bins)
+
+    np.testing.assert_almost_equal(value, restored, decimal=5)
 
 
 if __name__ == '__main__':

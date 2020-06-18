@@ -75,3 +75,32 @@ def power(x: ArrayLike, p: float) -> ArrayLike:
   base.type_assert(x, float)
   q = jnp.sqrt(p)
   return jnp.sign(x) * (jnp.power(jnp.abs(x) / q + 1., p) - 1) / q
+
+
+def transform_to_2hot(
+    scalar: ArrayLike,
+    min_value: float,
+    max_value: float,
+    num_bins: int) -> ArrayLike:
+  """Transforms a scalar tensor to a 2 hot representation."""
+  scalar = jnp.clip(scalar, min_value, max_value)
+  scalar_bin = (scalar - min_value) / (max_value - min_value) * (num_bins - 1)
+  lower, upper = jnp.floor(scalar_bin), jnp.ceil(scalar_bin)
+  lower_value = (lower / (num_bins - 1.0)) * (max_value - min_value) + min_value
+  upper_value = (upper / (num_bins - 1.0)) * (max_value - min_value) + min_value
+  p_lower = (upper_value - scalar) / (upper_value - lower_value + 1e-5)
+  p_upper = 1 - p_lower
+  lower_one_hot = base.one_hot(lower, num_bins) * jnp.expand_dims(p_lower, -1)
+  upper_one_hot = base.one_hot(upper, num_bins) * jnp.expand_dims(p_upper, -1)
+  return lower_one_hot + upper_one_hot
+
+
+def transform_from_2hot(
+    probs: ArrayLike,
+    min_value: float,
+    max_value: float,
+    num_bins: int) -> ArrayLike:
+  """Transforms from a categorical distribution to a scalar."""
+  support_space = jnp.linspace(min_value, max_value, num_bins)
+  scalar = jnp.sum(probs * jnp.expand_dims(support_space, 0), -1)
+  return scalar

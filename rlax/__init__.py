@@ -71,6 +71,8 @@ from rlax._src.transforms import signed_expm1
 from rlax._src.transforms import signed_hyperbolic
 from rlax._src.transforms import signed_logp1
 from rlax._src.transforms import signed_parabolic
+from rlax._src.transforms import transform_from_2hot
+from rlax._src.transforms import transform_to_2hot
 from rlax._src.tree_util import tree_split_key
 from rlax._src.value_learning import categorical_double_q_learning
 from rlax._src.value_learning import categorical_q_learning
@@ -157,6 +159,8 @@ __all__ = (
     "softmax",
     "td_lambda",
     "td_learning",
+    "transform_to_2hot",
+    "transform_from_2hot",
     "transformed_general_off_policy_returns_from_action_values",
     "transformed_lambda_returns",
     "transformed_q_lambda",

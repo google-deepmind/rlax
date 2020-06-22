@@ -61,8 +61,6 @@ from rlax._src.perturbations import add_ornstein_uhlenbeck_noise
 from rlax._src.policy_gradients import dpg_loss
 from rlax._src.policy_gradients import entropy_loss
 from rlax._src.policy_gradients import policy_gradient_loss
-from rlax._src.schedules import piecewise_constant_schedule
-from rlax._src.schedules import polynomial_schedule
 from rlax._src.transforms import identity
 from rlax._src.transforms import logit
 from rlax._src.transforms import power
@@ -133,10 +131,8 @@ __all__ = (
     "one_hot",
     "periodic_update",
     "persistent_q_learning",
-    "piecewise_constant_schedule",
     "pixel_control_rewards",
     "policy_gradient_loss",
-    "polynomial_schedule",
     "power",
     "q_lambda",
     "q_learning",

@@ -25,6 +25,7 @@ from haiku import nets
 import jax
 from jax.experimental import optix
 import jax.numpy as jnp
+import optax
 import rlax
 from rlax.examples import experiment
 
@@ -106,7 +107,7 @@ class DQN:
     # Neural net and optimiser.
     self._network = build_network(action_spec.num_values)
     self._optimizer = optix.adam(learning_rate)
-    self._epsilon_by_frame = rlax.polynomial_schedule(**epsilon_cfg)
+    self._epsilon_by_frame = optax.polynomial_schedule(**epsilon_cfg)
     # Jitting for speed.
     self.actor_step = jax.jit(self.actor_step)
     self.learner_step = jax.jit(self.learner_step)

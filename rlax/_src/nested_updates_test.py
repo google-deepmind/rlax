@@ -17,11 +17,11 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
 from rlax._src import nested_updates
-from rlax._src import test_util
 
 
 class NestedUpdatesTest(parameterized.TestCase):
@@ -33,10 +33,10 @@ class NestedUpdatesTest(parameterized.TestCase):
     self._old_struct = ((old, old), old)
     self._new_struct = ((new, new), new)
 
-  @test_util.parameterize_variant()
-  def test_periodic_update_is_time(self, variant):
+  @chex.all_variants()
+  def test_periodic_update_is_time(self):
     """Check periodic update enabled."""
-    periodic_update = variant(nested_updates.periodic_update)
+    periodic_update = self.variant(nested_updates.periodic_update)
 
     is_time = jnp.array(True)
     output = periodic_update(self._new_struct, self._old_struct, is_time)
@@ -44,10 +44,10 @@ class NestedUpdatesTest(parameterized.TestCase):
         jax.tree_leaves(output), jax.tree_leaves(self._new_struct)):
       np.testing.assert_allclose(o, exp)
 
-  @test_util.parameterize_variant()
-  def test_periodic_update_is_not_time(self, variant):
+  @chex.all_variants()
+  def test_periodic_update_is_not_time(self):
     """Check periodic update disables."""
-    periodic_update = variant(nested_updates.periodic_update)
+    periodic_update = self.variant(nested_updates.periodic_update)
 
     is_not_time = jnp.array(False)
     output = periodic_update(self._new_struct, self._old_struct, is_not_time)
@@ -55,10 +55,10 @@ class NestedUpdatesTest(parameterized.TestCase):
         jax.tree_leaves(output), jax.tree_leaves(self._old_struct)):
       np.testing.assert_allclose(o, exp)
 
-  @test_util.parameterize_variant()
-  def test_incremental_update(self, variant):
+  @chex.all_variants()
+  def test_incremental_update(self):
     """Check nested incremental updates."""
-    incremental_update = variant(nested_updates.incremental_update)
+    incremental_update = self.variant(nested_updates.incremental_update)
 
     tau = jnp.array(0.1)
     output = incremental_update(self._new_struct, self._old_struct, tau)

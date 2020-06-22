@@ -15,13 +15,14 @@
 # ==============================================================================
 """Tests for `value_learning.py`."""
 
+import functools
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
 from rlax._src import distributions
-from rlax._src import test_util
 from rlax._src import value_learning
 
 
@@ -42,10 +43,10 @@ class TDLearningTest(parameterized.TestCase):
     self.expected_td = np.array(
         [-2., -2., -2., -2., -1.5, -1., -2., -1., 0.], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_td_learning_batch(self, variant):
+  @chex.all_variants()
+  def test_td_learning_batch(self):
     """Tests for a full batch."""
-    td_learning = variant(value_learning.td_learning)
+    td_learning = self.variant(jax.vmap(value_learning.td_learning))
     # Compute errors in batch.
     actual_td = td_learning(self.v_tm1, self.r_t, self.discount_t, self.v_t)
     # Tets output.
@@ -71,10 +72,11 @@ class TDLambdaTest(parameterized.TestCase):
          [-0.01701999, 2.6529999, -2.196]],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_batch_compatibility(self, variant):
+  @chex.all_variants()
+  def test_batch_compatibility(self):
     """Tests for a full batch."""
-    td_lambda = variant(value_learning.td_lambda, lambda_=self.lambda_)
+    td_lambda = self.variant(jax.vmap(functools.partial(
+        value_learning.td_lambda, lambda_=self.lambda_)))
     # Get arguments.
     v_t = np.concatenate([self.v_tm1[:, 1:], self.bootstrap_v[:, None]], axis=1)
     # Test output
@@ -96,10 +98,10 @@ class SarsaTest(parameterized.TestCase):
 
     self.expected = np.array([0., 3.], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_sarsa_batch(self, variant):
+  @chex.all_variants()
+  def test_sarsa_batch(self):
     """Tests for a full batch."""
-    batch_sarsa = variant(value_learning.sarsa)
+    batch_sarsa = self.variant(jax.vmap(value_learning.sarsa))
     # Test outputs.
     actual = batch_sarsa(self.q_tm1, self.a_tm1, self.r_t, self.discount_t,
                          self.q_t, self.a_t)
@@ -127,10 +129,10 @@ class ExpectedSarsaTest(parameterized.TestCase):
     self.expected = np.array(
         [4.4, 2.], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_expected_sarsa_batch(self, variant):
+  @chex.all_variants()
+  def test_expected_sarsa_batch(self):
     """Tests for a full batch."""
-    expected_sarsa = variant(value_learning.expected_sarsa)
+    expected_sarsa = self.variant(jax.vmap(value_learning.expected_sarsa))
     # Test outputs.
     actual = expected_sarsa(self.q_tm1, self.a_tm1, self.r_t, self.discount_t,
                             self.q_t, self.probs_a_t)
@@ -172,10 +174,11 @@ class SarsaLambdaTest(parameterized.TestCase):
         [[-2.4, -1.8126001, -1.8200002], [0.25347996, 3.4780002, -2.196]],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_sarsa_lambda_batch(self, variant):
+  @chex.all_variants()
+  def test_sarsa_lambda_batch(self):
     """Tests for a full batch."""
-    sarsa_lambda = variant(value_learning.sarsa_lambda, lambda_=self.lambda_)
+    sarsa_lambda = self.variant(jax.vmap(functools.partial(
+        value_learning.sarsa_lambda, lambda_=self.lambda_)))
     # Test outputs.
     actual = sarsa_lambda(self.q_tm1, self.a_tm1, self.r_t, self.discount_t,
                           self.q_t, self.a_t)
@@ -195,10 +198,10 @@ class QLearningTest(parameterized.TestCase):
 
     self.expected = np.array([0., 1.], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_q_learning_batch(self, variant):
+  @chex.all_variants()
+  def test_q_learning_batch(self):
     """Tests for a full batch."""
-    q_learning = variant(value_learning.q_learning)
+    q_learning = self.variant(jax.vmap(value_learning.q_learning))
     # Test outputs.
     actual = q_learning(self.q_tm1, self.a_tm1, self.r_t, self.discount_t,
                         self.q_t)
@@ -219,10 +222,10 @@ class DoubleQLearningTest(parameterized.TestCase):
 
     self.expected = np.array([0., 1.], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_double_q_learning_batch(self, variant):
+  @chex.all_variants()
+  def test_double_q_learning_batch(self):
     """Tests for a full batch."""
-    double_q_learning = variant(value_learning.double_q_learning)
+    double_q_learning = self.variant(jax.vmap(value_learning.double_q_learning))
     # Test outputs.
     actual = double_q_learning(self.q_tm1, self.a_tm1, self.r_t,
                                self.discount_t, self.q_t_value,
@@ -244,12 +247,13 @@ class PersistentQLearningTest(parameterized.TestCase):
 
     self.expected = np.array([2., 17., -1.], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_persistent_q_learning_batch(self, variant):
+  @chex.all_variants()
+  def test_persistent_q_learning_batch(self):
     """Tests for a full batch."""
     # Vmap and optionally compile.
-    persistent_q_learning = variant(value_learning.persistent_q_learning,
-                                    action_gap_scale=self.action_gap_scale)
+    persistent_q_learning = self.variant(jax.vmap(functools.partial(
+        value_learning.persistent_q_learning,
+        action_gap_scale=self.action_gap_scale)))
     # Test outputs.
     actual = persistent_q_learning(self.q_tm1, self.a_tm1, self.r_t,
                                    self.discount_t, self.q_t)
@@ -269,10 +273,10 @@ class QVLearningTest(parameterized.TestCase):
 
     self.expected = np.array([0., 2.], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_qv_learning_batch(self, variant):
+  @chex.all_variants()
+  def test_qv_learning_batch(self):
     """Tests for a full batch."""
-    batch_qv_learning = variant(value_learning.qv_learning)
+    batch_qv_learning = self.variant(jax.vmap(value_learning.qv_learning))
     # Test outputs.
     actual = batch_qv_learning(self.q_tm1, self.a_tm1, self.r_t,
                                self.discount_t, self.v_t)
@@ -302,10 +306,10 @@ class QVMaxTest(parameterized.TestCase):
         [-2., -2., -2., -2., -1.5, -1., -2., -1., 0.],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_qv_max_batch(self, variant):
+  @chex.all_variants()
+  def test_qv_max_batch(self):
     """Tests for a full batch."""
-    qv_max = variant(value_learning.qv_max)
+    qv_max = self.variant(jax.vmap(value_learning.qv_max))
     # Test outputs.
     actual = qv_max(self.v_tm1, self.r_t, self.discount_t, self.q_t)
     np.testing.assert_allclose(self.expected, actual)
@@ -343,10 +347,11 @@ class QLambdaTest(parameterized.TestCase):
          [0.69348, 3.478, -2.196]],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_q_lambda_batch(self, variant):
+  @chex.all_variants()
+  def test_q_lambda_batch(self):
     """Tests for a full batch."""
-    q_lambda = variant(value_learning.q_lambda, lambda_=self.lambda_)
+    q_lambda = self.variant(jax.vmap(functools.partial(
+        value_learning.q_lambda, lambda_=self.lambda_)))
     # Test outputs.
     actual = q_lambda(self.q_tm1, self.a_tm1, self.r_t, self.discount_t,
                       self.q_t)
@@ -395,10 +400,11 @@ class RetraceTest(parameterized.TestCase):
          [3.1121615e-1, 2.0253206e1, 3.1601219e-3]],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_retrace_batch(self, variant):
+  @chex.all_variants()
+  def test_retrace_batch(self):
     """Tests for a full batch."""
-    retrace = variant(value_learning.retrace, lambda_=self._lambda)
+    retrace = self.variant(jax.vmap(functools.partial(
+        value_learning.retrace, lambda_=self._lambda)))
     # Test outputs.
     actual_td = retrace(self._qs[:, :-1], self._targnet_qs[:, 1:],
                         self._actions[:, :-1], self._actions[:, 1:],
@@ -439,10 +445,11 @@ class L2ProjectTest(parameterized.TestCase):
     self.expected = np.array([[-0.375, -0.5, 0., 0.875], [0., 0.5, 1., 1.5]],
                              dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_categorical_l2_project_batch(self, variant):
+  @chex.all_variants()
+  def test_categorical_l2_project_batch(self):
     """Testsfor a full batch."""
-    l2_project = variant(value_learning._categorical_l2_project)
+    l2_project = self.variant(jax.vmap(functools.partial(
+        value_learning._categorical_l2_project)))
     # Compute projection in batch.
     actual = l2_project(self.old_supports, self.weights, self.new_supports)
     # Test outputs.
@@ -472,8 +479,8 @@ class CategoricalTDLearningTest(parameterized.TestCase):
         [8.998915, 3.6932087, 8.998915, 0.69320893, 5.1929307],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_categorical_td_learning_batch(self, variant):
+  @chex.all_variants()
+  def test_categorical_td_learning_batch(self):
     """Tests for a full batch."""
     # Not using vmap for atoms.
     def fn(v_logits_tm1, r_t, discount_t, v_logits_t):
@@ -484,7 +491,7 @@ class CategoricalTDLearningTest(parameterized.TestCase):
           discount_t=discount_t,
           v_atoms_t=self.atoms,
           v_logits_t=v_logits_t)
-    categorical_td_learning = variant(fn)
+    categorical_td_learning = self.variant(jax.vmap(fn))
     # Test outputs.
     actual = categorical_td_learning(
         self.logits_tm1, self.r_t, self.discount_t, self.logits_t)
@@ -528,8 +535,8 @@ class CategoricalQLearningTest(parameterized.TestCase):
         [8.998915, 3.6932087, 8.998915, 0.69320893, 5.1929307],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_categorical_q_learning_batch(self, variant):
+  @chex.all_variants()
+  def test_categorical_q_learning_batch(self):
     """Tests for a full batch."""
     # Not using vmap for atoms.
     def fn(q_logits_tm1, a_tm1, r_t, discount_t, q_logits_t):
@@ -541,7 +548,7 @@ class CategoricalQLearningTest(parameterized.TestCase):
           discount_t=discount_t,
           q_atoms_t=self.atoms,
           q_logits_t=q_logits_t)
-    categorical_q_learning = variant(fn)
+    categorical_q_learning = self.variant(jax.vmap(fn))
     # Test outputs.
     actual = categorical_q_learning(*self.inputs)
     np.testing.assert_allclose(self.expected, actual, rtol=1e-5)
@@ -587,8 +594,8 @@ class CategoricalDoubleQLearningTest(parameterized.TestCase):
         [8.998915, 5.192931, 5.400247, 0.693209, 0.693431],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_categorical_double_q_learning_batch(self, variant):
+  @chex.all_variants()
+  def test_categorical_double_q_learning_batch(self):
     """Tests for a full batch."""
     # Not using vmap for atoms.
     def fn(q_logits_tm1, a_tm1, r_t, discount_t, q_logits_t, q_t_selector):
@@ -601,16 +608,17 @@ class CategoricalDoubleQLearningTest(parameterized.TestCase):
           q_atoms_t=self.atoms,
           q_logits_t=q_logits_t,
           q_t_selector=q_t_selector)
-    categorical_double_q_learning = variant(fn)
+    categorical_double_q_learning = self.variant(jax.vmap(fn))
     # Test outputs.
     actual = categorical_double_q_learning(*self.inputs)
     np.testing.assert_allclose(self.expected, actual, rtol=1e-5)
 
-  @test_util.parameterize_vmap_variant()
-  def test_single_double_q_learning_eq_batch(self, variant):
+  @chex.all_variants()
+  def test_single_double_q_learning_eq_batch(self):
     """Tests equivalence to categorical_q_learning when q_t_selector == q_t."""
     # Not using vmap for atoms.
-    @variant
+    @self.variant
+    @jax.vmap
     def batch_categorical_double_q_learning(
         q_logits_tm1, a_tm1, r_t, discount_t, q_logits_t, q_t_selector):
       return value_learning.categorical_double_q_learning(
@@ -623,7 +631,8 @@ class CategoricalDoubleQLearningTest(parameterized.TestCase):
           q_logits_t=q_logits_t,
           q_t_selector=q_t_selector)
 
-    @variant
+    @self.variant
+    @jax.vmap
     def batch_categorical_q_learning(
         q_logits_tm1, a_tm1, r_t, discount_t, q_logits_t):
       return value_learning.categorical_q_learning(
@@ -675,13 +684,15 @@ class QuantileRegressionLossTest(parameterized.TestCase):
         2.: np.array([2.5, 8.5 / 3.])
     }
 
-  @test_util.parameterize_vmap_variant(
+  @parameterized.named_parameters(
       ('nohuber', 0.),
       ('huber', 2.))
-  def test_quantile_regression_loss_batch(self, huber_param, variant):
+  @chex.all_variants()
+  def test_quantile_regression_loss_batch(self, huber_param):
     """Tests for a full batch."""
     loss_fn = value_learning._quantile_regression_loss
-    loss_fn = variant(loss_fn, huber_param=huber_param)
+    loss_fn = self.variant(jax.vmap(functools.partial(
+        loss_fn, huber_param=huber_param)))
     # Compute quantile regression loss.
     actual = loss_fn(self.dist_src, self.tau_src, self.dist_target)
     # Test outputs in batch.
@@ -754,13 +765,14 @@ class QuantileQLearningTest(parameterized.TestCase):
            for (dqa, tau, dt) in zip(dist_qa_tm1, self.tau_q_tm1, dist_target)],
           dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant(
+  @parameterized.named_parameters(
       ('nohuber', 0.0),
       ('huber', 1.0))
-  def test_quantile_q_learning_batch(self, huber_param, variant):
+  @chex.all_variants()
+  def test_quantile_q_learning_batch(self, huber_param):
     """Tests for a full batch."""
-    quantile_q_learning = variant(
-        value_learning.quantile_q_learning, huber_param=huber_param)
+    quantile_q_learning = self.variant(jax.vmap(functools.partial(
+        value_learning.quantile_q_learning, huber_param=huber_param)))
     # Test outputs.
     actual = quantile_q_learning(
         self.dist_q_tm1, self.tau_q_tm1, self.a_tm1, self.r_t, self.discount_t,

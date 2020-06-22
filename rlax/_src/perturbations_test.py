@@ -17,10 +17,10 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import numpy as np
 from rlax._src import perturbations
-from rlax._src import test_util
 
 
 class GaussianTest(parameterized.TestCase):
@@ -30,10 +30,10 @@ class GaussianTest(parameterized.TestCase):
     self._num_actions = 3
     self._rng_key = jax.random.PRNGKey(42)
 
-  @test_util.parameterize_variant()
-  def test_deterministic(self, variant):
+  @chex.all_variants()
+  def test_deterministic(self):
     """Check that noisy and noisless actions match for zero stddev."""
-    add_noise = variant(perturbations.add_gaussian_noise)
+    add_noise = self.variant(perturbations.add_gaussian_noise)
     # Test that noisy and noisless actions match for zero stddev
     for _ in range(10):
       action = np.random.normal(0., 1., self._num_actions)
@@ -50,10 +50,10 @@ class OrnsteinUhlenbeckTest(parameterized.TestCase):
     self._num_actions = 3
     self._rng_key = jax.random.PRNGKey(42)
 
-  @test_util.parameterize_variant()
-  def test_deterministic(self, variant):
+  @chex.all_variants()
+  def test_deterministic(self):
     """Check that noisy and noisless actions match for zero stddev."""
-    add_noise = variant(perturbations.add_ornstein_uhlenbeck_noise)
+    add_noise = self.variant(perturbations.add_ornstein_uhlenbeck_noise)
     # Test that noisy and noisless actions match for zero stddev
     noise_tm1 = np.zeros((self._num_actions,))
     for _ in range(10):

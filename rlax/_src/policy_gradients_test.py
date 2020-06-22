@@ -15,13 +15,14 @@
 # ==============================================================================
 """Unit tests for `policy_gradients.py`."""
 
+import functools
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
 from rlax._src import policy_gradients
-from rlax._src import test_util
 
 
 class DpgLossTest(parameterized.TestCase):
@@ -39,10 +40,11 @@ class DpgLossTest(parameterized.TestCase):
 
     self.expected = np.array([0.5, 0.5], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_dpg_loss_batch(self, variant):
+  @chex.all_variants()
+  def test_dpg_loss_batch(self):
     """Tests for a full batch."""
-    dpg = variant(policy_gradients.dpg_loss, dqda_clipping=1.)
+    dpg = self.variant(jax.vmap(functools.partial(
+        policy_gradients.dpg_loss, dqda_clipping=1.)))
     # Actor and critic function approximators.
     actor = lambda s_t: jnp.matmul(s_t, self.w_s) + self.b_s
     critic = lambda a_t: jnp.squeeze(jnp.matmul(a_t, self.w) + self.b)
@@ -71,10 +73,11 @@ class PolicyGradientLossTest(parameterized.TestCase):
 
     self.expected = np.array([0.0788835088, 0.327200909], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_policy_gradient_loss_batch(self, variant):
+  @chex.all_variants()
+  def test_policy_gradient_loss_batch(self):
     """Tests for a full batch."""
-    policy_gradient_loss = variant(policy_gradients.policy_gradient_loss)
+    policy_gradient_loss = self.variant(jax.vmap(
+        policy_gradients.policy_gradient_loss))
     # Test outputs.
     actual = policy_gradient_loss(self.logits, self.actions, self.advantages,
                                   self.weights)
@@ -94,10 +97,10 @@ class EntropyLossTest(parameterized.TestCase):
 
     self.expected = np.array([0.288693, 1.15422], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_entropy_loss_batch(self, variant):
+  @chex.all_variants()
+  def test_entropy_loss_batch(self):
     """Tests for a full batch."""
-    entropy_loss = variant(policy_gradients.entropy_loss)
+    entropy_loss = self.variant(jax.vmap(policy_gradients.entropy_loss))
     # Test outputs.
     actual = entropy_loss(self.logits, self.weights)
     np.testing.assert_allclose(self.expected, actual, atol=1e-4)

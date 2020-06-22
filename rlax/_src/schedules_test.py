@@ -18,21 +18,21 @@
 from absl.testing import absltest
 from absl.testing import parameterized
 
+import chex
 import jax
 import numpy as np
 
 from rlax._src import schedules
-from rlax._src import test_util
 
 
-@test_util.parameterize_variant()
+@chex.all_variants()
 class PolynomialTest(parameterized.TestCase):
 
-  def test_linear(self, variant):
+  def test_linear(self):
     """Check linear schedule."""
     # Get schedule function.
     schedule_fn = schedules.polynomial_schedule(10., 20., 1, 10)
-    schedule_fn = variant(schedule_fn)
+    schedule_fn = self.variant(schedule_fn)
     # Test that generated values equal the expected schedule values.
     generated_vals = []
     for count in range(15):
@@ -43,7 +43,7 @@ class PolynomialTest(parameterized.TestCase):
     np.testing.assert_allclose(
         expected_vals, np.array(generated_vals), atol=1e-3)
 
-  def test_zero_steps_schedule(self, variant):
+  def test_zero_steps_schedule(self):
     # Get schedule function.
     num_steps = 0
     initial_value = 10.
@@ -52,15 +52,15 @@ class PolynomialTest(parameterized.TestCase):
     for num_steps in [-1, 0]:
       schedule_fn = schedules.polynomial_schedule(
           initial_value, final_value, 1, num_steps)
-      schedule_fn = variant(schedule_fn)
+      schedule_fn = self.variant(schedule_fn)
       for count in range(15):
         np.testing.assert_allclose(schedule_fn(count), initial_value)
 
-  def test_nonlinear(self, variant):
+  def test_nonlinear(self):
     """Check non-linear (quadratic) schedule."""
     # Get schedule function.
     schedule_fn = schedules.polynomial_schedule(25., 10., 2, 10)
-    schedule_fn = variant(schedule_fn)
+    schedule_fn = self.variant(schedule_fn)
     # Test that generated values equal the expected schedule values.
     generated_vals = []
     for count in range(15):
@@ -73,12 +73,12 @@ class PolynomialTest(parameterized.TestCase):
     np.testing.assert_allclose(
         expected_vals, np.array(generated_vals), atol=1e-3)
 
-  def test_with_decay_begin(self, variant):
+  def test_with_decay_begin(self):
     """Check quadratic schedule with non-zero schedule begin."""
     # Get schedule function.
     schedule_fn = schedules.polynomial_schedule(
         30., 10., 2, 10, transition_begin=4)
-    schedule_fn = variant(schedule_fn)
+    schedule_fn = self.variant(schedule_fn)
     # Test that generated values equal the expected schedule values.
     generated_vals = []
     for count in range(20):
@@ -92,14 +92,14 @@ class PolynomialTest(parameterized.TestCase):
         expected_vals, np.array(generated_vals), atol=1e-3)
 
 
-@test_util.parameterize_variant()
+@chex.all_variants()
 class PiecewiseConstantTest(parameterized.TestCase):
 
-  def test_positive(self, variant):
+  def test_positive(self):
     """Check piecewise constant schedule of positive values."""
     # Get schedule function.
     schedule_fn = schedules.piecewise_constant_schedule(0.1, {3: 2., 6: 0.5})
-    schedule_fn = variant(schedule_fn)
+    schedule_fn = self.variant(schedule_fn)
     # Test that generated values equal the expected schedule values.
     generated_vals = []
     for count in range(10):
@@ -111,11 +111,11 @@ class PiecewiseConstantTest(parameterized.TestCase):
     np.testing.assert_allclose(
         expected_vals, np.array(generated_vals), atol=1e-3)
 
-  def test_negative(self, variant):
+  def test_negative(self):
     """Check piecewise constant schedule of negative values."""
     # Get schedule function.
     schedule_fn = schedules.piecewise_constant_schedule(-0.1, {3: 2., 6: 0.5})
-    schedule_fn = variant(schedule_fn)
+    schedule_fn = self.variant(schedule_fn)
     # Test that generated values equal the expected schedule values.
     generated_vals = []
     for count in range(10):

@@ -18,10 +18,10 @@
 import functools
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import numpy as np
 from rlax._src import general_value_functions
-from rlax._src import test_util
 
 
 class PixelControlTest(parameterized.TestCase):
@@ -44,22 +44,24 @@ class PixelControlTest(parameterized.TestCase):
 
     self.expected = 0.05 * np.ones((2, 2, 2, 2), dtype=np.float32)
 
-  @test_util.parameterize_variant()
-  def test_pixel_control_rewards(self, variant):
+  @chex.all_variants()
+  def test_pixel_control_rewards(self):
     """Tests for a single element."""
-    pixel_control_rewards = variant(
-        general_value_functions.pixel_control_rewards, cell_size=self.cell_size)
+    pixel_control_rewards = self.variant(
+        functools.partial(
+            general_value_functions.pixel_control_rewards,
+            cell_size=self.cell_size))
     # Test pseudo rewards.
     for i in range(self.batch_size):
       rs = pixel_control_rewards(self.obs[:, i])
       np.testing.assert_allclose(self.expected[:, i], rs, rtol=1e-5)
 
-  @test_util.parameterize_variant()
-  def test_pixel_control_rewards_batch(self, variant):
+  @chex.all_variants()
+  def test_pixel_control_rewards_batch(self):
     """Tests for a batch."""
     pixel_control_rewards = functools.partial(
         general_value_functions.pixel_control_rewards, cell_size=self.cell_size)
-    pixel_control_rewards = variant(jax.vmap(
+    pixel_control_rewards = self.variant(jax.vmap(
         pixel_control_rewards, in_axes=(1,), out_axes=1))
     # Test pseudo rewards.
     rs = pixel_control_rewards(self.obs)
@@ -94,53 +96,53 @@ class FeatureControlTest(parameterized.TestCase):
         [[g*2.-1., g*4.-2.], [g*3.-2., g*6.-4.]],
         [[-1., -2.], [-g, -2.*g]]])
 
-  @test_util.parameterize_vmap_variant()
-  def test_feature_control_rewards_feature_batch(self, variant):
+  @chex.all_variants()
+  def test_feature_control_rewards_feature_batch(self):
     """Tests for a batch, cumulant_type='feature'."""
-    feature_control_rewards = variant(
+    feature_control_rewards = self.variant(jax.vmap(functools.partial(
         general_value_functions.feature_control_rewards,
-        cumulant_type='feature')
+        cumulant_type='feature')))
     # Test pseudo rewards.
     rs = feature_control_rewards(self.features)
     np.testing.assert_allclose(self.exp_feature, rs, rtol=1e-5)
 
-  @test_util.parameterize_vmap_variant()
-  def test_feature_control_rewards_abs_change_batch(self, variant):
+  @chex.all_variants()
+  def test_feature_control_rewards_abs_change_batch(self):
     """Tests for a batch, cumulant_type='absolute_change'."""
-    feature_control_rewards = variant(
+    feature_control_rewards = self.variant(jax.vmap(functools.partial(
         general_value_functions.feature_control_rewards,
-        cumulant_type='absolute_change')
+        cumulant_type='absolute_change')))
     # Test pseudo rewards.
     rs = feature_control_rewards(self.features)
     np.testing.assert_allclose(self.exp_abs_change, rs, rtol=1e-5)
 
-  @test_util.parameterize_vmap_variant()
-  def test_feature_control_rewards_increase_batch(self, variant):
+  @chex.all_variants()
+  def test_feature_control_rewards_increase_batch(self):
     """Tests for a batch, cumulant_type='increase'."""
-    feature_control_rewards = variant(
+    feature_control_rewards = self.variant(jax.vmap(functools.partial(
         general_value_functions.feature_control_rewards,
-        cumulant_type='increase')
+        cumulant_type='increase')))
     # Test pseudo rewards.
     rs = feature_control_rewards(self.features)
     np.testing.assert_allclose(self.exp_increase, rs, rtol=1e-5)
 
-  @test_util.parameterize_vmap_variant()
-  def test_feature_control_rewards_decrease_batch(self, variant):
+  @chex.all_variants()
+  def test_feature_control_rewards_decrease_batch(self):
     """Tests for a batch, cumulant_type='decrease'."""
-    feature_control_rewards = variant(
+    feature_control_rewards = self.variant(jax.vmap(functools.partial(
         general_value_functions.feature_control_rewards,
-        cumulant_type='decrease')
+        cumulant_type='decrease')))
     # Test pseudo rewards.
     rs = feature_control_rewards(self.features)
     np.testing.assert_allclose(self.exp_decrease, rs, rtol=1e-5)
 
-  @test_util.parameterize_vmap_variant()
-  def test_feature_control_rewards_potential_batch(self, variant):
+  @chex.all_variants()
+  def test_feature_control_rewards_potential_batch(self):
     """Tests for a batch, cumulant_type='potential'."""
-    feature_control_rewards = variant(
+    feature_control_rewards = self.variant(jax.vmap(functools.partial(
         general_value_functions.feature_control_rewards,
         cumulant_type='potential',
-        discount=self.potential_discount)
+        discount=self.potential_discount)))
     # Test pseudo rewards.
     rs = feature_control_rewards(self.features)
     np.testing.assert_allclose(self.exp_potential, rs, rtol=1e-5)

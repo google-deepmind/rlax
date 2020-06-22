@@ -15,12 +15,13 @@
 # ==============================================================================
 """Unit tests for `nonlinear_bellman.py`."""
 
+import functools
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import numpy as np
 from rlax._src import nonlinear_bellman
-from rlax._src import test_util
 
 
 class IdentityTest(parameterized.TestCase):
@@ -75,15 +76,16 @@ class TransformedQLambdaTest(parameterized.TestCase):
          [[-1.6179, 0.4633, -0.7576], [-1.1097, 1.6509, 0.3598]]],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant(
+  @parameterized.named_parameters(
       ('identity0', nonlinear_bellman.IDENTITY_PAIR, 0),
       ('signed_logp11', nonlinear_bellman.SIGNED_LOGP1_PAIR, 1),
       ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2))
-  def test_transformed_q_lambda_batch(self, tx_pair, td_index, variant):
+  @chex.all_variants()
+  def test_transformed_q_lambda_batch(self, tx_pair, td_index):
     """Tests correctness for full batch."""
-    transformed_q_lambda = variant(
+    transformed_q_lambda = self.variant(jax.vmap(functools.partial(
         nonlinear_bellman.transformed_q_lambda, tx_pair=tx_pair,
-        lambda_=self.lambda_)
+        lambda_=self.lambda_)))
     # Compute vtrace output.
     actual_td = transformed_q_lambda(
         self.q_tm1, self.a_tm1, self.r_t, self.discount_t, self.q_t)
@@ -132,15 +134,16 @@ class TransformedRetraceTest(parameterized.TestCase):
          [[-1.6179, -3.0165, -5.2699], [-2.7742, -9.9544, 2.3167]]],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant(
+  @parameterized.named_parameters(
       ('identity0', nonlinear_bellman.IDENTITY_PAIR, 0),
       ('signed_logp11', nonlinear_bellman.SIGNED_LOGP1_PAIR, 1),
       ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2))
-  def test_transformed_retrace_batch(self, tx_pair, td_index, variant):
+  @chex.all_variants()
+  def test_transformed_retrace_batch(self, tx_pair, td_index):
     """Tests correctness for full batch."""
-    transformed_retrace = variant(
+    transformed_retrace = self.variant(jax.vmap(functools.partial(
         nonlinear_bellman.transformed_retrace,
-        tx_pair=tx_pair, lambda_=self._lambda)
+        tx_pair=tx_pair, lambda_=self._lambda)))
     # Compute transformed vtrace td errors in batch.
     actual_td = transformed_retrace(
         self._qs[:, :-1], self._targnet_qs[:, 1:], self._actions[:, :-1],

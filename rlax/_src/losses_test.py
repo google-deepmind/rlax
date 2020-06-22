@@ -15,13 +15,14 @@
 # ==============================================================================
 """Tests for losses.py."""
 
+import functools
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
 from rlax._src import losses
-from rlax._src import test_util
 
 
 class L2LossTest(parameterized.TestCase):
@@ -32,29 +33,29 @@ class L2LossTest(parameterized.TestCase):
     self.ys = jnp.array([2., 0.5, 0.125, 0, 0.125, 0.5, 2.])
     self.dys = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
 
-  @test_util.parameterize_variant()
-  def test_l2_loss_scalar(self, variant):
-    l2_loss = variant(losses.l2_loss)
+  @chex.all_variants()
+  def test_l2_loss_scalar(self):
+    l2_loss = self.variant(losses.l2_loss)
     x = jnp.array(0.5)
     # Test output.
     np.testing.assert_allclose(l2_loss(x), 0.125)
 
-  @test_util.parameterize_variant()
-  def test_l2_loss_vector(self, variant):
-    l2_loss = variant(losses.l2_loss)
+  @chex.all_variants()
+  def test_l2_loss_vector(self):
+    l2_loss = self.variant(losses.l2_loss)
     # Test output.
     np.testing.assert_allclose(l2_loss(self.xs), self.ys)
 
-  @test_util.parameterize_variant()
-  def test_l2_regularizer(self, variant):
-    l2_loss = variant(losses.l2_loss)
+  @chex.all_variants()
+  def test_l2_regularizer(self):
+    l2_loss = self.variant(losses.l2_loss)
     # Test output.
     np.testing.assert_allclose(
         l2_loss(self.xs), l2_loss(self.xs, jnp.zeros_like(self.xs)))
 
-  @test_util.parameterize_variant()
-  def test_gradients(self, variant):
-    l2_loss = variant(losses.l2_loss)
+  @chex.all_variants()
+  def test_gradients(self):
+    l2_loss = self.variant(losses.l2_loss)
     # Compute gradient in batch
     batch_grad_func = jax.vmap(jax.grad(l2_loss), (0))
     actual = batch_grad_func(self.xs)
@@ -69,18 +70,18 @@ class LogLossTest(parameterized.TestCase):
     self.targets = jnp.array([1., 0., 0., 1., 1., 0])
     self.expected = jnp.array([0., np.inf, 0., np.inf, 0.6931472, 0.6931472])
 
-  @test_util.parameterize_variant()
-  def test_log_loss_scalar(self, variant):
-    log_loss = variant(losses.log_loss)
+  @chex.all_variants()
+  def test_log_loss_scalar(self):
+    log_loss = self.variant(losses.log_loss)
     preds = self.preds[2]
     targets = self.targets[2]
     # Test output.
     np.testing.assert_allclose(
         log_loss(preds, targets), self.expected[2], atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_log_loss_vector(self, variant):
-    log_loss = variant(losses.log_loss)
+  @chex.all_variants()
+  def test_log_loss_vector(self):
+    log_loss = self.variant(losses.log_loss)
     # Test output.
     np.testing.assert_allclose(
         log_loss(self.preds, self.targets), self.expected, atol=1e-4)
@@ -145,11 +146,11 @@ class PixelControlLossTest(parameterized.TestCase):
     self.action_values = self.observations
     self.actions = np.array([action1, action2, action3])
 
-  @test_util.parameterize_variant()
-  def testPixelControlLossScalarDiscount(self, variant):
+  @chex.all_variants()
+  def testPixelControlLossScalarDiscount(self):
     """Compute loss for given observations, actions, values, scalar discount."""
-    loss_fn = variant(
-        losses.pixel_control_loss, cell_size=self.cell_size)
+    loss_fn = self.variant(functools.partial(
+        losses.pixel_control_loss, cell_size=self.cell_size))
     loss = loss_fn(
         self.observations,
         self.actions,
@@ -158,14 +159,14 @@ class PixelControlLossTest(parameterized.TestCase):
     loss = jnp.sum(loss)
     np.testing.assert_allclose(loss, self.error, rtol=1e-3)
 
-  @test_util.parameterize_variant()
-  def testPixelControlLossTensorDiscount(self, variant):
+  @chex.all_variants()
+  def testPixelControlLossTensorDiscount(self):
     """Compute loss for given observations, actions, values, tensor discount."""
     zero_discount = np.zeros((1,))
     non_zero_discount = self.discount * np.ones(self.seq_length - 1)
     discount = np.concatenate([zero_discount, non_zero_discount], axis=0)
-    loss_fn = variant(
-        losses.pixel_control_loss, cell_size=self.cell_size)
+    loss_fn = self.variant(functools.partial(
+        losses.pixel_control_loss, cell_size=self.cell_size))
     loss = loss_fn(
         self.observations,
         self.actions,
@@ -174,24 +175,24 @@ class PixelControlLossTest(parameterized.TestCase):
     loss = jnp.sum(loss)
     np.testing.assert_allclose(loss, self.error_term, rtol=1e-3)
 
-  @test_util.parameterize_variant()
-  def testPixelControlLossShapes(self, variant):
+  @chex.all_variants()
+  def testPixelControlLossShapes(self):
     with self.assertRaisesRegex(
         ValueError, 'Pixel Control values are not compatible'):
-      loss_fn = variant(
-          losses.pixel_control_loss, cell_size=self.cell_size)
+      loss_fn = self.variant(functools.partial(
+          losses.pixel_control_loss, cell_size=self.cell_size))
       loss_fn(
           self.observations, self.actions,
           self.action_values[:, :-1], self.discount)
 
-  @test_util.parameterize_variant()
-  def testTensorDiscountShape(self, variant):
+  @chex.all_variants()
+  def testTensorDiscountShape(self):
     with self.assertRaisesRegex(
         ValueError, 'discount_factor must be a scalar or a tensor of rank 1'):
       discount = np.tile(
           np.reshape(self.discount, (1, 1)), (self.seq_length, 1))
-      loss_fn = variant(
-          losses.pixel_control_loss, cell_size=self.cell_size)
+      loss_fn = self.variant(functools.partial(
+          losses.pixel_control_loss, cell_size=self.cell_size))
       loss_fn(
           self.observations, self.actions, self.action_values, discount)
 

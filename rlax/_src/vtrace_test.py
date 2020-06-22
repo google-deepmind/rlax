@@ -15,12 +15,13 @@
 # ==============================================================================
 """Tests for `value_learning.py`."""
 
+import functools
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import numpy as np
 from rlax._src import distributions
-from rlax._src import test_util
 from rlax._src import vtrace
 
 
@@ -70,12 +71,12 @@ class VTraceTest(parameterized.TestCase):
          [1.4662433, 3.6116405, -8.3369283e-05, -1.3540000e+1]],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_vtrace_td_error_and_advantage(self, variant):
+  @chex.all_variants()
+  def test_vtrace_td_error_and_advantage(self):
     """Tests for a full batch."""
-    vtrace_td_error_and_advantage = variant(
+    vtrace_td_error_and_advantage = self.variant(jax.vmap(functools.partial(
         vtrace.vtrace_td_error_and_advantage,
-        clip_rho_threshold=self._clip_rho_threshold, lambda_=self._lambda)
+        clip_rho_threshold=self._clip_rho_threshold, lambda_=self._lambda)))
     # Get function arguments.
     r_t, discount_t, rho_t, v_tm1, bootstrap_value = self._inputs
     v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)
@@ -88,13 +89,13 @@ class VTraceTest(parameterized.TestCase):
     np.testing.assert_allclose(
         self._expected_pg, vtrace_output.pg_advantage, rtol=1e-3)
 
-  @test_util.parameterize_vmap_variant()
-  def test_lambda_q_estimate(self, variant):
+  @chex.all_variants()
+  def test_lambda_q_estimate(self):
     """Tests for a full batch."""
     lambda_ = 0.8
-    vtrace_td_error_and_advantage = variant(
+    vtrace_td_error_and_advantage = self.variant(jax.vmap(functools.partial(
         vtrace.vtrace_td_error_and_advantage,
-        clip_rho_threshold=self._clip_rho_threshold, lambda_=lambda_)
+        clip_rho_threshold=self._clip_rho_threshold, lambda_=lambda_)))
     # Get function arguments.
     r_t, discount_t, rho_t, v_tm1, bootstrap_value = self._inputs
     v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)
@@ -107,12 +108,13 @@ class VTraceTest(parameterized.TestCase):
     # Test output.
     np.testing.assert_allclose(expected_vs, vs_from_q, rtol=1e-3)
 
-  @test_util.parameterize_vmap_variant()
-  def test_leaky_and_non_leaky_vtrace(self, variant):
+  @chex.all_variants()
+  def test_leaky_and_non_leaky_vtrace(self):
     """Tests for a full batch."""
-    vtrace_fn = variant(vtrace.vtrace, lambda_=self._lambda)
-    leaky_vtrace_fn = variant(
-        vtrace.leaky_vtrace, alpha_=1., lambda_=self._lambda)
+    vtrace_fn = self.variant(jax.vmap(functools.partial(
+        vtrace.vtrace, lambda_=self._lambda)))
+    leaky_vtrace_fn = self.variant(jax.vmap(functools.partial(
+        vtrace.leaky_vtrace, alpha_=1., lambda_=self._lambda)))
     # Get function arguments.
     r_t, discount_t, rho_t, v_tm1, bootstrap_value = self._inputs
     v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)

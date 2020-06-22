@@ -15,12 +15,13 @@
 # ==============================================================================
 """Unit tests for `transforms.py`."""
 
+import functools
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
-from rlax._src import test_util
 from rlax._src import transforms
 
 
@@ -46,79 +47,79 @@ class TransformsTest(parameterized.TestCase):
     self.x = 0.5
     self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
 
-  @test_util.parameterize_variant()
-  def test_identity_scalar(self, variant):
-    identity = variant(transforms.identity)
+  @chex.all_variants()
+  def test_identity_scalar(self):
+    identity = self.variant(transforms.identity)
     x = jnp.array(self.x)
     # Test output.
     np.testing.assert_allclose(identity(x), self.x)
 
-  @test_util.parameterize_variant()
-  def test_identity_vector(self, variant):
-    identity = variant(transforms.identity)
+  @chex.all_variants()
+  def test_identity_vector(self):
+    identity = self.variant(transforms.identity)
     # Test output.
     np.testing.assert_allclose(identity(self.xs), self.xs)
 
-  @test_util.parameterize_variant()
-  def test_sigmoid_scalar(self, variant):
-    sigmoid = variant(transforms.sigmoid)
-    logit = variant(transforms.logit)
+  @chex.all_variants()
+  def test_sigmoid_scalar(self):
+    sigmoid = self.variant(transforms.sigmoid)
+    logit = self.variant(transforms.logit)
     x = jnp.array(self.x)
     # Test output.
     np.testing.assert_allclose(logit(sigmoid(x)), self.x, atol=1e-3)
 
-  @test_util.parameterize_variant()
-  def test_sigmoid_vector(self, variant):
-    sigmoid = variant(transforms.sigmoid)
-    logit = variant(transforms.logit)
+  @chex.all_variants()
+  def test_sigmoid_vector(self):
+    sigmoid = self.variant(transforms.sigmoid)
+    logit = self.variant(transforms.logit)
     # Test output.
     np.testing.assert_allclose(logit(sigmoid(self.xs)), self.xs, atol=1e-3)
 
-  @test_util.parameterize_variant()
-  def test_signed_log_exp_transform_scalar(self, variant):
-    signed_logp1 = variant(transforms.signed_logp1)
-    signed_expm1 = variant(transforms.signed_expm1)
+  @chex.all_variants()
+  def test_signed_log_exp_transform_scalar(self):
+    signed_logp1 = self.variant(transforms.signed_logp1)
+    signed_expm1 = self.variant(transforms.signed_expm1)
     x = jnp.array(self.x)
     # Test inverse.
     np.testing.assert_allclose(signed_expm1(signed_logp1(x)), self.x, atol=1e-3)
 
-  @test_util.parameterize_variant()
-  def test_signed_log_exp_transform_vector(self, variant):
-    signed_logp1 = variant(transforms.signed_logp1)
-    signed_expm1 = variant(transforms.signed_expm1)
+  @chex.all_variants()
+  def test_signed_log_exp_transform_vector(self):
+    signed_logp1 = self.variant(transforms.signed_logp1)
+    signed_expm1 = self.variant(transforms.signed_expm1)
     # Test inverse.
     np.testing.assert_allclose(
         signed_expm1(signed_logp1(self.xs)), self.xs, atol=1e-3)
 
-  @test_util.parameterize_variant()
-  def test_signed_hyper_parabolic_transform_scalar(self, variant):
-    signed_hyperbolic = variant(transforms.signed_hyperbolic)
-    signed_parabolic = variant(transforms.signed_parabolic)
+  @chex.all_variants()
+  def test_signed_hyper_parabolic_transform_scalar(self):
+    signed_hyperbolic = self.variant(transforms.signed_hyperbolic)
+    signed_parabolic = self.variant(transforms.signed_parabolic)
     x = jnp.array(self.x)
     # Test inverse.
     np.testing.assert_allclose(
         signed_parabolic(signed_hyperbolic(x)), self.x, atol=1e-3)
 
-  @test_util.parameterize_variant()
-  def test_signed_hyper_parabolic_transform_vector(self, variant):
-    signed_hyperbolic = variant(transforms.signed_hyperbolic)
-    signed_parabolic = variant(transforms.signed_parabolic)
+  @chex.all_variants()
+  def test_signed_hyper_parabolic_transform_vector(self):
+    signed_hyperbolic = self.variant(transforms.signed_hyperbolic)
+    signed_parabolic = self.variant(transforms.signed_parabolic)
     # Test inverse.
     np.testing.assert_allclose(
         signed_parabolic(signed_hyperbolic(self.xs)), self.xs, atol=1e-3)
 
-  @test_util.parameterize_variant()
-  def test_signed_power_transform_scalar(self, variant):
-    square = variant(transforms.power, p=2.)
-    sqrt = variant(transforms.power, p=1/2.)
+  @chex.all_variants()
+  def test_signed_power_transform_scalar(self):
+    square = self.variant(functools.partial(transforms.power, p=2.))
+    sqrt = self.variant(functools.partial(transforms.power, p=1/2.))
     x = jnp.array(self.x)
     # Test inverse.
     np.testing.assert_allclose(square(sqrt(x)), self.x, atol=1e-3)
 
-  @test_util.parameterize_variant()
-  def test_signed_power_transform_vector(self, variant):
-    square = variant(transforms.power, p=2.)
-    sqrt = variant(transforms.power, p=1/2.)
+  @chex.all_variants()
+  def test_signed_power_transform_vector(self):
+    square = self.variant(functools.partial(transforms.power, p=2.))
+    sqrt = self.variant(functools.partial(transforms.power, p=1/2.))
     # Test inverse.
     np.testing.assert_allclose(square(sqrt(self.xs)), self.xs, atol=1e-3)
 

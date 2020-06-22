@@ -15,12 +15,13 @@
 # ==============================================================================
 """Unit tests for `multistep.py`."""
 
+import functools
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import numpy as np
 from rlax._src import multistep
-from rlax._src import test_util
 
 
 class LambdaReturnsTest(parameterized.TestCase):
@@ -41,10 +42,11 @@ class LambdaReturnsTest(parameterized.TestCase):
          [0.7866317, 0.9913063, 0.1101501, 2.834, 3.99]],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_lambda_returns_batch(self, variant):
+  @chex.all_variants()
+  def test_lambda_returns_batch(self):
     """Tests for a full batch."""
-    lambda_returns = variant(multistep.lambda_returns, lambda_=self.lambda_)
+    lambda_returns = self.variant(jax.vmap(functools.partial(
+        multistep.lambda_returns, lambda_=self.lambda_)))
     # Compute lambda return in batch.
     actual = lambda_returns(self.r_t, self.discount_t, self.v_t)
     # Test return estimate.
@@ -69,10 +71,10 @@ class DiscountedReturnsTest(parameterized.TestCase):
          [1.33592, 0.9288, 0.2576, 3.192, 3.9899998]],
         dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_discounted_returns_batch(self, variant):
+  @chex.all_variants()
+  def test_discounted_returns_batch(self):
     """Tests for a single element."""
-    discounted_returns = variant(multistep.discounted_returns)
+    discounted_returns = self.variant(jax.vmap(multistep.discounted_returns))
     # Compute discounted return.
     actual_scalar = discounted_returns(self.r_t, self.discount_t,
                                        self.bootstrap_v)
@@ -96,12 +98,12 @@ class TDErrorTest(parameterized.TestCase):
     self.values = np.array(
         [[3.0, 1.0, 5.0, -5.0, 3.0, 1.], [-1.7, 1.2, 2.3, 2.2, 2.7, 2.]])
 
-  @test_util.parameterize_vmap_variant()
-  def test_importance_corrected_td_errors_batch(self, variant):
+  @chex.all_variants()
+  def test_importance_corrected_td_errors_batch(self):
     """Tests equivalence to computing the error from a the lambda-return."""
     # Vmap and optionally compile.
-    lambda_returns = variant(multistep.lambda_returns)
-    td_errors = variant(multistep.importance_corrected_td_errors)
+    lambda_returns = self.variant(jax.vmap(multistep.lambda_returns))
+    td_errors = self.variant(jax.vmap(multistep.importance_corrected_td_errors))
     # Compute multistep td-error with recursion on deltas.
     td_direct = td_errors(self.r_t, self.discount_t, self.rho_tm1,
                           np.ones_like(self.discount_t), self.values)

@@ -17,10 +17,10 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import numpy as np
 from rlax._src import distributions
-from rlax._src import test_util
 
 
 class CategoricalSampleTest(parameterized.TestCase):
@@ -53,31 +53,31 @@ class SoftmaxTest(parameterized.TestCase):
         [logprobs[0][self.samples[0]], logprobs[1][self.samples[1]]])
     self.expected_entropy = -np.sum(probs * logprobs, axis=-1)
 
-  @test_util.parameterize_variant()
-  def test_softmax_probs(self, variant):
+  @chex.all_variants()
+  def test_softmax_probs(self):
     """Tests for a single element."""
     distrib = distributions.softmax(temperature=10.)
-    softmax = variant(distrib.probs)
+    softmax = self.variant(distrib.probs)
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_probs):
       # Test outputs.
       actual = softmax(logits)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_softmax_probs_batch(self, variant):
+  @chex.all_variants()
+  def test_softmax_probs_batch(self):
     """Tests for a full batch."""
     distrib = distributions.softmax(temperature=10.)
-    softmax = variant(distrib.probs)
+    softmax = self.variant(distrib.probs)
     # Test softmax output in batch.
     actual = softmax(self.logits)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_softmax_logprob(self, variant):
+  @chex.all_variants()
+  def test_softmax_logprob(self):
     """Tests for a single element."""
     distrib = distributions.softmax()
-    logprob_fn = variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)
     # For each element in the batch.
     for logits, samples, expected in zip(
         self.logits, self.samples, self.expected_logprobs):
@@ -85,31 +85,31 @@ class SoftmaxTest(parameterized.TestCase):
       actual = logprob_fn(samples, logits)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_softmax_logprob_batch(self, variant):
+  @chex.all_variants()
+  def test_softmax_logprob_batch(self):
     """Tests for a full batch."""
     distrib = distributions.softmax()
-    logprob_fn = variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)
     # Test softmax output in batch.
     actual = logprob_fn(self.samples, self.logits)
     np.testing.assert_allclose(self.expected_logprobs, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_softmax_entropy(self, variant):
+  @chex.all_variants()
+  def test_softmax_entropy(self):
     """Tests for a single element."""
     distrib = distributions.softmax()
-    entropy_fn = variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_entropy):
       # Test outputs.
       actual = entropy_fn(logits)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_softmax_entropy_batch(self, variant):
+  @chex.all_variants()
+  def test_softmax_entropy_batch(self):
     """Tests for a full batch."""
     distrib = distributions.softmax()
-    entropy_fn = variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)
     # Test softmax output in batch.
     actual = entropy_fn(self.logits)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
@@ -137,33 +137,33 @@ class EpsilonSoftmaxTest(parameterized.TestCase):
         [logprobs[0][self.samples[0]], logprobs[1][self.samples[1]]])
     self.expected_entropy = -np.sum(probs * logprobs, axis=-1)
 
-  @test_util.parameterize_variant()
-  def test_softmax_probs(self, variant):
+  @chex.all_variants()
+  def test_softmax_probs(self):
     """Tests for a single element."""
     distrib = distributions.epsilon_softmax(epsilon=0.1,
                                             temperature=10.)
-    softmax = variant(distrib.probs)
+    softmax = self.variant(distrib.probs)
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_probs):
       # Test outputs.
       actual = softmax(logits)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_softmax_probs_batch(self, variant):
+  @chex.all_variants()
+  def test_softmax_probs_batch(self):
     """Tests for a full batch."""
     distrib = distributions.epsilon_softmax(epsilon=0.1,
                                             temperature=10.)
-    softmax = variant(distrib.probs)
+    softmax = self.variant(distrib.probs)
     # Test softmax output in batch.
     actual = softmax(self.logits)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_safe_epsilon_softmax_equivalence(self, variant):
+  @chex.all_variants()
+  def test_safe_epsilon_softmax_equivalence(self):
     distrib = distributions.safe_epsilon_softmax(epsilon=0.1,
                                                  temperature=10.)
-    softmax = variant(distrib.probs)
+    softmax = self.variant(distrib.probs)
     # Test softmax output in batch.
     actual = softmax(self.logits)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
@@ -184,31 +184,31 @@ class GreedyTest(parameterized.TestCase):
     self.expected_entropy = np.array(
         [0.6931472, 0.], dtype=np.float32)
 
-  @test_util.parameterize_variant()
-  def test_greedy_probs(self, variant):
+  @chex.all_variants()
+  def test_greedy_probs(self):
     """Tests for a single element."""
     distrib = distributions.greedy()
-    greedy = variant(distrib.probs)
+    greedy = self.variant(distrib.probs)
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_probs):
       # Test outputs.
       actual = greedy(preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_greedy_probs_batch(self, variant):
+  @chex.all_variants()
+  def test_greedy_probs_batch(self):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    greedy = variant(distrib.probs)
+    greedy = self.variant(distrib.probs)
     # Test greedy output in batch.
     actual = greedy(self.preferences)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_greedy_logprob(self, variant):
+  @chex.all_variants()
+  def test_greedy_logprob(self):
     """Tests for a single element."""
     distrib = distributions.greedy()
-    logprob_fn = variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)
     # For each element in the batch.
     for preferences, samples, expected in zip(
         self.preferences, self.samples, self.expected_logprob):
@@ -216,31 +216,31 @@ class GreedyTest(parameterized.TestCase):
       actual = logprob_fn(samples, preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_greedy_logprob_batch(self, variant):
+  @chex.all_variants()
+  def test_greedy_logprob_batch(self):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    logprob_fn = variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)
     # Test greedy output in batch.
     actual = logprob_fn(self.samples, self.preferences)
     np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_greedy_entropy(self, variant):
+  @chex.all_variants()
+  def test_greedy_entropy(self):
     """Tests for a single element."""
     distrib = distributions.greedy()
-    entropy_fn = variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_entropy):
       # Test outputs.
       actual = entropy_fn(preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_greedy_entropy_batch(self, variant):
+  @chex.all_variants()
+  def test_greedy_entropy_batch(self):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    entropy_fn = variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)
     # Test greedy output in batch.
     actual = entropy_fn(self.preferences)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
@@ -262,31 +262,31 @@ class EpsilonGreedyTest(parameterized.TestCase):
     self.expected_entropy = np.array(
         [1.01823008, 0.58750093], dtype=np.float32)
 
-  @test_util.parameterize_variant()
-  def test_greedy_probs(self, variant):
+  @chex.all_variants()
+  def test_greedy_probs(self):
     """Tests for a single element."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    probs_fn = variant(distrib.probs)
+    probs_fn = self.variant(distrib.probs)
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_probs):
       # Test outputs.
       actual = probs_fn(preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_greedy_probs_batch(self, variant):
+  @chex.all_variants()
+  def test_greedy_probs_batch(self):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    probs_fn = variant(distrib.probs)
+    probs_fn = self.variant(distrib.probs)
     # Test greedy output in batch.
     actual = probs_fn(self.preferences)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_greedy_logprob(self, variant):
+  @chex.all_variants()
+  def test_greedy_logprob(self):
     """Tests for a single element."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    logprob_fn = variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)
     # For each element in the batch.
     for preferences, samples, expected in zip(
         self.preferences, self.samples, self.expected_logprob):
@@ -294,50 +294,50 @@ class EpsilonGreedyTest(parameterized.TestCase):
       actual = logprob_fn(samples, preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_greedy_logprob_batch(self, variant):
+  @chex.all_variants()
+  def test_greedy_logprob_batch(self):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    logprob_fn = variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)
     # Test greedy output in batch.
     actual = logprob_fn(self.samples, self.preferences)
     np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_greedy_entropy(self, variant):
+  @chex.all_variants()
+  def test_greedy_entropy(self):
     """Tests for a single element."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    entropy_fn = variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_entropy):
       # Test outputs.
       actual = entropy_fn(preferences)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_greedy_entropy_batch(self, variant):
+  @chex.all_variants()
+  def test_greedy_entropy_batch(self):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    entropy_fn = variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)
     # Test greedy output in batch.
     actual = entropy_fn(self.preferences)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_safe_epsilon_softmax_equivalence(self, variant):
+  @chex.all_variants()
+  def test_safe_epsilon_softmax_equivalence(self):
     distrib = distributions.safe_epsilon_softmax(epsilon=self.epsilon,
                                                  temperature=0)
-    probs_fn = variant(distrib.probs)
+    probs_fn = self.variant(distrib.probs)
     # Test greedy output in batch.
     actual = probs_fn(self.preferences)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
-    logprob_fn = variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)
     # Test greedy output in batch.
     actual = logprob_fn(self.samples, self.preferences)
     np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
 
-    sample_fn = variant(distrib.sample)
+    sample_fn = self.variant(distrib.sample)
     # Optionally convert to device array.
     key = np.array([1, 2], dtype=np.uint32)
     actions = sample_fn(key, self.preferences)
@@ -363,11 +363,11 @@ class GaussianDiagonalTest(parameterized.TestCase):
     self.expected_entropy = np.array(
         [-1.7672932, 0.02446628], dtype=np.float32)
 
-  @test_util.parameterize_variant()
-  def test_gaussian_prob(self, variant):
+  @chex.all_variants()
+  def test_gaussian_prob(self):
     """Tests for a single element."""
     distrib = distributions.gaussian_diagonal()
-    prob_fn = variant(distrib.prob)
+    prob_fn = self.variant(distrib.prob)
     # For each element in the batch.
     for mu, sigma, sample, expected in zip(
         self.mu, self.sigma, self.sample, self.expected_prob_a):
@@ -375,20 +375,20 @@ class GaussianDiagonalTest(parameterized.TestCase):
       actual = prob_fn(sample, mu, sigma)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_gaussian_prob_batch(self, variant):
+  @chex.all_variants()
+  def test_gaussian_prob_batch(self):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    prob_fn = variant(distrib.prob)
+    prob_fn = self.variant(distrib.prob)
     # Test greedy output in batch.
     actual = prob_fn(self.sample, self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_prob_a, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_gaussian_logprob(self, variant):
+  @chex.all_variants()
+  def test_gaussian_logprob(self):
     """Tests for a single element."""
     distrib = distributions.gaussian_diagonal()
-    logprob_fn = variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)
     # For each element in the batch.
     for mu, sigma, sample, expected in zip(
         self.mu, self.sigma, self.sample, self.expected_logprob_a):
@@ -396,20 +396,20 @@ class GaussianDiagonalTest(parameterized.TestCase):
       actual = logprob_fn(sample, mu, sigma)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_gaussian_logprob_batch(self, variant):
+  @chex.all_variants()
+  def test_gaussian_logprob_batch(self):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    logprob_fn = variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)
     # Test greedy output in batch.
     actual = logprob_fn(self.sample, self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_logprob_a, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_gaussian_entropy(self, variant):
+  @chex.all_variants()
+  def test_gaussian_entropy(self):
     """Tests for a single element."""
     distrib = distributions.gaussian_diagonal()
-    entropy_fn = variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)
     # For each element in the batch.
     for mu, sigma, expected in zip(
         self.mu, self.sigma, self.expected_entropy):
@@ -417,11 +417,11 @@ class GaussianDiagonalTest(parameterized.TestCase):
       actual = entropy_fn(mu, sigma)
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
-  @test_util.parameterize_variant()
-  def test_gaussian_entropy_batch(self, variant):
+  @chex.all_variants()
+  def test_gaussian_entropy_batch(self):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    entropy_fn = variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)
     # Test greedy output in batch.
     actual = entropy_fn(self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
@@ -441,10 +441,10 @@ class ImportanceSamplingTest(parameterized.TestCase):
     self.expected_rhos = np.array(
         [pi[0][1] / mu[0][1], pi[1][0] / mu[1][0]], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_importance_sampling_ratios_batch(self, variant):
+  @chex.all_variants()
+  def test_importance_sampling_ratios_batch(self):
     """Tests for a full batch."""
-    ratios_fn = variant(
+    ratios_fn = self.variant(
         distributions.categorical_importance_sampling_ratios)
     # Test softmax output in batch.
     actual = ratios_fn(self.pi_logits, self.mu_logits, self.actions)
@@ -468,10 +468,10 @@ class CategoricalKLTest(parameterized.TestCase):
 
     self.expected_kl = np.sum(p_probs * (p_logprobs - q_logprobs), axis=-1)
 
-  @test_util.parameterize_vmap_variant()
-  def test_categorical_kl_divergence_batch(self, variant):
+  @chex.all_variants()
+  def test_categorical_kl_divergence_batch(self):
     """Tests for a full batch."""
-    kl_fn = variant(distributions.categorical_kl_divergence)
+    kl_fn = self.variant(distributions.categorical_kl_divergence)
     # Test softmax output in batch.
     actual = kl_fn(self.p_logits, self.q_logits)
     np.testing.assert_allclose(self.expected_kl, actual, atol=1e-4)
@@ -487,10 +487,11 @@ class CategoricalCrossEntropyTest(parameterized.TestCase):
 
     self.expected = np.array([9.00013, 3.0696733], dtype=np.float32)
 
-  @test_util.parameterize_vmap_variant()
-  def test_categorical_cross_entropy_batch(self, variant):
+  @chex.all_variants()
+  def test_categorical_cross_entropy_batch(self):
     """Tests for a full batch."""
-    cross_entropy = variant(distributions.categorical_cross_entropy)
+    cross_entropy = self.variant(jax.vmap(
+        distributions.categorical_cross_entropy))
     # Test outputs.
     actual = cross_entropy(self.labels, self.logits)
     np.testing.assert_allclose(self.expected, actual, atol=1e-4)

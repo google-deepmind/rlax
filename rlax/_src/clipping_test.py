@@ -17,11 +17,11 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
 from rlax._src import clipping
-from rlax._src import test_util
 
 
 class HuberLossTest(parameterized.TestCase):
@@ -34,25 +34,25 @@ class HuberLossTest(parameterized.TestCase):
     self.ys = jnp.array([1.5, 0.5, 0.125, 0, 0.125, 0.5, 1.5])
     self.dys = jnp.array([-1, -1, -0.5, 0, 0.5, 1, 1])
 
-  @test_util.parameterize_variant()
-  def test_huber_loss_scalar(self, variant):
-    huber_loss = variant(clipping.huber_loss, delta=self.delta)
+  @chex.all_variants()
+  def test_huber_loss_scalar(self):
+    huber_loss = self.variant(clipping.huber_loss, delta=self.delta)
     x = jnp.array(0.5)
     # Test output.
     np.testing.assert_allclose(huber_loss(x), 0.125)
 
-  @test_util.parameterize_variant()
-  def test_huber_loss_vector(self, variant):
-    huber_loss = variant(clipping.huber_loss, delta=self.delta)
+  @chex.all_variants()
+  def test_huber_loss_vector(self):
+    huber_loss = self.variant(clipping.huber_loss, delta=self.delta)
     xs = self.xs
     # Compute transformation.
     actual = huber_loss(xs)
     # test output.
     np.testing.assert_allclose(actual, self.ys)
 
-  @test_util.parameterize_variant()
-  def test_gradients(self, variant):
-    huber_loss = variant(clipping.huber_loss, delta=self.delta)
+  @chex.all_variants()
+  def test_gradients(self):
+    huber_loss = self.variant(clipping.huber_loss, delta=self.delta)
     xs = self.xs
     # Compute gradient in batch
     batch_grad_func = jax.vmap(jax.grad(huber_loss), (0))
@@ -66,17 +66,17 @@ class ClipGradientsTest(parameterized.TestCase):
     super(ClipGradientsTest, self).setUp()
     self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
 
-  @test_util.parameterize_variant()
-  def test_clip_gradient(self, variant):
-    clip_gradient = variant(clipping.clip_gradient)
+  @chex.all_variants()
+  def test_clip_gradient(self):
+    clip_gradient = self.variant(clipping.clip_gradient)
     x = jnp.array(0.5)
     # Test output.
     actual = clip_gradient(x, -1., 1.)
     np.testing.assert_allclose(actual, 0.5)
 
-  @test_util.parameterize_variant()
-  def test_clip_gradient_vector(self, variant):
-    clip_gradient = variant(clipping.clip_gradient)
+  @chex.all_variants()
+  def test_clip_gradient_vector(self):
+    clip_gradient = self.variant(clipping.clip_gradient)
     xs = self.xs
     # Test output.
     actual = clip_gradient(xs, -1., 1.)
@@ -90,17 +90,21 @@ class EquivalenceTest(parameterized.TestCase):
     self.large_delta = 5.
     self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
 
-  @test_util.parameterize_variant(
+  @parameterized.named_parameters(
       ('10', 10.),
       ('0.5', 0.5))
-  def test_clip_huber_equivalence(self, td_error, variant):
+  @chex.all_variants()
+  def test_clip_huber_equivalence(self, td_error):
+
+    @self.variant
     def td_error_with_clip(x):
       return 0.5 * jnp.square(
           clipping.clip_gradient(x, -self.large_delta, self.large_delta))
+
+    @self.variant
     def td_error_with_huber(x):
       return clipping.huber_loss(x, self.large_delta)
-    td_error_with_clip = variant(td_error_with_clip)
-    td_error_with_huber = variant(td_error_with_huber)
+
     td_error = jnp.array(td_error)
     # Compute gradient in batch
     clip_grad = jax.grad(td_error_with_clip)(td_error)

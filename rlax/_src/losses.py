@@ -24,6 +24,7 @@ transformations used to construct such losses.
 import functools
 
 from typing import Optional, Union
+import chex
 import jax
 import jax.numpy as jnp
 from rlax._src import base
@@ -52,7 +53,7 @@ def l2_loss(predictions: ArrayLike,
   """
   if targets is None:
     targets = jnp.zeros_like(predictions)
-  base.type_assert([predictions, targets], float)
+  chex.type_assert([predictions, targets], float)
   return 0.5 * (predictions - targets)**2
 
 
@@ -66,7 +67,7 @@ def likelihood(predictions: ArrayLike, targets: ArrayLike) -> ArrayLike:
   Returns:
     a vector of same shape of `predictions`.
   """
-  base.type_assert([predictions, targets], float)
+  chex.type_assert([predictions, targets], float)
   likelihood_vals = predictions**targets * (1. - predictions)**(1. - targets)
   # Note: 0**0 evaluates to NaN on TPUs, manually set these cases to 1.
   filter_indices = jnp.logical_or(
@@ -88,7 +89,7 @@ def log_loss(
   Returns:
     a vector of same shape of `predictions`.
   """
-  base.type_assert([predictions, targets], float)
+  chex.type_assert([predictions, targets], float)
   return -jnp.log(likelihood(predictions, targets))
 
 
@@ -133,8 +134,8 @@ def pixel_control_loss(
   assert len(actions.shape) == 1
   assert len(action_values.shape) == 4
   # Check types
-  base.type_assert([observations], float)
-  base.type_assert([actions], int)
+  chex.type_assert([observations], float)
+  chex.type_assert([actions], int)
   # Useful shapes.
   sequence_length = actions.shape[0]
   num_actions = action_values.shape[-1]

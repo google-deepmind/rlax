@@ -20,6 +20,7 @@ stochasticity in the training process in order to aid exploration. This
 subpackage exposes popular forms of perturbations used by RL agents.
 """
 
+import chex
 import jax
 from rlax._src import base
 
@@ -41,7 +42,7 @@ def add_gaussian_noise(
   Returns:
     noisy action, of the same shape as input action.
   """
-  base.type_assert(action, float)
+  chex.type_assert(action, float)
 
   noise = jax.random.normal(key, shape=action.shape) * stddev
   return action + noise
@@ -70,7 +71,7 @@ def add_ornstein_uhlenbeck_noise(
     noisy action, of the same shape as input action.
   """
   base.rank_assert([action, noise_tm1], 1)
-  base.type_assert([action, noise_tm1], float)
+  chex.type_assert([action, noise_tm1], float)
 
   noise_t = (1. - damping) * noise_tm1 + jax.random.normal(
       key, shape=action.shape) * stddev

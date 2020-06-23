@@ -23,6 +23,7 @@ to compute statistics such as its entropy.
 """
 
 import collections
+import chex
 import jax
 import jax.numpy as jnp
 from rlax._src import base
@@ -371,7 +372,7 @@ def categorical_importance_sampling_ratios(pi_logits_t: ArrayLike,
   Returns:
     importance sampling ratios.
   """
-  base.type_assert([pi_logits_t, mu_logits_t, a_t], [float, float, int])
+  chex.type_assert([pi_logits_t, mu_logits_t, a_t], [float, float, int])
 
   log_pi_a_t = base.batched_index(jax.nn.log_softmax(pi_logits_t), a_t)
   log_mu_a_t = base.batched_index(jax.nn.log_softmax(mu_logits_t), a_t)
@@ -413,7 +414,7 @@ def categorical_kl_divergence(
   Returns:
     the kl divergence between the distributions.
   """
-  base.type_assert([p_logits, q_logits], float)
+  chex.type_assert([p_logits, q_logits], float)
 
   p_logits /= temperature
   q_logits /= temperature

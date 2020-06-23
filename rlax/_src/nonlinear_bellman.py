@@ -27,6 +27,8 @@ We also use this to implement different learning algorithms from the literature.
 
 import collections
 import functools
+
+import chex
 import jax
 import jax.numpy as jnp
 from rlax._src import base
@@ -99,7 +101,7 @@ def transformed_q_lambda(
   """
   base.rank_assert([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
                    [2, 1, 1, 1, 2, [0, 1]])
-  base.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
+  chex.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
                    [float, int, float, float, float, float])
 
   qa_tm1 = base.batched_index(q_tm1, a_tm1)
@@ -151,7 +153,7 @@ def transformed_retrace(
   """
   base.rank_assert([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
                    [2, 2, 1, 1, 1, 1, 2, 1])
-  base.type_assert([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
+  chex.type_assert([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
                    [float, float, int, int, float, float, float, float])
 
   pi_a_t = base.batched_index(pi_t, a_t)

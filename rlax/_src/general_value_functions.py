@@ -21,6 +21,7 @@ functions (Sutton et al. 2011) extend the notion of value functions to include
 estimates of discounted sums of `cumulants` different from the main task reward.
 """
 
+import chex
 import jax.numpy as jnp
 from rlax._src import base
 
@@ -58,7 +59,7 @@ def pixel_control_rewards(
     shape is `[T,H',W']`, where `H'=H/cell_size` and `W'=W/cell_size`.
   """
   base.rank_assert(observations, 4)
-  base.type_assert(observations, float)
+  chex.type_assert(observations, float)
 
   # Shape info.
   h = observations.shape[1] // cell_size  # new height.
@@ -100,7 +101,7 @@ def feature_control_rewards(
     A tensor of cumulants calculated from the features. The shape is `[T,D]`.
   """
   base.rank_assert(features, 2)
-  base.type_assert(features, float)
+  chex.type_assert(features, float)
 
   if cumulant_type == 'feature':
     return features[1:]

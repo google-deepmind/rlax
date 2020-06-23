@@ -22,6 +22,7 @@ spaces. Actions are assumed to be represented as indices in the range `[0, A)`
 where `A` is the number of distinct actions.
 """
 
+import chex
 import jax
 import jax.numpy as jnp
 from rlax._src import base
@@ -55,7 +56,7 @@ def td_learning(
   """
 
   base.rank_assert([v_tm1, r_t, discount_t, v_t], 0)
-  base.type_assert([v_tm1, r_t, discount_t, v_t], float)
+  chex.type_assert([v_tm1, r_t, discount_t, v_t], float)
 
   target_tm1 = r_t + discount_t * v_t
   return jax.lax.stop_gradient(target_tm1) - v_tm1
@@ -84,7 +85,7 @@ def td_lambda(
     TD(lambda) temporal difference error.
   """
   base.rank_assert([v_tm1, r_t, discount_t, v_t, lambda_], [1, 1, 1, 1, [0, 1]])
-  base.type_assert([v_tm1, r_t, discount_t, v_t, lambda_], float)
+  chex.type_assert([v_tm1, r_t, discount_t, v_t, lambda_], float)
 
   target_tm1 = multistep.lambda_returns(r_t, discount_t, v_t, lambda_)
   return jax.lax.stop_gradient(target_tm1) - v_tm1
@@ -116,7 +117,7 @@ def sarsa(
   """
   base.rank_assert([q_tm1, a_tm1, r_t, discount_t, q_t, a_t],
                    [1, 0, 0, 0, 1, 0])
-  base.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, a_t],
+  chex.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, a_t],
                    [float, int, float, float, float, int])
 
   target_tm1 = r_t + discount_t * q_t[a_t]
@@ -150,7 +151,7 @@ def expected_sarsa(
   """
   base.rank_assert([q_tm1, a_tm1, r_t, discount_t, q_t, probs_a_t],
                    [1, 0, 0, 0, 1, 1])
-  base.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, probs_a_t],
+  chex.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, probs_a_t],
                    [float, int, float, float, float, float])
 
   target_tm1 = r_t + discount_t * jnp.dot(q_t, probs_a_t)
@@ -188,7 +189,7 @@ def sarsa_lambda(
   """
   base.rank_assert([q_tm1, a_tm1, r_t, discount_t, q_t, a_t, lambda_],
                    [2, 1, 1, 1, 2, 1, [0, 1]])
-  base.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, a_t, lambda_],
+  chex.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, a_t, lambda_],
                    [float, int, float, float, float, int, float])
 
   qa_tm1 = base.batched_index(q_tm1, a_tm1)
@@ -223,7 +224,7 @@ def q_learning(
     Q-learning temporal difference error.
   """
   base.rank_assert([q_tm1, a_tm1, r_t, discount_t, q_t], [1, 0, 0, 0, 1])
-  base.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t],
+  chex.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t],
                    [float, int, float, float, float])
 
   target_tm1 = r_t + discount_t * jnp.max(q_t)
@@ -256,7 +257,7 @@ def double_q_learning(
   """
   base.rank_assert([q_tm1, a_tm1, r_t, discount_t, q_t_value, q_t_selector],
                    [1, 0, 0, 0, 1, 1])
-  base.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t_value, q_t_selector],
+  chex.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t_value, q_t_selector],
                    [float, int, float, float, float, float])
 
   target_tm1 = r_t + discount_t * q_t_value[q_t_selector.argmax()]
@@ -288,7 +289,7 @@ def persistent_q_learning(
     Persistent Q-learning temporal difference error.
   """
   base.rank_assert([q_tm1, a_tm1, r_t, discount_t, q_t], [1, 0, 0, 0, 1])
-  base.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t],
+  chex.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t],
                    [float, int, float, float, float])
 
   corrected_q_t = (
@@ -323,7 +324,7 @@ def qv_learning(
     QV-learning temporal difference error.
   """
   base.rank_assert([q_tm1, a_tm1, r_t, discount_t, v_t], [1, 0, 0, 0, 0])
-  base.type_assert([q_tm1, a_tm1, r_t, discount_t, v_t],
+  chex.type_assert([q_tm1, a_tm1, r_t, discount_t, v_t],
                    [float, int, float, float, float])
 
   target_tm1 = r_t + discount_t * v_t
@@ -352,7 +353,7 @@ def qv_max(
     QVMAX temporal difference error.
   """
   base.rank_assert([v_tm1, r_t, discount_t, q_t], [0, 0, 0, 1])
-  base.type_assert([v_tm1, r_t, discount_t, q_t], float)
+  chex.type_assert([v_tm1, r_t, discount_t, q_t], float)
 
   target_tm1 = r_t + discount_t * jnp.max(q_t)
   return jax.lax.stop_gradient(target_tm1) - v_tm1
@@ -388,7 +389,7 @@ def q_lambda(
   """
   base.rank_assert([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
                    [2, 1, 1, 1, 2, [0, 1]])
-  base.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
+  chex.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
                    [float, int, float, float, float, float])
 
   qa_tm1 = base.batched_index(q_tm1, a_tm1)
@@ -437,7 +438,7 @@ def retrace(
   """
   base.rank_assert([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
                    [2, 2, 1, 1, 1, 1, 2, 1])
-  base.type_assert([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
+  chex.type_assert([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
                    [float, float, int, int, float, float, float, float])
 
   pi_a_t = base.batched_index(pi_t, a_t)
@@ -477,7 +478,7 @@ def _categorical_l2_project(
     Projection of (z_p, p) onto support z_q under Cramer distance.
   """
   base.rank_assert([z_p, probs, z_q], 1)
-  base.type_assert([z_p, probs, z_q], float)
+  chex.type_assert([z_p, probs, z_q], float)
 
   kp = z_p.shape[0]
   kq = z_q.shape[0]
@@ -541,7 +542,7 @@ def categorical_td_learning(
   base.rank_assert(
       [v_atoms_tm1, v_logits_tm1, r_t, discount_t, v_atoms_t, v_logits_t],
       [1, 1, 0, 0, 1, 1])
-  base.type_assert(
+  chex.type_assert(
       [v_atoms_tm1, v_logits_tm1, r_t, discount_t, v_atoms_t, v_logits_t],
       [float, float, float, float, float, float])
 
@@ -589,7 +590,7 @@ def categorical_q_learning(
   base.rank_assert([
       q_atoms_tm1, q_logits_tm1, a_tm1, r_t, discount_t, q_atoms_t, q_logits_t
   ], [1, 2, 0, 0, 0, 1, 2])
-  base.type_assert([
+  chex.type_assert([
       q_atoms_tm1, q_logits_tm1, a_tm1, r_t, discount_t, q_atoms_t, q_logits_t
   ], [float, float, int, float, float, float, float])
 
@@ -648,7 +649,7 @@ def categorical_double_q_learning(
       q_atoms_tm1, q_logits_tm1, a_tm1, r_t, discount_t, q_atoms_t, q_logits_t,
       q_t_selector
   ], [1, 2, 0, 0, 0, 1, 2, 1])
-  base.type_assert([
+  chex.type_assert([
       q_atoms_tm1, q_logits_tm1, a_tm1, r_t, discount_t, q_atoms_t, q_logits_t,
       q_t_selector
   ], [float, float, int, float, float, float, float, float])
@@ -690,7 +691,7 @@ def _quantile_regression_loss(
     Quantile regression loss.
   """
   base.rank_assert([dist_src, tau_src, dist_target], 1)
-  base.type_assert([dist_src, tau_src, dist_target], float)
+  chex.type_assert([dist_src, tau_src, dist_target], float)
 
   # Calculate quantile error.
   delta = dist_target[None, :] - dist_src[:, None]
@@ -742,7 +743,7 @@ def quantile_q_learning(
   base.rank_assert([
       dist_q_tm1, tau_q_tm1, a_tm1, r_t, discount_t, dist_q_t_selector, dist_q_t
   ], [2, 1, 0, 0, 0, 2, 2])
-  base.type_assert([
+  chex.type_assert([
       dist_q_tm1, tau_q_tm1, a_tm1, r_t, discount_t, dist_q_t_selector, dist_q_t
   ], [float, float, int, float, float, float, float])
 

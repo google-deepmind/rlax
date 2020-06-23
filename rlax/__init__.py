@@ -20,7 +20,6 @@ from rlax._src.base import batched_index
 from rlax._src.base import one_hot
 from rlax._src.base import rank_assert
 from rlax._src.base import Scalar
-from rlax._src.base import type_assert
 from rlax._src.clipping import clip_gradient
 from rlax._src.clipping import huber_loss
 from rlax._src.distributions import categorical_cross_entropy
@@ -162,7 +161,6 @@ __all__ = (
     "transformed_q_lambda",
     "transformed_retrace",
     "tree_split_key",
-    "type_assert",
     "TxPair",
     "vtrace",
     "vtrace_td_error_and_advantage",

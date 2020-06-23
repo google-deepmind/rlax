@@ -15,7 +15,7 @@
 # ==============================================================================
 """Common utilities for RLax functions."""
 
-from typing import List, Type, Union
+from typing import List, Union
 import jax.numpy as jnp
 
 Scalar = Union[float, int]
@@ -93,37 +93,3 @@ def rank_assert(
       raise ValueError(
           "Error in rank compatibility check: input {} has rank {} "
           "(shape {}) but expected {}.".format(idx, rank, shape, expected))
-
-
-def type_assert(
-    inputs: Union[ArrayLike, List[ArrayLike]],
-    expected_types: Union[Type[Scalar], List[Type[Scalar]]]):
-  """Checks that the type of all inputs matches specified expected_types.
-
-  Args:
-    inputs: list of inputs.
-    expected_types: list of expected types associated with each input; if all
-      inputs have same type, a single type may be passed as `expected_types`.
-
-  Raises:
-    ValueError: if the length of inputs and expected_types do not match.
-  """
-  if not isinstance(inputs, list):
-    inputs = [inputs]
-  if not isinstance(expected_types, list):
-    expected_types = [expected_types] * len(inputs)
-  if len(inputs) != len(expected_types):
-    raise ValueError("Length of inputs and expected_types must match.")
-  for idx, (x, expected) in enumerate(zip(inputs, expected_types)):
-    if jnp.issubdtype(expected, jnp.floating):
-      parent = jnp.floating
-    elif jnp.issubdtype(expected, jnp.integer):
-      parent = jnp.integer
-    else:
-      raise ValueError("Error in type compatibility check, unsupported dtype"
-                       " {}".format(expected))
-
-    if not jnp.issubdtype(jnp.result_type(x), parent):
-      raise ValueError(
-          "Error in type compatibility check: input {} has type {} but "
-          "expected {}.".format(idx, jnp.result_type(x), expected))

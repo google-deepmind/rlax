@@ -24,6 +24,7 @@ a special case of the multistep return estimates from `multistep.py`.
 """
 
 import collections
+import chex
 import jax
 import jax.numpy as jnp
 from rlax._src import base
@@ -67,8 +68,8 @@ def vtrace(
   """
   base.rank_assert(
       [v_tm1, v_t, r_t, discount_t, rho_t], [1, 1, 1, 1, 1])
-  base.type_assert(
-      [v_tm1, v_t, r_t, discount_t, rho_t], [float, float, float, float, float])
+  chex.type_assert([v_tm1, v_t, r_t, discount_t, rho_t],
+                   [float, float, float, float, float])
 
   # Clip importance sampling ratios.
   c_t = jnp.minimum(1.0, rho_t) * lambda_
@@ -131,8 +132,8 @@ def leaky_vtrace(
   """
   base.rank_assert(
       [v_tm1, v_t, r_t, discount_t, rho_t], [1, 1, 1, 1, 1])
-  base.type_assert(
-      [v_tm1, v_t, r_t, discount_t, rho_t], [float, float, float, float, float])
+  chex.type_assert([v_tm1, v_t, r_t, discount_t, rho_t],
+                   [float, float, float, float, float])
 
   # Mix clipped and unclipped importance sampling ratios.
   c_t = (
@@ -196,7 +197,7 @@ def vtrace_td_error_and_advantage(
     a tuple of V-Trace error, policy gradient advantage, and estimated Q-values.
   """
   base.rank_assert([v_tm1, v_t, r_t, discount_t, rho_t], 1)
-  base.type_assert([v_tm1, v_t, r_t, discount_t, rho_t], float)
+  chex.type_assert([v_tm1, v_t, r_t, discount_t, rho_t], float)
 
   errors = vtrace(
       v_tm1, v_t, r_t, discount_t, rho_t,

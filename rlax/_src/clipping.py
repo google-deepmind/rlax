@@ -21,6 +21,7 @@ forms of gradient clipping can be conveniently expressed as transformations of
 the loss function optimized by a suitable gradient descent algorithm.
 """
 
+import chex
 import jax
 import jax.numpy as jnp
 from rlax._src import base
@@ -43,7 +44,7 @@ def huber_loss(x: ArrayLike, delta: float = 1.) -> ArrayLike:
   Returns:
     a vector of same shape of `x`.
   """
-  base.type_assert(x, float)
+  chex.type_assert(x, float)
 
   # 0.5 * x^2                  if |x| <= d
   # 0.5 * d^2 + d * (|x| - d)  if |x| > d
@@ -71,5 +72,5 @@ def clip_gradient(x: ArrayLike, gradient_min: float, gradient_max: float):
   Returns:
     a vector of same shape of `x`.
   """
-  base.type_assert(x, float)
+  chex.type_assert(x, float)
   return x, lambda g: (jnp.clip(g, gradient_min, gradient_max), 0., 0.)

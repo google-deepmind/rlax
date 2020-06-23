@@ -22,6 +22,7 @@ of experience; trajectories are not assumed to align with episode boundaries,
 and bootstrapping is used to estimate returns beyond the end of a trajectory.
 """
 
+import chex
 import jax.numpy as jnp
 from rlax._src import base
 
@@ -93,7 +94,7 @@ def lambda_returns(
     Multistep lambda returns.
   """
   base.rank_assert([r_t, discount_t, v_t, lambda_], [1, 1, 1, [0, 1]])
-  base.type_assert([r_t, discount_t, v_t, lambda_], float)
+  chex.type_assert([r_t, discount_t, v_t, lambda_], float)
 
   # If scalar make into vector.
   lambda_ = jnp.ones_like(discount_t) * lambda_
@@ -131,7 +132,7 @@ def discounted_returns(
     Discounted returns.
   """
   base.rank_assert([r_t, discount_t, v_t], [1, 1, [0, 1]])
-  base.type_assert([r_t, discount_t, v_t], float)
+  chex.type_assert([r_t, discount_t, v_t], float)
 
   # If scalar make into vector.
   bootstrapped_v = jnp.ones_like(discount_t) * v_t
@@ -174,7 +175,7 @@ def importance_corrected_td_errors(
     Off-policy estimates of the multistep lambda returns from each state.
   """
   base.rank_assert([r_t, discount_t, rho_tm1, values], [1, 1, 1, 1])
-  base.type_assert([r_t, discount_t, rho_tm1, values], float)
+  chex.type_assert([r_t, discount_t, rho_tm1, values], float)
 
   v_tm1 = values[:-1]  # Predictions to compute errors for.
   v_t = values[1:]  # Values for bootstrapping.
@@ -233,7 +234,7 @@ def general_off_policy_returns_from_action_values(
   """
   base.rank_assert([q_t, a_t, r_t, discount_t, c_t, pi_t],
                    [2, 1, 1, 1, 1, 2])
-  base.type_assert([q_t, a_t, r_t, discount_t, c_t, pi_t],
+  chex.type_assert([q_t, a_t, r_t, discount_t, c_t, pi_t],
                    [float, int, float, float, float, float])
 
   # Get the expected values and the values of actually selected actions.
@@ -285,7 +286,7 @@ def general_off_policy_returns_from_q_and_v(
     [0, ..., K - 1].
   """
   base.rank_assert([q_t, v_t, r_t, discount_t, c_t], 1)
-  base.type_assert([q_t, v_t, r_t, discount_t, c_t], float)
+  chex.type_assert([q_t, v_t, r_t, discount_t, c_t], float)
 
   # Work backwards to compute `G_K-1`, ..., `G_1`, `G_0`.
   g = r_t[-1] + discount_t[-1] * v_t[-1]  # G_K-1.

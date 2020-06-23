@@ -57,7 +57,7 @@ def dpg_loss(
   Returns:
     DPG loss.
   """
-  chex.rank_assert([a_t, dqda_t], 1)
+  base.rank_assert([a_t, dqda_t], 1)
   chex.type_assert([a_t, dqda_t], float)
 
   if dqda_clipping is not None:
@@ -86,7 +86,7 @@ def policy_gradient_loss(
   Returns:
     Loss whose gradient corresponds to a policy gradient update.
   """
-  chex.rank_assert([logits_t, a_t, adv_t, w_t], [2, 1, 1, 1])
+  base.rank_assert([logits_t, a_t, adv_t, w_t], [2, 1, 1, 1])
   chex.type_assert([logits_t, a_t, adv_t, w_t], [float, int, float, float])
 
   log_pi_a = distributions.softmax().logprob(a_t, logits_t)
@@ -111,7 +111,7 @@ def entropy_loss(
   Returns:
     Entropy loss.
   """
-  chex.rank_assert([logits_t, w_t], [2, 1])
+  base.rank_assert([logits_t, w_t], [2, 1])
   chex.type_assert([logits_t, w_t], float)
 
   entropy_per_timestep = distributions.softmax().entropy(logits_t)

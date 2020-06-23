@@ -15,7 +15,7 @@
 # ==============================================================================
 """Common utilities for RLax functions."""
 
-from typing import Union
+from typing import List, Union
 import jax.numpy as jnp
 
 Scalar = Union[float, int]
@@ -58,3 +58,38 @@ def one_hot(indices, num_classes, dtype=jnp.float32):
     labels = jnp.expand_dims(labels, axis=0)
   return jnp.array(
       indices[..., jnp.newaxis] == labels, dtype=dtype)
+
+
+def rank_assert(
+    inputs: Union[ArrayLike, List[ArrayLike]],
+    expected_ranks: Union[int, List[Union[int, List[int]]]]):
+  """Checks that the rank of all inputs matches specified expected_ranks.
+
+  Args:
+    inputs: list of inputs.
+    expected_ranks: list of expected ranks associated with each input, where the
+      expected rank is either an integer or list of integer options; if all
+      inputs have same rank, a single scalar may be passed as `expected_ranks`.
+
+  Raises:
+    ValueError: if the length of inputs and expected_ranks do not match.
+  """
+  if not isinstance(inputs, list):
+    inputs = [inputs]
+  if not isinstance(expected_ranks, list):
+    expected_ranks = [expected_ranks] * len(inputs)
+  if len(inputs) != len(expected_ranks):
+    raise ValueError("Length of inputs and expected_ranks must match.")
+  for idx, (x, expected) in enumerate(zip(inputs, expected_ranks)):
+    if hasattr(x, "shape"):
+      shape = x.shape
+    else:
+      shape = ()  # scalars have shape () by definition.
+    rank = len(shape)
+
+    expected_as_list = expected if isinstance(expected, list) else [expected]
+
+    if rank not in expected_as_list:
+      raise ValueError(
+          "Error in rank compatibility check: input {} has rank {} "
+          "(shape {}) but expected {}.".format(idx, rank, shape, expected))

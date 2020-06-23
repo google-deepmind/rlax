@@ -99,7 +99,7 @@ def transformed_q_lambda(
   Returns:
     Q(lambda) temporal difference error.
   """
-  base.rank_assert([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
+  chex.rank_assert([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
                    [2, 1, 1, 1, 2, [0, 1]])
   chex.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
                    [float, int, float, float, float, float])
@@ -151,7 +151,7 @@ def transformed_retrace(
   Returns:
     Transformed Retrace error.
   """
-  base.rank_assert([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
+  chex.rank_assert([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
                    [2, 2, 1, 1, 1, 1, 2, 1])
   chex.type_assert([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
                    [float, float, int, int, float, float, float, float])

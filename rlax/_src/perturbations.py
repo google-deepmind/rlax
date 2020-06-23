@@ -70,7 +70,7 @@ def add_ornstein_uhlenbeck_noise(
   Returns:
     noisy action, of the same shape as input action.
   """
-  base.rank_assert([action, noise_tm1], 1)
+  chex.rank_assert([action, noise_tm1], 1)
   chex.type_assert([action, noise_tm1], float)
 
   noise_t = (1. - damping) * noise_tm1 + jax.random.normal(

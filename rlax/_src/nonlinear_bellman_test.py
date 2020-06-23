@@ -76,11 +76,11 @@ class TransformedQLambdaTest(parameterized.TestCase):
          [[-1.6179, 0.4633, -0.7576], [-1.1097, 1.6509, 0.3598]]],
         dtype=np.float32)
 
+  @chex.all_variants()
   @parameterized.named_parameters(
       ('identity0', nonlinear_bellman.IDENTITY_PAIR, 0),
       ('signed_logp11', nonlinear_bellman.SIGNED_LOGP1_PAIR, 1),
       ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2))
-  @chex.all_variants()
   def test_transformed_q_lambda_batch(self, tx_pair, td_index):
     """Tests correctness for full batch."""
     transformed_q_lambda = self.variant(jax.vmap(functools.partial(
@@ -134,11 +134,11 @@ class TransformedRetraceTest(parameterized.TestCase):
          [[-1.6179, -3.0165, -5.2699], [-2.7742, -9.9544, 2.3167]]],
         dtype=np.float32)
 
+  @chex.all_variants()
   @parameterized.named_parameters(
       ('identity0', nonlinear_bellman.IDENTITY_PAIR, 0),
       ('signed_logp11', nonlinear_bellman.SIGNED_LOGP1_PAIR, 1),
       ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2))
-  @chex.all_variants()
   def test_transformed_retrace_batch(self, tx_pair, td_index):
     """Tests correctness for full batch."""
     transformed_retrace = self.variant(jax.vmap(functools.partial(

@@ -684,10 +684,10 @@ class QuantileRegressionLossTest(parameterized.TestCase):
         2.: np.array([2.5, 8.5 / 3.])
     }
 
+  @chex.all_variants()
   @parameterized.named_parameters(
       ('nohuber', 0.),
       ('huber', 2.))
-  @chex.all_variants()
   def test_quantile_regression_loss_batch(self, huber_param):
     """Tests for a full batch."""
     loss_fn = value_learning._quantile_regression_loss
@@ -765,10 +765,10 @@ class QuantileQLearningTest(parameterized.TestCase):
            for (dqa, tau, dt) in zip(dist_qa_tm1, self.tau_q_tm1, dist_target)],
           dtype=np.float32)
 
+  @chex.all_variants()
   @parameterized.named_parameters(
       ('nohuber', 0.0),
       ('huber', 1.0))
-  @chex.all_variants()
   def test_quantile_q_learning_batch(self, huber_param):
     """Tests for a full batch."""
     quantile_q_learning = self.variant(jax.vmap(functools.partial(

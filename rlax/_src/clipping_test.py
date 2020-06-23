@@ -90,10 +90,10 @@ class EquivalenceTest(parameterized.TestCase):
     self.large_delta = 5.
     self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
 
+  @chex.all_variants()
   @parameterized.named_parameters(
       ('10', 10.),
       ('0.5', 0.5))
-  @chex.all_variants()
   def test_clip_huber_equivalence(self, td_error):
 
     @self.variant

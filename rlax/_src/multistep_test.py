@@ -84,6 +84,42 @@ class DiscountedReturnsTest(parameterized.TestCase):
     np.testing.assert_allclose(self.expected, actual_vector, rtol=1e-5)
 
 
+class NStepBootstrappedReturnsTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(NStepBootstrappedReturnsTest, self).setUp()
+    self.r_t = np.array(
+        [[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0, 2.1]])
+    self.discount_t = np.array(
+        [[0.5, 0.9, 1.0, 0.5, 0.8], [0.9, 0.5, 0.3, 0.8, 0.7]])
+    self.v_t = np.array(
+        [[3.0, 1.0, 5.0, -5.0, 3.0], [-1.7, 1.2, 2.3, 2.2, 2.7]])
+
+    # Different expected results for different values of n.
+    self.expected = dict()
+    self.expected[3] = np.array(
+        [[2.8, -3.15, 0.7, 1.7, 3.4], [1.2155, 0.714, 0.2576, 3.192, 3.99]],
+        dtype=np.float32)
+    self.expected[5] = np.array(
+        [[1.315, 0.63, 0.7, 1.7, 3.4], [1.33592, 0.9288, 0.2576, 3.192, 3.99]],
+        dtype=np.float32)
+    self.expected[7] = np.array(
+        [[1.315, 0.63, 0.7, 1.7, 3.4], [1.33592, 0.9288, 0.2576, 3.192, 3.99]],
+        dtype=np.float32)
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('smaller_n', 3,), ('equal_n', 5,), ('bigger_n', 7,))
+  def test_n_step_sequence_returns_batch(self, n):
+    """Tests for a full batch."""
+    n_step_returns = self.variant(jax.vmap(functools.partial(
+        multistep.n_step_bootstrapped_returns, n=n)))
+    # Compute n-step return in batch.
+    actual = n_step_returns(self.r_t, self.discount_t, self.v_t)
+    # Test return estimate.
+    np.testing.assert_allclose(self.expected[n], actual, rtol=1e-5)
+
+
 class TDErrorTest(parameterized.TestCase):
 
   def setUp(self):

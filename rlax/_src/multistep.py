@@ -109,6 +109,45 @@ def lambda_returns(
   return jnp.array(returns)
 
 
+def n_step_bootstrapped_returns(
+    r_t: ArrayLike,
+    discount_t: ArrayLike,
+    v_t: ArrayLike,
+    n: int
+) -> ArrayLike:
+  """Computes strided n-step bootstrapped return targets over a sequence.
+
+  The returns are computed in a backwards fashion according to the equation:
+
+     Gₜ = rₜ₊₁ + γₜ₊₁ * (rₜ₊₂ + γₜ₊₂ * (... * (rₜ₊ₙ + γₜ₊ₙ * vₜ₊ₙ ))),
+
+  Args:
+    r_t: rewards at times [1, ..., T].
+    discount_t: discounts at times [1, ..., T].
+    v_t: state or state-action values to bootstrap from at time [1, ...., T]
+    n: number of steps over which to accumulate reward before bootstrapping.
+
+  Returns:
+    estimated bootstrapped returns at times [1, ...., T]
+  """
+  chex.rank_assert([r_t, discount_t, v_t], 1)
+  chex.type_assert([r_t, discount_t, v_t], float)
+  seq_len = r_t.shape[0]
+
+  # Pad end of reward and discount sequences with 0 and 1 respectively.
+  r_t = jnp.concatenate([r_t, jnp.zeros(n - 1)])
+  discount_t = jnp.concatenate([discount_t, jnp.ones(n - 1)])
+
+  # Shift bootstrap values by n and pad end of sequence with last value v_t[-1].
+  pad_size = min(n - 1, seq_len)
+  targets = jnp.concatenate([v_t[n - 1:], jnp.array([v_t[-1]] * pad_size)])
+
+  # Work backwards to compute discounted, bootstrapped n-step returns.
+  for i in reversed(range(n)):
+    targets = r_t[i:i + seq_len] + discount_t[i:i + seq_len] * targets
+  return targets
+
+
 def discounted_returns(
     r_t: ArrayLike,
     discount_t: ArrayLike,
@@ -296,3 +335,4 @@ def general_off_policy_returns_from_q_and_v(
     returns.insert(0, g)
 
   return jnp.array(returns)
+

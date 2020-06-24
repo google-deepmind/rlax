@@ -93,7 +93,7 @@ def lambda_returns(
   Returns:
     Multistep lambda returns.
   """
-  base.rank_assert([r_t, discount_t, v_t, lambda_], [1, 1, 1, [0, 1]])
+  chex.rank_assert([r_t, discount_t, v_t, lambda_], [1, 1, 1, [0, 1]])
   chex.type_assert([r_t, discount_t, v_t, lambda_], float)
 
   # If scalar make into vector.
@@ -170,7 +170,7 @@ def discounted_returns(
   Returns:
     Discounted returns.
   """
-  base.rank_assert([r_t, discount_t, v_t], [1, 1, [0, 1]])
+  chex.rank_assert([r_t, discount_t, v_t], [1, 1, [0, 1]])
   chex.type_assert([r_t, discount_t, v_t], float)
 
   # If scalar make into vector.
@@ -213,7 +213,7 @@ def importance_corrected_td_errors(
   Returns:
     Off-policy estimates of the multistep lambda returns from each state.
   """
-  base.rank_assert([r_t, discount_t, rho_tm1, values], [1, 1, 1, 1])
+  chex.rank_assert([r_t, discount_t, rho_tm1, values], [1, 1, 1, 1])
   chex.type_assert([r_t, discount_t, rho_tm1, values], float)
 
   v_tm1 = values[:-1]  # Predictions to compute errors for.
@@ -271,8 +271,7 @@ def general_off_policy_returns_from_action_values(
   Returns:
     Off-policy estimates of the multistep lambda returns from each state..
   """
-  base.rank_assert([q_t, a_t, r_t, discount_t, c_t, pi_t],
-                   [2, 1, 1, 1, 1, 2])
+  chex.rank_assert([q_t, a_t, r_t, discount_t, c_t, pi_t], [2, 1, 1, 1, 1, 2])
   chex.type_assert([q_t, a_t, r_t, discount_t, c_t, pi_t],
                    [float, int, float, float, float, float])
 
@@ -324,7 +323,7 @@ def general_off_policy_returns_from_q_and_v(
     Off-policy estimates of the generalized returns from states visited at times
     [0, ..., K - 1].
   """
-  base.rank_assert([q_t, v_t, r_t, discount_t, c_t], 1)
+  chex.rank_assert([q_t, v_t, r_t, discount_t, c_t], 1)
   chex.type_assert([q_t, v_t, r_t, discount_t, c_t], float)
 
   # Work backwards to compute `G_K-1`, ..., `G_1`, `G_0`.

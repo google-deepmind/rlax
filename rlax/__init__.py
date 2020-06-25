@@ -46,6 +46,7 @@ from rlax._src.multistep import discounted_returns
 from rlax._src.multistep import general_off_policy_returns_from_action_values
 from rlax._src.multistep import general_off_policy_returns_from_q_and_v
 from rlax._src.multistep import lambda_returns
+from rlax._src.multistep import n_step_bootstrapped_returns
 from rlax._src.nested_updates import incremental_update
 from rlax._src.nested_updates import periodic_update
 from rlax._src.nonlinear_bellman import IDENTITY_PAIR
@@ -126,6 +127,7 @@ __all__ = (
     "log_loss",
     "logit",
     "multivariate_normal_kl_divergence",
+    "n_step_bootstrapped_returns",
     "one_hot",
     "periodic_update",
     "persistent_q_learning",

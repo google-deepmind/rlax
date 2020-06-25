@@ -24,65 +24,6 @@ import numpy as np
 from rlax._src import base
 
 
-class RankAssertTest(parameterized.TestCase):
-
-  @parameterized.named_parameters(
-      ('rank_1', [1, 2], 2),
-      ('rank_2', [[1, 2], [3, 4]], 1),
-      ('rank_3', [[[1, 2], [3, 4]], [[5, 6], [7, 8]]], [[1, 2, 4]]),
-  )
-  def test_rank_assert_should_raise_single_input(self, array, wrong_rank):
-    with self.assertRaises(ValueError):
-      base.rank_assert(jnp.array(array), wrong_rank)
-
-  @parameterized.named_parameters(
-      ('rank_1', [1, 2], 2),
-      ('rank_2', [[1, 2], [3, 4]], 1),
-      ('rank_3', [[[1, 2], [3, 4]], [[5, 6], [7, 8]]], 4),
-  )
-  def test_rank_assert_should_raise_list_input_single_rank(
-      self, array, wrong_rank):
-    with self.assertRaises(ValueError):
-      base.rank_assert([jnp.array(array)] * 3, wrong_rank)
-
-  def test_rank_assert_should_raise_list_input_list_rank(self):
-    with self.assertRaises(ValueError):
-      base.rank_assert(
-          [jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [2, 2])
-      base.rank_assert(
-          [jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [[1, 3], 2])
-      base.rank_assert(
-          [jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [[1, 2], 3])
-
-  @parameterized.named_parameters(
-      ('rank_1', [1, 2], 1),
-      ('rank_2', [[1, 2], [3, 4]], 2),
-      ('rank_3', [[[1, 2], [3, 4]], [[5, 6], [7, 8]]], [[1, 2, 3]]),
-  )
-  def test_rank_assert_should_not_raise_single_input(self, array, correct_rank):
-    base.rank_assert(jnp.array(array), correct_rank)
-
-  @parameterized.named_parameters(
-      ('rank_1', [1, 2], 1),
-      ('rank_2', [[1, 2], [3, 4]], 2),
-      ('rank_3', [[[1, 2], [3, 4]], [[5, 6], [7, 8]]], 3),
-  )
-  def test_rank_assert_should_not_raise_list_input_single_rank(
-      self, array, correct_rank):
-    base.rank_assert([jnp.array(array)] * 3, correct_rank)
-
-  def test_rank_assert_should_not_raise_list_input_list_rank(self):
-    base.rank_assert(
-        [jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [1, 2])
-    base.rank_assert(
-        [jnp.array([1, 2]), jnp.array([[1, 2], [3, 4]])], [[1, 2], 2])
-
-  def test_rank_assert_should_raise_different_length(self):
-    with self.assertRaises(ValueError):
-      base.rank_assert(
-          [jnp.array([1, 2])], [2, 2])
-
-
 class OneHotTest(parameterized.TestCase):
 
   def test_one_hot(self):

@@ -18,7 +18,6 @@
 from rlax._src.base import ArrayLike
 from rlax._src.base import batched_index
 from rlax._src.base import one_hot
-from rlax._src.base import rank_assert
 from rlax._src.base import Scalar
 from rlax._src.clipping import clip_gradient
 from rlax._src.clipping import huber_loss
@@ -140,7 +139,6 @@ __all__ = (
     "quantile_q_learning",
     "qv_learning",
     "qv_max",
-    "rank_assert",
     "sarsa",
     "sarsa_lambda",
     "Scalar",

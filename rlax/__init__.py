@@ -34,6 +34,8 @@ from rlax._src.distributions import multivariate_normal_kl_divergence
 from rlax._src.distributions import safe_epsilon_softmax
 from rlax._src.distributions import softmax
 from rlax._src.distributions import squashed_gaussian
+from rlax._src.exploration import add_gaussian_noise
+from rlax._src.exploration import add_ornstein_uhlenbeck_noise
 from rlax._src.general_value_functions import feature_control_rewards
 from rlax._src.general_value_functions import pixel_control_rewards
 from rlax._src.losses import l2_loss
@@ -54,8 +56,6 @@ from rlax._src.nonlinear_bellman import transformed_lambda_returns
 from rlax._src.nonlinear_bellman import transformed_q_lambda
 from rlax._src.nonlinear_bellman import transformed_retrace
 from rlax._src.nonlinear_bellman import TxPair
-from rlax._src.perturbations import add_gaussian_noise
-from rlax._src.perturbations import add_ornstein_uhlenbeck_noise
 from rlax._src.policy_gradients import dpg_loss
 from rlax._src.policy_gradients import entropy_loss
 from rlax._src.policy_gradients import policy_gradient_loss

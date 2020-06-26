@@ -15,10 +15,8 @@
 # ==============================================================================
 """RLax: building blocks for RL, in JAX."""
 
-from rlax._src.base import ArrayLike
 from rlax._src.base import batched_index
 from rlax._src.base import one_hot
-from rlax._src.base import Scalar
 from rlax._src.clipping import clip_gradient
 from rlax._src.clipping import huber_loss
 from rlax._src.distributions import categorical_cross_entropy
@@ -95,7 +93,6 @@ __version__ = "0.0.1"
 __all__ = (
     "add_gaussian_noise",
     "add_ornstein_uhlenbeck_noise",
-    "ArrayLike",
     "batched_index",
     "categorical_cross_entropy",
     "categorical_double_q_learning",
@@ -143,7 +140,6 @@ __all__ = (
     "qv_max",
     "sarsa",
     "sarsa_lambda",
-    "Scalar",
     "sigmoid",
     "signed_expm1",
     "signed_hyperbolic",

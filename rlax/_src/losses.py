@@ -27,16 +27,15 @@ from typing import Optional, Union
 import chex
 import jax
 import jax.numpy as jnp
-from rlax._src import base
 from rlax._src import general_value_functions
 from rlax._src import value_learning
 
-Scalar = base.Scalar
-ArrayLike = base.ArrayLike
+Scalar = chex.Scalar
+Array = chex.Array
 
 
-def l2_loss(predictions: ArrayLike,
-            targets: Optional[ArrayLike] = None) -> ArrayLike:
+def l2_loss(predictions: Array,
+            targets: Optional[Array] = None) -> Array:
   """Caculates the L2 loss of predictions wrt targets.
 
   If targets are not provided this function acts as an L2-regularizer for preds.
@@ -57,7 +56,7 @@ def l2_loss(predictions: ArrayLike,
   return 0.5 * (predictions - targets)**2
 
 
-def likelihood(predictions: ArrayLike, targets: ArrayLike) -> ArrayLike:
+def likelihood(predictions: Array, targets: Array) -> Array:
   """Calculates the likelihood of predictions wrt targets.
 
   Args:
@@ -77,9 +76,9 @@ def likelihood(predictions: ArrayLike, targets: ArrayLike) -> ArrayLike:
 
 
 def log_loss(
-    predictions: ArrayLike,
-    targets: ArrayLike,
-) -> ArrayLike:
+    predictions: Array,
+    targets: Array,
+) -> Array:
   """Calculates the log loss of predictions wrt targets.
 
   Args:
@@ -94,10 +93,10 @@ def log_loss(
 
 
 def pixel_control_loss(
-    observations: ArrayLike,
-    actions: ArrayLike,
-    action_values: ArrayLike,
-    discount_factor: Union[ArrayLike, Scalar],
+    observations: Array,
+    actions: Array,
+    action_values: Array,
+    discount_factor: Union[Array, Scalar],
     cell_size: int):
   """Calculate n-step Q-learning loss for pixel control auxiliary task.
 

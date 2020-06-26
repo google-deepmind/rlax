@@ -24,54 +24,54 @@ import jax
 import jax.numpy as jnp
 from rlax._src import base
 
-ArrayLike = base.ArrayLike
-ArrayOrScalar = base.ArrayOrScalar
+Array = chex.Array
+Numeric = chex.Numeric
 
 
-def identity(x: ArrayLike) -> ArrayLike:
+def identity(x: Array) -> Array:
   """Identity transform."""
   chex.type_assert(x, float)
   return x
 
 
-def sigmoid(x: ArrayOrScalar) -> ArrayLike:
+def sigmoid(x: Numeric) -> Array:
   """Sigmoid transform."""
   chex.type_assert(x, float)
   return jax.nn.sigmoid(x)
 
 
-def logit(x: ArrayLike) -> ArrayLike:
+def logit(x: Array) -> Array:
   """Logit transform, inverse of sigmoid."""
   chex.type_assert(x, float)
   return -jnp.log(1. / x - 1.)
 
 
-def signed_logp1(x: ArrayLike) -> ArrayLike:
+def signed_logp1(x: Array) -> Array:
   """Signed logarithm of x + 1."""
   chex.type_assert(x, float)
   return jnp.sign(x) * jnp.log1p(jnp.abs(x))
 
 
-def signed_expm1(x: ArrayLike) -> ArrayLike:
+def signed_expm1(x: Array) -> Array:
   """Signed exponential of x - 1, inverse of signed_logp1."""
   chex.type_assert(x, float)
   return jnp.sign(x) * (jnp.exp(jnp.abs(x)) - 1)
 
 
-def signed_hyperbolic(x: ArrayLike, eps: float = 1e-3) -> ArrayLike:
+def signed_hyperbolic(x: Array, eps: float = 1e-3) -> Array:
   """Signed hyperbolic transform, inverse of signed_parabolic."""
   chex.type_assert(x, float)
   return jnp.sign(x) * (jnp.sqrt(jnp.abs(x) + 1) - 1) + eps * x
 
 
-def signed_parabolic(x: ArrayLike, eps: float = 1e-3) -> ArrayLike:
+def signed_parabolic(x: Array, eps: float = 1e-3) -> Array:
   """Signed parabolic transform, inverse of signed_hyperbolic."""
   chex.type_assert(x, float)
   z = jnp.sqrt(1 + 4 * eps * (eps + 1 + jnp.abs(x))) / 2 / eps - 1 / 2 / eps
   return jnp.sign(x) * (jnp.square(z) - 1)
 
 
-def power(x: ArrayLike, p: float) -> ArrayLike:
+def power(x: Array, p: float) -> Array:
   """Power transform; `power_tx(_, 1/p)` is the inverse of `power_tx(_, p)`."""
   chex.type_assert(x, float)
   q = jnp.sqrt(p)
@@ -79,10 +79,10 @@ def power(x: ArrayLike, p: float) -> ArrayLike:
 
 
 def transform_to_2hot(
-    scalar: ArrayLike,
+    scalar: Array,
     min_value: float,
     max_value: float,
-    num_bins: int) -> ArrayLike:
+    num_bins: int) -> Array:
   """Transforms a scalar tensor to a 2 hot representation."""
   scalar = jnp.clip(scalar, min_value, max_value)
   scalar_bin = (scalar - min_value) / (max_value - min_value) * (num_bins - 1)
@@ -97,10 +97,10 @@ def transform_to_2hot(
 
 
 def transform_from_2hot(
-    probs: ArrayLike,
+    probs: Array,
     min_value: float,
     max_value: float,
-    num_bins: int) -> ArrayLike:
+    num_bins: int) -> Array:
   """Transforms from a categorical distribution to a scalar."""
   support_space = jnp.linspace(min_value, max_value, num_bins)
   scalar = jnp.sum(probs * jnp.expand_dims(support_space, 0), -1)

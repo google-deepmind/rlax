@@ -26,24 +26,24 @@ from typing import Optional
 import chex
 import jax
 import jax.numpy as jnp
-from rlax._src import base
 from rlax._src import distributions
 from rlax._src import losses
 
-ArrayLike = base.ArrayLike
+Array = chex.Array
+Scalar = chex.Scalar
 
 
-def _clip_by_l2_norm(x: ArrayLike, max_norm: float) -> ArrayLike:
+def _clip_by_l2_norm(x: Array, max_norm: float) -> Array:
   """Clip gradients to maximum l2 norm `max_norm`."""
   norm = jnp.sqrt(jnp.sum(jnp.vdot(x, x)))
   return jnp.where(norm > max_norm, x * (max_norm / norm), x)
 
 
 def dpg_loss(
-    a_t: ArrayLike,
-    dqda_t: ArrayLike,
-    dqda_clipping: Optional[base.Scalar] = None
-) -> ArrayLike:
+    a_t: Array,
+    dqda_t: Array,
+    dqda_clipping: Optional[Scalar] = None
+) -> Array:
   """Calculates the deterministic policy gradient (DPG) loss.
 
   See "Deterministic Policy Gradient Algorithms" by Silver, Lever, Heess,
@@ -67,11 +67,11 @@ def dpg_loss(
 
 
 def policy_gradient_loss(
-    logits_t: ArrayLike,
-    a_t: ArrayLike,
-    adv_t: ArrayLike,
-    w_t: ArrayLike,
-) -> ArrayLike:
+    logits_t: Array,
+    a_t: Array,
+    adv_t: Array,
+    w_t: Array,
+) -> Array:
   """Calculates the policy gradient loss.
 
   See "Simple Gradient-Following Algorithms for Connectionist RL" by Williams.
@@ -96,9 +96,9 @@ def policy_gradient_loss(
 
 
 def entropy_loss(
-    logits_t: ArrayLike,
-    w_t: ArrayLike,
-) -> ArrayLike:
+    logits_t: Array,
+    w_t: Array,
+) -> Array:
   """Calculates the entropy regularization loss.
 
   See "Function Optimization using Connectionist RL Algorithms" by Williams.

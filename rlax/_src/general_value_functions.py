@@ -23,15 +23,14 @@ estimates of discounted sums of `cumulants` different from the main task reward.
 
 import chex
 import jax.numpy as jnp
-from rlax._src import base
 
-ArrayLike = base.ArrayLike
+Array = chex.Array
 
 
 def pixel_control_rewards(
-    observations: ArrayLike,
+    observations: Array,
     cell_size: int,
-) -> base.ArrayLike:
+) -> Array:
   """Calculates cumulants for pixel control tasks from an observation sequence.
 
   The observations are first split in a grid of KxK cells. For each cell a
@@ -73,10 +72,10 @@ def pixel_control_rewards(
 
 
 def feature_control_rewards(
-    features: ArrayLike,
+    features: Array,
     cumulant_type='absolute_change',
     discount=None,
-) -> base.ArrayLike:
+) -> Array:
   """Calculates cumulants for feature control tasks from a sequence of features.
 
   For each feature dimension, a distinct pseudo reward is computed based on the

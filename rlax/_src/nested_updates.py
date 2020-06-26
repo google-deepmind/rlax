@@ -16,20 +16,20 @@
 """Utilities for target network switching."""
 
 from typing import Any
+import chex
 import jax
-from rlax._src import base
 
-ArrayOrScalar = base.ArrayOrScalar
+Numeric = chex.Numeric
 
 
-def periodic_update(new_tensors: Any, old_tensors: Any, is_time: ArrayOrScalar):
+def periodic_update(new_tensors: Any, old_tensors: Any, is_time: Numeric):
   """Periodically switch all elements from a nested struct with new elements."""
   return jax.tree_multimap(
       lambda new, old: jax.lax.select(is_time, new, old),
       new_tensors, old_tensors)
 
 
-def incremental_update(new_tensors, old_tensors, tau: ArrayOrScalar):
+def incremental_update(new_tensors, old_tensors, tau: Numeric):
   """Incrementally update all elements from a nested struct."""
   return jax.tree_multimap(
       lambda new, old: tau * new + (1.0 - tau) * old,

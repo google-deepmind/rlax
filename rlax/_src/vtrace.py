@@ -27,24 +27,23 @@ import collections
 import chex
 import jax
 import jax.numpy as jnp
-from rlax._src import base
 
 
-ArrayLike = base.ArrayLike
+Array = chex.Array
 VTraceOutput = collections.namedtuple(
     'vtrace_output', ['errors', 'pg_advantage', 'q_estimate'])
 
 
 def vtrace(
-    v_tm1: ArrayLike,
-    v_t: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
-    rho_t: ArrayLike,
+    v_tm1: Array,
+    v_t: Array,
+    r_t: Array,
+    discount_t: Array,
+    rho_t: Array,
     lambda_: float = 1.0,
     clip_rho_threshold: float = 1.0,
     stop_target_gradients: bool = True,
-) -> ArrayLike:
+) -> Array:
   """Calculates V-Trace errors from importance weights.
 
   V-trace computes TD-errors from multistep trajectories by applying
@@ -98,11 +97,11 @@ def vtrace(
 
 
 def leaky_vtrace(
-    v_tm1: ArrayLike,
-    v_t: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
-    rho_t: ArrayLike,
+    v_tm1: Array,
+    v_t: Array,
+    r_t: Array,
+    discount_t: Array,
+    rho_t: Array,
     alpha_: float = 1.0,
     lambda_: float = 1.0,
     clip_rho_threshold: float = 1.0,
@@ -162,11 +161,11 @@ def leaky_vtrace(
 
 
 def vtrace_td_error_and_advantage(
-    v_tm1: ArrayLike,
-    v_t: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
-    rho_t: ArrayLike,
+    v_tm1: Array,
+    v_t: Array,
+    r_t: Array,
+    discount_t: Array,
+    rho_t: Array,
     lambda_: float = 1.0,
     clip_rho_threshold: float = 1.0,
     clip_pg_rho_threshold: float = 1.0,

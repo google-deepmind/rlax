@@ -15,16 +15,14 @@
 # ==============================================================================
 """Common utilities for RLax functions."""
 
-from typing import Union
+import chex
 import jax.numpy as jnp
 
-Scalar = Union[float, int]
-ArrayLike = jnp.ndarray
-ArrayOrScalar = Union[ArrayLike, Scalar]
+Array = chex.Array
 
 
 def batched_index(
-    values: ArrayLike, indices: ArrayLike, keepdims: bool = False) -> ArrayLike:
+    values: Array, indices: Array, keepdims: bool = False) -> Array:
   """Index into the last dimension of a tensor, preserving all others dims.
 
   Args:

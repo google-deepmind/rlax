@@ -35,7 +35,7 @@ from rlax._src import base
 from rlax._src import multistep
 from rlax._src import transforms
 
-ArrayLike = base.ArrayLike
+Array = chex.Array
 TxPair = collections.namedtuple('TxPair', ['apply', 'apply_inv'])
 
 
@@ -70,15 +70,15 @@ transformed_general_off_policy_returns_from_action_values = transform_values(
 
 
 def transformed_q_lambda(
-    q_tm1: ArrayLike,
-    a_tm1: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
-    q_t: ArrayLike,
-    lambda_: ArrayLike,
+    q_tm1: Array,
+    a_tm1: Array,
+    r_t: Array,
+    discount_t: Array,
+    q_t: Array,
+    lambda_: Array,
     stop_target_gradients: bool = True,
     tx_pair: TxPair = IDENTITY_PAIR,
-) -> ArrayLike:
+) -> Array:
   """Calculates Peng's or Watkins' Q(lambda) temporal difference error.
 
   See "General non-linear Bellman equations" by van Hasselt et al.
@@ -115,19 +115,19 @@ def transformed_q_lambda(
 
 
 def transformed_retrace(
-    q_tm1: ArrayLike,
-    q_t: ArrayLike,
-    a_tm1: ArrayLike,
-    a_t: ArrayLike,
-    r_t: ArrayLike,
-    discount_t: ArrayLike,
-    pi_t: ArrayLike,
-    mu_t: ArrayLike,
+    q_tm1: Array,
+    q_t: Array,
+    a_tm1: Array,
+    a_t: Array,
+    r_t: Array,
+    discount_t: Array,
+    pi_t: Array,
+    mu_t: Array,
     lambda_: float,
     eps: float = 1e-8,
     stop_target_gradients: bool = True,
     tx_pair: TxPair = IDENTITY_PAIR,
-) -> ArrayLike:
+) -> Array:
   """Calculates transformed Retrace errors.
 
   See "Recurrent Experience Replay in Distributed Reinforcement Learning" by

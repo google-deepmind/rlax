@@ -15,12 +15,13 @@
 # ==============================================================================
 """Tree utilities."""
 
+import chex
 import jax
 
-from rlax._src import base
+Array = chex.Array
 
 
-def tree_split_key(rng_key: base.ArrayLike, tree_like):
+def tree_split_key(rng_key: Array, tree_like):
   """Generate random keys for each leaf in a tree.
 
   Args:

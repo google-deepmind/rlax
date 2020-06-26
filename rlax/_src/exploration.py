@@ -22,16 +22,15 @@ subpackage exposes popular forms of perturbations used by RL agents.
 
 import chex
 import jax
-from rlax._src import base
 
-ArrayLike = base.ArrayLike
+Array = chex.Array
 
 
 def add_gaussian_noise(
-    key: ArrayLike,
-    action: ArrayLike,
+    key: Array,
+    action: Array,
     stddev: float
-) -> ArrayLike:
+) -> Array:
   """Returns continuous action with noise drawn from a Gaussian distribution.
 
   Args:
@@ -49,12 +48,12 @@ def add_gaussian_noise(
 
 
 def add_ornstein_uhlenbeck_noise(
-    key: ArrayLike,
-    action: ArrayLike,
-    noise_tm1: ArrayLike,
+    key: Array,
+    action: Array,
+    noise_tm1: Array,
     damping: float,
     stddev: float
-) -> ArrayLike:
+) -> Array:
   """Returns continuous action with noise from Ornstein-Uhlenbeck process.
 
   See "On the theory of Brownian Motion" by Uhlenbeck and Ornstein.

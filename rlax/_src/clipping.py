@@ -24,12 +24,11 @@ the loss function optimized by a suitable gradient descent algorithm.
 import chex
 import jax
 import jax.numpy as jnp
-from rlax._src import base
 
-ArrayLike = base.ArrayLike
+Array = chex.Array
 
 
-def huber_loss(x: ArrayLike, delta: float = 1.) -> ArrayLike:
+def huber_loss(x: Array, delta: float = 1.) -> Array:
   """Huber loss, similar to L2 loss close to zero, L1 loss away from zero.
 
   See "Robust Estimation of a Location Parameter" by Huber.
@@ -56,7 +55,7 @@ def huber_loss(x: ArrayLike, delta: float = 1.) -> ArrayLike:
 
 
 @jax.custom_gradient
-def clip_gradient(x: ArrayLike, gradient_min: float, gradient_max: float):
+def clip_gradient(x: Array, gradient_min: float, gradient_max: float):
   """Identity but the gradient in the backward pass is clipped.
 
   See "Human-level control through deep reinforcement learning" by Mnih et al,

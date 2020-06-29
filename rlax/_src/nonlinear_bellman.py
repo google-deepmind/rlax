@@ -67,6 +67,8 @@ def transform_values(build_targets, *value_argnums):
 transformed_lambda_returns = transform_values(multistep.lambda_returns, 2)
 transformed_general_off_policy_returns_from_action_values = transform_values(
     multistep.general_off_policy_returns_from_action_values, 0)
+transformed_n_step_returns = transform_values(
+    multistep.n_step_bootstrapped_returns, 2)
 
 
 def transformed_q_lambda(
@@ -163,5 +165,51 @@ def transformed_retrace(
   if stop_target_gradients:
     target_tm1 = jax.lax.stop_gradient(target_tm1)
 
+  q_a_tm1 = base.batched_index(q_tm1, a_tm1)
+  return target_tm1 - q_a_tm1
+
+
+def transformed_n_step_q_learning(
+    q_tm1: Array,
+    a_tm1: Array,
+    target_q_t: Array,
+    a_t: Array,
+    r_t: Array,
+    discount_t: Array,
+    n: int,
+    stop_target_gradients: bool = True,
+    tx_pair: TxPair = IDENTITY_PAIR,
+) -> Array:
+  """Calculates transformed n-step TD errors.
+
+  See "Recurrent Experience Replay in Distributed Reinforcement Learning" by
+  Kapturowski et al. (https://openreview.net/pdf?id=r1lyTjAqYX).
+
+  Args:
+    q_tm1: Q-values at times [0, ..., T - 1].
+    a_tm1: action index at times [0, ..., T - 1].
+    target_q_t: target Q-values at time [1, ..., T].
+    a_t: action index at times [[1, ... , T]] used to select target q-values to
+      bootstrap from; max(target_q_t) for normal Q-learning, max(q_t) for double
+      Q-learning.
+    r_t: reward at times [1, ..., T].
+    discount_t: discount at times [1, ..., T]
+    n: number of steps over which to accumulate reward before bootstrapping.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
+    tx_pair: TxPair of value function transformation and its inverse.
+
+  Returns:
+    Transformed N-step TD error.
+  """
+  chex.rank_assert([q_tm1, target_q_t, a_tm1, a_t, r_t, discount_t],
+                   [2, 2, 1, 1, 1, 1])
+  chex.type_assert([q_tm1, target_q_t, a_tm1, a_t, r_t, discount_t],
+                   [float, float, int, int, float, float])
+
+  v_t = base.batched_index(target_q_t, a_t)
+  target_tm1 = transformed_n_step_returns(tx_pair, r_t, discount_t, v_t, n)
+  if stop_target_gradients:
+    target_tm1 = jax.lax.stop_gradient(target_tm1)
   q_a_tm1 = base.batched_index(q_tm1, a_tm1)
   return target_tm1 - q_a_tm1

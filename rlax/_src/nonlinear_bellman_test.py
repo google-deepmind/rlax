@@ -93,6 +93,62 @@ class TransformedQLambdaTest(parameterized.TestCase):
     np.testing.assert_allclose(self.expected_td[td_index], actual_td, rtol=1e-3)
 
 
+class TransformedNStepQLearningTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(TransformedNStepQLearningTest, self).setUp()
+    self.n = 2
+
+    self.q_tm1 = np.array(
+        [[[1.1, 2.1], [-1.1, 1.1], [3.1, -3.1]],
+         [[2.1, 3.1], [-1.1, 0.1], [-2.1, -1.1]]],
+        dtype=np.float32)
+    self.a_tm1 = np.array(
+        [[0, 1, 0],
+         [1, 0, 0]],
+        dtype=np.int32)
+    self.discount_t = np.array(
+        [[0., 0.89, 0.85],
+         [0.88, 1., 0.83]],
+        dtype=np.float32)
+    self.r_t = np.array(
+        [[-1.3, -1.3, 2.3],
+         [1.3, 5.3, -3.3]],
+        dtype=np.float32)
+    self.target_q_t = np.array(
+        [[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2]],
+         [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2]]],
+        dtype=np.float32)
+    self.a_t = np.array(
+        [[0, 1, 0],
+         [1, 0, 0]],
+        dtype=np.int32)
+
+    self.expected_td = np.array([
+        [[-2.4, 1.3112999, 1.0700002],
+         [3.9199996, 2.104, -2.196]],
+        [[-1.9329091, 0.9564189, -0.7853615],
+         [-0.9021418, 1.1716722, 0.2713145]],
+        [[-1.6178751, 0.85600746, -0.75762916],
+         [-0.87689304, 0.6246443, 0.3598088]]
+    ], dtype=np.float32)
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('identity0', nonlinear_bellman.IDENTITY_PAIR, 0),
+      ('signed_logp11', nonlinear_bellman.SIGNED_LOGP1_PAIR, 1),
+      ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2))
+  def test_transformed_q_lambda_batch(self, tx_pair, td_index):
+    """Tests correctness for full batch."""
+    transformed_n_step_q_learning = self.variant(jax.vmap(functools.partial(
+        nonlinear_bellman.transformed_n_step_q_learning, tx_pair=tx_pair,
+        n=self.n)))
+    actual_td = transformed_n_step_q_learning(
+        self.q_tm1, self.a_tm1, self.target_q_t, self.a_t, self.r_t,
+        self.discount_t)
+    np.testing.assert_allclose(self.expected_td[td_index], actual_td, rtol=1e-3)
+
+
 class TransformedRetraceTest(parameterized.TestCase):
 
   def setUp(self):

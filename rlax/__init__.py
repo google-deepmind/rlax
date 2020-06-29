@@ -52,6 +52,8 @@ from rlax._src.nonlinear_bellman import SIGNED_HYPERBOLIC_PAIR
 from rlax._src.nonlinear_bellman import SIGNED_LOGP1_PAIR
 from rlax._src.nonlinear_bellman import transformed_general_off_policy_returns_from_action_values
 from rlax._src.nonlinear_bellman import transformed_lambda_returns
+from rlax._src.nonlinear_bellman import transformed_n_step_q_learning
+from rlax._src.nonlinear_bellman import transformed_n_step_returns
 from rlax._src.nonlinear_bellman import transformed_q_lambda
 from rlax._src.nonlinear_bellman import transformed_retrace
 from rlax._src.nonlinear_bellman import TxPair
@@ -154,6 +156,8 @@ __all__ = (
     "transform_from_2hot",
     "transformed_general_off_policy_returns_from_action_values",
     "transformed_lambda_returns",
+    "transformed_n_step_q_learning",
+    "transformed_n_step_returns",
     "transformed_q_lambda",
     "transformed_retrace",
     "tree_split_key",

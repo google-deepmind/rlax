@@ -23,6 +23,7 @@ to compute statistics such as its entropy.
 """
 
 import collections
+
 import chex
 import jax
 import jax.numpy as jnp

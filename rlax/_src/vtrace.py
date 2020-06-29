@@ -24,6 +24,7 @@ a special case of the multistep return estimates from `multistep.py`.
 """
 
 import collections
+
 import chex
 import jax
 import jax.numpy as jnp

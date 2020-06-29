@@ -22,7 +22,8 @@ Array = chex.Array
 
 
 def batched_index(
-    values: Array, indices: Array, keepdims: bool = False) -> Array:
+    values: Array, indices: Array, keepdims: bool = False
+) -> Array:
   """Index into the last dimension of a tensor, preserving all others dims.
 
   Args:

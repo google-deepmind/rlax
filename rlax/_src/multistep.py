@@ -86,7 +86,7 @@ def lambda_returns(
 
   Args:
     r_t: sequence of rewards rₜ for timesteps t in [1, T].
-    discount_t: sequence of rewards γₜ for timesteps t in [1, T].
+    discount_t: sequence of discounts γₜ for timesteps t in [1, T].
     v_t: sequence of state values estimates under π for timesteps t in [1, T].
     lambda_: mixing parameter; a scalar or a vector for timesteps t in [1, T].
 

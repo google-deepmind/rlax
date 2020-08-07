@@ -15,6 +15,7 @@
 # ==============================================================================
 """RLax: building blocks for RL, in JAX."""
 
+from rlax._src.base import AllSum
 from rlax._src.base import batched_index
 from rlax._src.base import one_hot
 from rlax._src.clipping import clip_gradient
@@ -32,14 +33,23 @@ from rlax._src.distributions import multivariate_normal_kl_divergence
 from rlax._src.distributions import safe_epsilon_softmax
 from rlax._src.distributions import softmax
 from rlax._src.distributions import squashed_gaussian
+from rlax._src.embedding import embed_oar
+from rlax._src.exploration import add_dirichlet_noise
 from rlax._src.exploration import add_gaussian_noise
 from rlax._src.exploration import add_ornstein_uhlenbeck_noise
+from rlax._src.exploration import episodic_memory_intrinsic_rewards
 from rlax._src.general_value_functions import feature_control_rewards
 from rlax._src.general_value_functions import pixel_control_rewards
 from rlax._src.losses import l2_loss
 from rlax._src.losses import likelihood
 from rlax._src.losses import log_loss
 from rlax._src.losses import pixel_control_loss
+from rlax._src.mpo_ops import compute_parametric_kl_penalty_and_dual_loss
+from rlax._src.mpo_ops import LagrangePenalty
+from rlax._src.mpo_ops import mpo_compute_weights_and_temperature_loss
+from rlax._src.mpo_ops import mpo_loss
+from rlax._src.mpo_ops import vmpo_compute_weights_and_temperature_loss
+from rlax._src.mpo_ops import vmpo_loss
 from rlax._src.multistep import discounted_returns
 from rlax._src.multistep import general_off_policy_returns_from_action_values
 from rlax._src.multistep import general_off_policy_returns_from_q_and_v
@@ -47,6 +57,7 @@ from rlax._src.multistep import lambda_returns
 from rlax._src.multistep import n_step_bootstrapped_returns
 from rlax._src.nested_updates import incremental_update
 from rlax._src.nested_updates import periodic_update
+from rlax._src.nonlinear_bellman import HYPERBOLIC_SIN_PAIR
 from rlax._src.nonlinear_bellman import IDENTITY_PAIR
 from rlax._src.nonlinear_bellman import SIGNED_HYPERBOLIC_PAIR
 from rlax._src.nonlinear_bellman import SIGNED_LOGP1_PAIR
@@ -60,6 +71,15 @@ from rlax._src.nonlinear_bellman import TxPair
 from rlax._src.policy_gradients import dpg_loss
 from rlax._src.policy_gradients import entropy_loss
 from rlax._src.policy_gradients import policy_gradient_loss
+from rlax._src.policy_gradients import qpg_loss
+from rlax._src.policy_gradients import rm_loss
+from rlax._src.policy_gradients import rpg_loss
+from rlax._src.pop_art import art
+from rlax._src.pop_art import normalize
+from rlax._src.pop_art import pop
+from rlax._src.pop_art import popart
+from rlax._src.pop_art import unnormalize
+from rlax._src.pop_art import unnormalize_linear
 from rlax._src.transforms import identity
 from rlax._src.transforms import logit
 from rlax._src.transforms import power
@@ -70,6 +90,8 @@ from rlax._src.transforms import signed_logp1
 from rlax._src.transforms import signed_parabolic
 from rlax._src.transforms import transform_from_2hot
 from rlax._src.transforms import transform_to_2hot
+from rlax._src.tree_util import tree_map_zipped
+from rlax._src.tree_util import tree_select
 from rlax._src.tree_util import tree_split_key
 from rlax._src.value_learning import categorical_double_q_learning
 from rlax._src.value_learning import categorical_q_learning
@@ -90,11 +112,13 @@ from rlax._src.vtrace import leaky_vtrace
 from rlax._src.vtrace import vtrace
 from rlax._src.vtrace import vtrace_td_error_and_advantage
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 __all__ = (
     "add_gaussian_noise",
     "add_ornstein_uhlenbeck_noise",
+    "add_dirichlet_noise",
+    "AllSum",
     "batched_index",
     "categorical_cross_entropy",
     "categorical_double_q_learning",
@@ -107,11 +131,13 @@ __all__ = (
     "double_q_learning",
     "dpg_loss",
     "entropy_loss",
+    "episodic_memory_intrinsic_rewards",
     "epsilon_greedy",
     "epsilon_softmax",
     "expected_sarsa",
     "feature_control_rewards",
     "gaussian_diagonal",
+    "HYPERBOLIC_SIN_PAIR",
     "squashed_gaussian",
     "clipped_entropy_softmax",
     "greedy",
@@ -137,9 +163,12 @@ __all__ = (
     "q_learning",
     "general_off_policy_returns_from_action_values",
     "general_off_policy_returns_from_q_and_v",
+    "qpg_loss",
     "quantile_q_learning",
     "qv_learning",
     "qv_max",
+    "rm_loss",
+    "rpg_loss",
     "sarsa",
     "sarsa_lambda",
     "sigmoid",
@@ -160,10 +189,18 @@ __all__ = (
     "transformed_n_step_returns",
     "transformed_q_lambda",
     "transformed_retrace",
+    "tree_map_zipped",
+    "tree_select",
     "tree_split_key",
     "TxPair",
     "vtrace",
     "vtrace_td_error_and_advantage",
+    "LagrangePenalty",
+    "mpo_compute_weights_and_temperature_loss",
+    "mpo_loss",
+    "compute_parametric_kl_penalty_and_dual_loss",
+    "vmpo_compute_weights_and_temperature_loss",
+    "vmpo_loss",
 )
 
 #  _________________________________________

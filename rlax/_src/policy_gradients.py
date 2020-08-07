@@ -57,8 +57,8 @@ def dpg_loss(
   Returns:
     DPG loss.
   """
-  chex.rank_assert([a_t, dqda_t], 1)
-  chex.type_assert([a_t, dqda_t], float)
+  chex.assert_rank([a_t, dqda_t], 1)
+  chex.assert_type([a_t, dqda_t], float)
 
   if dqda_clipping is not None:
     dqda_t = _clip_by_l2_norm(dqda_t, dqda_clipping)
@@ -86,12 +86,12 @@ def policy_gradient_loss(
   Returns:
     Loss whose gradient corresponds to a policy gradient update.
   """
-  chex.rank_assert([logits_t, a_t, adv_t, w_t], [2, 1, 1, 1])
-  chex.type_assert([logits_t, a_t, adv_t, w_t], [float, int, float, float])
+  chex.assert_rank([logits_t, a_t, adv_t, w_t], [2, 1, 1, 1])
+  chex.assert_type([logits_t, a_t, adv_t, w_t], [float, int, float, float])
 
-  log_pi_a = distributions.softmax().logprob(a_t, logits_t)
+  log_pi_a_t = distributions.softmax().logprob(a_t, logits_t)
   adv_t = jax.lax.stop_gradient(adv_t)
-  loss_per_timestep = - log_pi_a * adv_t
+  loss_per_timestep = -log_pi_a_t * adv_t
   return jnp.mean(loss_per_timestep * w_t)
 
 
@@ -111,8 +111,118 @@ def entropy_loss(
   Returns:
     Entropy loss.
   """
-  chex.rank_assert([logits_t, w_t], [2, 1])
-  chex.type_assert([logits_t, w_t], float)
+  chex.assert_rank([logits_t, w_t], [2, 1])
+  chex.assert_type([logits_t, w_t], float)
 
   entropy_per_timestep = distributions.softmax().entropy(logits_t)
   return -jnp.mean(entropy_per_timestep * w_t)
+
+
+def _compute_baseline(pi_t, q_t):
+  """Computes baseline given a policy and action values at a state."""
+  return jnp.sum(pi_t * q_t, axis=1)
+
+
+def _compute_advantages(logits_t: Array,
+                        q_t: Array,
+                        use_stop_gradient=True) -> Array:
+  """Computes summed advantage using logits and action values."""
+  policy_t = jax.nn.softmax(logits_t, axis=1)
+
+  # Avoid computing gradients for action_values.
+  if use_stop_gradient:
+    q_t = jax.lax.stop_gradient(q_t)
+  baseline_t = _compute_baseline(policy_t, q_t)
+
+  adv_t = q_t - jnp.expand_dims(baseline_t, 1)
+  return policy_t, adv_t
+
+
+def qpg_loss(
+    logits_t: Array,
+    q_t: Array,
+) -> Array:
+  """Computes the QPG (Q-based Policy Gradient) loss.
+
+  See "Actor-Critic Policy Optimization in Partially Observable Multiagent
+  Environments" by Srinivasan, Lanctot.
+  (https://papers.nips.cc/paper/7602-actor-critic-policy-optimization-in-partially-observable-multiagent-environments.pdf)
+
+  Args:
+    logits_t: a sequence of unnormalized action preferences.
+    q_t: the observed or estimated action value from executing actions `a_t` at
+      time t.
+      regularization.
+
+  Returns:
+    QPG Loss.
+  """
+  chex.assert_rank([logits_t, q_t], 2)
+  chex.assert_type([logits_t, q_t], float)
+
+  policy_t, advantage_t = _compute_advantages(logits_t, q_t)
+  policy_advantages = -policy_t * jax.lax.stop_gradient(advantage_t)
+  loss = jnp.mean(jnp.sum(policy_advantages, axis=1), axis=0)
+  return loss
+
+
+def rm_loss(
+    logits_t: Array,
+    q_t: Array,
+) -> Array:
+  """Computes the RMPG (Regret Matching Policy Gradient) loss.
+
+  The gradient of this loss adapts the Regret Matching rule by weighting the
+  standard PG update with thresholded regret.
+
+  See "Actor-Critic Policy Optimization in Partially Observable Multiagent
+  Environments" by Srinivasan, Lanctot.
+  (https://papers.nips.cc/paper/7602-actor-critic-policy-optimization-in-partially-observable-multiagent-environments.pdf)
+
+  Args:
+    logits_t: a sequence of unnormalized action preferences.
+    q_t: the observed or estimated action value from executing actions `a_t` at
+      time t.
+
+  Returns:
+    RM Loss.
+  """
+  chex.assert_rank([logits_t, q_t], 2)
+  chex.assert_type([logits_t, q_t], float)
+
+  policy_t, advantage_t = _compute_advantages(logits_t, q_t)
+  action_regret_t = jax.nn.relu(advantage_t)
+  policy_regret = -policy_t * jax.lax.stop_gradient(action_regret_t)
+  loss = jnp.mean(jnp.sum(policy_regret, axis=1), axis=0)
+  return loss
+
+
+def rpg_loss(
+    logits_t: Array,
+    q_t: Array,
+) -> Array:
+  """Computes the RPG (Regret Policy Gradient) loss.
+
+  The gradient of this loss adapts the Regret Matching rule by weighting the
+  standard PG update with regret.
+
+  See "Actor-Critic Policy Optimization in Partially Observable Multiagent
+  Environments" by Srinivasan, Lanctot.
+  (https://papers.nips.cc/paper/7602-actor-critic-policy-optimization-in-partially-observable-multiagent-environments.pdf)
+
+  Args:
+    logits_t: a sequence of unnormalized action preferences.
+    q_t: the observed or estimated action value from executing actions `a_t` at
+      time t.
+
+  Returns:
+    RPG Loss.
+  """
+  chex.assert_rank([logits_t, q_t], 2)
+  chex.assert_type([logits_t, q_t], float)
+
+  _, adv_t = _compute_advantages(logits_t, q_t)
+  regrets_t = jnp.sum(jax.nn.relu(adv_t), axis=1)
+
+  total_regret_t = jnp.mean(regrets_t, axis=0)
+  return total_regret_t

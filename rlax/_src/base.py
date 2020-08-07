@@ -15,10 +15,13 @@
 # ==============================================================================
 """Common utilities for RLax functions."""
 
+from typing import Optional, Sequence, Union
 import chex
+import jax
 import jax.numpy as jnp
 
 Array = chex.Array
+Numeric = chex.Numeric
 
 
 def batched_index(
@@ -57,3 +60,19 @@ def one_hot(indices, num_classes, dtype=jnp.float32):
     labels = jnp.expand_dims(labels, axis=0)
   return jnp.array(
       indices[..., jnp.newaxis] == labels, dtype=dtype)
+
+
+class AllSum:
+  """Helper for summing over elements in an array and over devices."""
+
+  def __init__(self, axis_name: Optional[str] = None):
+    """Callable which sums locally and then over devices with the axis name provided."""
+    self._axis_name = axis_name
+
+  def __call__(
+      self, x: Array, axis: Optional[Union[int, Sequence[int]]] = None
+  ) -> Numeric:
+    s = jnp.sum(x, axis=axis)
+    if self._axis_name:
+      s = jax.lax.psum(s, axis_name=self._axis_name)
+    return s

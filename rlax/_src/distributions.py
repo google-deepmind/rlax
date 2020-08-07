@@ -23,6 +23,7 @@ to compute statistics such as its entropy.
 """
 
 import collections
+from typing import Tuple
 
 import chex
 import jax
@@ -42,17 +43,19 @@ ContinuousDistribution = collections.namedtuple(
 
 def categorical_sample(key, probs):
   """Sample from a set of discrete probabilities."""
+  probs = probs / probs.sum(axis=-1, keepdims=True)
   cpi = jnp.cumsum(probs, axis=-1)
-  rnds = jax.random.uniform(key, shape=probs.shape[:-1] + (1,))
-  return jnp.argmin(rnds > cpi, axis=-1)
+  eps = jnp.finfo(probs.dtype).eps
+  rnds = jax.random.uniform(
+      key=key, shape=probs.shape[:-1] + (1,), dtype=probs.dtype, minval=eps)
+  return jnp.argmin(jnp.logical_or(rnds > cpi, probs < eps), axis=-1)
 
 
 def softmax(temperature=1.):
   """A softmax distribution."""
 
   def sample_fn(key: Array, logits: Array):
-    probs = jax.nn.softmax(logits / temperature)
-    return categorical_sample(key, probs)
+    return jax.random.categorical(key, logits / temperature)
 
   def probs_fn(logits: Array):
     return jax.nn.softmax(logits / temperature)
@@ -76,15 +79,16 @@ def softmax(temperature=1.):
 def clipped_entropy_softmax(temperature=1., entropy_clip=1.):
   """A softmax distribution with clipped entropy (1 is eq to not clipping)."""
 
-  def sample_fn(key: Array, action_spec, logits: Array):
+  def sample_fn(key: Array, logits: Array, action_spec=None):
     del action_spec
-    probs = jax.nn.softmax(logits / temperature)
-    return categorical_sample(key, probs)
+    return jax.random.categorical(key, logits / temperature)
 
-  def probs_fn(logits: Array):
+  def probs_fn(logits: Array, action_spec=None):
+    del action_spec
     return jax.nn.softmax(logits / temperature)
 
-  def logprob_fn(sample: Array, logits: Array):
+  def logprob_fn(sample: Array, logits: Array, action_spec=None):
+    del action_spec
     logprobs = jax.nn.log_softmax(logits / temperature)
     return base.batched_index(logprobs, sample)
 
@@ -270,7 +274,7 @@ def gaussian_diagonal(sigma=None):
 
   def kl_fn(mu_1: Array, sigma_1: Numeric, mu_0: Array,
             sigma_0: Numeric):
-    return multivariate_normal_kl_divergence(mu_1, sigma_1, mu_0, sigma_0)
+    return multivariate_normal_kl_divergence(mu_0, sigma_0, mu_1, sigma_1)
 
   return ContinuousDistribution(sample_fn, prob_fn, logprob_fn, entropy_fn,
                                 kl_to_standard_normal_fn, kl_fn)
@@ -279,6 +283,14 @@ def gaussian_diagonal(sigma=None):
 def squashed_gaussian(sigma_min=-4, sigma_max=0.):
   """A squashed gaussian distribution with diagonal covariance matrix."""
 
+  def minmaxvals(a, action_spec):
+    # broadcasts action spec to action shape
+    min_shape = action_spec.minimum.shape or (1,)
+    max_shape = action_spec.maximum.shape or (1,)
+    min_vals = jnp.broadcast_to(action_spec.minimum, a.shape[:-1] + min_shape)
+    max_vals = jnp.broadcast_to(action_spec.maximum, a.shape[:-1] + max_shape)
+    return min_vals, max_vals
+
   def sigma_activation(sigma, sigma_min=sigma_min, sigma_max=sigma_max):
     return jnp.exp(sigma_min + 0.5 * (sigma_max - sigma_min) *
                    (jnp.tanh(sigma) + 1.))
@@ -286,29 +298,37 @@ def squashed_gaussian(sigma_min=-4, sigma_max=0.):
   def mu_activation(mu):
     return jnp.tanh(mu)
 
-  def transform(a):
-    return jnp.tanh(a)
+  def transform(a, action_spec):
+    min_vals, max_vals = minmaxvals(a, action_spec)
+    scale = (max_vals - min_vals) * 0.5
+    actions = (jnp.tanh(a) + 1.0) * scale + min_vals
+    return actions
 
-  def inv_transform(a):
-    return jnp.arctanh(a)
+  def inv_transform(a, action_spec):
+    min_vals, max_vals = minmaxvals(a, action_spec)
+    scale = (max_vals - min_vals) * 0.5
+    actions_tanh = (a - min_vals) / scale - 1.
+    return jnp.arctanh(actions_tanh)
 
-  def log_det_jacobian(a):
-    return jnp.sum(2. * (jnp.log(2.) - a - jax.nn.softplus(-2. * a)))
+  def log_det_jacobian(a, action_spec):
+    min_vals, max_vals = minmaxvals(a, action_spec)
+    scale = (max_vals - min_vals) * 0.5
+    log_ = jnp.sum(jnp.log(scale))
+    # computes sum log (1-tanh(a)**2)
+    log_ += jnp.sum(2. * (jnp.log(2.) - a - jax.nn.softplus(-2. * a)))
+    return log_
 
   def sample_fn(key: Array,
-                action_spec,
                 mu: Array,
                 sigma: Array,
+                action_spec,
                 ):
     mu = mu_activation(mu)
     sigma = sigma_activation(sigma)
     action = _add_gaussian_noise(key, mu, sigma)
-    min_vals = jnp.tile(action_spec.minimum, (action.shape[0], 1))
-    max_vals = jnp.tile(action_spec.maximum, (action.shape[0], 1))
-    actions = jax.lax.clamp(min_vals, transform(action), max_vals)
-    return actions
+    return transform(action, action_spec)
 
-  def prob_fn(sample: Array, mu: Array, sigma: Array):
+  def prob_fn(sample: Array, mu: Array, sigma: Array, action_spec):
     # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
     mu = mu_activation(mu)
     sigma = sigma_activation(sigma)
@@ -317,11 +337,11 @@ def squashed_gaussian(sigma_min=-4, sigma_max=0.):
     det = jnp.prod(sigma**2, axis=-1)
     z = ((2 * jnp.pi)**(0.5 * d)) * (det**0.5)
     exp = jnp.exp(-0.5 * jnp.sum(
-        ((mu - inv_transform(sample)) / sigma)**2, axis=-1))
+        ((mu - inv_transform(sample, action_spec)) / sigma)**2, axis=-1))
     det_jacobian = jnp.prod(jnp.clip(1 - sample**2, 0., 1.) + 1e-6)
     return exp / (z * det_jacobian)
 
-  def logprob_fn(sample: Array, mu: Array, sigma: Array):
+  def logprob_fn(sample: Array, mu: Array, sigma: Array, action_spec):
     # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
     mu = mu_activation(mu)
     sigma = sigma_activation(sigma)
@@ -329,8 +349,9 @@ def squashed_gaussian(sigma_min=-4, sigma_max=0.):
     d = mu.shape[-1]
     half_logdet = jnp.sum(jnp.log(sigma), axis=-1)
     logz = half_logdet + 0.5 * d * jnp.log(2 * jnp.pi)
-    logexp = -0.5 * jnp.sum(((mu - inv_transform(sample)) / sigma)**2, axis=-1)
-    return logexp - logz - log_det_jacobian(sample)
+    logexp = -0.5 * jnp.sum(
+        ((mu - inv_transform(sample, action_spec)) / sigma)**2, axis=-1)
+    return logexp - logz - log_det_jacobian(sample, action_spec)
 
   def entropy_fn(mu: Array, sigma: Array):
     # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
@@ -341,20 +362,23 @@ def squashed_gaussian(sigma_min=-4, sigma_max=0.):
     half_logdet = jnp.sum(jnp.log(sigma), axis=-1)
     return half_logdet + 0.5 * d * (1 + jnp.log(2 * jnp.pi))
 
-  def kl_to_standard_normal_fn(mu: Array, sigma: Array):
+  def kl_to_standard_normal_fn(mu: Array,
+                               sigma: Array,
+                               per_dimension: bool = False):
     mu = mu_activation(mu)
     sigma = sigma_activation(sigma)
     v = jnp.clip(sigma**2, 1e-6, 1e6)
-    return 0.5 * (jnp.sum(v) + jnp.sum(mu**2) - jnp.sum(jnp.ones_like(mu)) -
-                  jnp.sum(jnp.log(v)))
+    kl = 0.5 * (v + mu**2 - jnp.ones_like(mu) - jnp.log(v))
+    if not per_dimension:
+      kl = jnp.sum(kl, axis=-1)
+    return kl
 
-  def kl_fn(mu_1: Array, sigma_1: Numeric, mu_0: Array,
-            sigma_0: Numeric):
+  def kl_fn(mu_1: Array, sigma_1: Numeric, mu_0: Array, sigma_0: Numeric):
     sigma_0 = sigma_activation(sigma_0)
     mu_0 = mu_activation(mu_0)
     sigma_1 = sigma_activation(sigma_1)
     mu_1 = mu_activation(mu_1)
-    return multivariate_normal_kl_divergence(mu_1, sigma_1, mu_0, sigma_0)
+    return multivariate_normal_kl_divergence(mu_0, sigma_0, mu_1, sigma_1)
 
   return ContinuousDistribution(sample_fn, prob_fn, logprob_fn, entropy_fn,
                                 kl_to_standard_normal_fn, kl_fn)
@@ -373,7 +397,7 @@ def categorical_importance_sampling_ratios(pi_logits_t: Array,
   Returns:
     importance sampling ratios.
   """
-  chex.type_assert([pi_logits_t, mu_logits_t, a_t], [float, float, int])
+  chex.assert_type([pi_logits_t, mu_logits_t, a_t], [float, float, int])
 
   log_pi_a_t = base.batched_index(jax.nn.log_softmax(pi_logits_t), a_t)
   log_mu_a_t = base.batched_index(jax.nn.log_softmax(mu_logits_t), a_t)
@@ -397,6 +421,7 @@ def categorical_cross_entropy(
   Returns:
     a scalar loss.
   """
+  chex.assert_rank([logits, labels], 1)
   return -jnp.sum(labels * jax.nn.log_softmax(logits))
 
 
@@ -415,7 +440,7 @@ def categorical_kl_divergence(
   Returns:
     the kl divergence between the distributions.
   """
-  chex.type_assert([p_logits, q_logits], float)
+  chex.assert_type([p_logits, q_logits], float)
 
   p_logits /= temperature
   q_logits /= temperature
@@ -427,30 +452,54 @@ def categorical_kl_divergence(
   return jax.nn.relu(kl)  # Guard against numerical issues giving negative KL.
 
 
-def multivariate_normal_kl_divergence(
-    mu_1: Array,
-    sigma_1: Numeric,
-    mu_0: Array,
-    sigma_0: Numeric,
-) -> Array:
-  """Compute the KL between two gaussian distribution with diagonal covariance matrices.
+def decoupled_multivariate_normal_kl_divergence(
+    mu_0: Array, sigma_0: Numeric, mu_1: Array, sigma_1: Numeric,
+    per_dimension: bool = False
+) -> Tuple[Array, Array]:
+  """Compute the KL between diagonal Gaussians decomposed into mean and covariance.
 
   Args:
-    mu_1: array like of mean values for policy 1
-    sigma_1: array like of std values for policy 1
     mu_0: array like of mean values for policy 0
     sigma_0: array like of std values for policy 0
+    mu_1: array like of mean values for policy 1
+    sigma_1: array like of std values for policy 1
+    per_dimension: Whether to return a separate kl divergence for each dimension
+      on the last axis.
 
   Returns:
-    the kl divergence between the distributions.
+    the kl divergence between the distributions decomposed into mean and
+    covariance.
   """
   # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
   sigma_1 = jnp.ones_like(mu_1) * sigma_1
   sigma_0 = jnp.ones_like(mu_0) * sigma_0
   v1 = jnp.clip(sigma_1**2, 1e-6, 1e6)
   v0 = jnp.clip(sigma_0**2, 1e-6, 1e6)
-  mu = mu_1 - mu_0
+  mu_diff = mu_1 - mu_0
+  kl_mean = 0.5 * jnp.divide(mu_diff**2, v1)
+  kl_cov = 0.5 * (jnp.divide(v0, v1) - jnp.ones_like(mu_1) + jnp.log(v1) -
+                  jnp.log(v0))
+  if not per_dimension:
+    kl_mean = jnp.sum(kl_mean, axis=-1)
+    kl_cov = jnp.sum(kl_cov, axis=-1)
 
-  return 0.5 * (
-      jnp.sum(jnp.divide(v0, v1)) + jnp.sum(jnp.divide(mu**2, v1)) - jnp.sum(
-          jnp.ones_like(mu_1)) + jnp.sum(jnp.log(v1)) - jnp.sum(jnp.log(v0)))
+  return kl_mean, kl_cov
+
+
+def multivariate_normal_kl_divergence(
+    mu_0: Array, sigma_0: Numeric, mu_1: Array, sigma_1: Numeric,
+) -> Array:
+  """Compute the KL between two gaussian distribution with diagonal covariance matrices.
+
+  Args:
+    mu_0: array like of mean values for policy 0
+    sigma_0: array like of std values for policy 0
+    mu_1: array like of mean values for policy 1
+    sigma_1: array like of std values for policy 1
+
+  Returns:
+    the kl divergence between the distributions.
+  """
+  kl_mean, kl_cov = decoupled_multivariate_normal_kl_divergence(
+      mu_0, sigma_0, mu_1, sigma_1)
+  return kl_mean + kl_cov

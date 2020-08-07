@@ -36,7 +36,8 @@ class IdentityTest(parameterized.TestCase):
   @parameterized.parameters(
       nonlinear_bellman.IDENTITY_PAIR,
       nonlinear_bellman.SIGNED_LOGP1_PAIR,
-      nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR)
+      nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR,
+      nonlinear_bellman.HYPERBOLIC_SIN_PAIR)
   def test_identity(self, tx, inv_tx):
     """Tests that tx(inv_tx(x)) == inv_tx(tx(x)) == x."""
     np.testing.assert_allclose(inv_tx(tx(self.q_t)), self.q_t, rtol=1e-3)
@@ -73,14 +74,16 @@ class TransformedQLambdaTest(parameterized.TestCase):
     self.expected_td = np.array(
         [[[-2.4, 0.4280, 1.07], [0.6935, 3.478, -2.196]],
          [[-1.9329, 0.6643, -0.7854], [-0.20713, 2.1855, 0.27132]],
-         [[-1.6179, 0.4633, -0.7576], [-1.1097, 1.6509, 0.3598]]],
+         [[-1.6179, 0.4633, -0.7576], [-1.1097, 1.6509, 0.3598]],
+         [[-2.1785, 0.6562, -0.5938], [-0.0892, 2.6553, -0.1208]]],
         dtype=np.float32)
 
   @chex.all_variants()
   @parameterized.named_parameters(
       ('identity0', nonlinear_bellman.IDENTITY_PAIR, 0),
       ('signed_logp11', nonlinear_bellman.SIGNED_LOGP1_PAIR, 1),
-      ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2))
+      ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2),
+      ('hyperbolic_sin3', nonlinear_bellman.HYPERBOLIC_SIN_PAIR, 3))
   def test_transformed_q_lambda_batch(self, tx_pair, td_index):
     """Tests correctness for full batch."""
     transformed_q_lambda = self.variant(jax.vmap(functools.partial(
@@ -130,14 +133,17 @@ class TransformedNStepQLearningTest(parameterized.TestCase):
         [[-1.9329091, 0.9564189, -0.7853615],
          [-0.9021418, 1.1716722, 0.2713145]],
         [[-1.6178751, 0.85600746, -0.75762916],
-         [-0.87689304, 0.6246443, 0.3598088]]
+         [-0.87689304, 0.6246443, 0.3598088]],
+        [[-2.178451, 1.02313, -0.593768],
+         [-0.415362, 1.790864, -0.120749]]
     ], dtype=np.float32)
 
   @chex.all_variants()
   @parameterized.named_parameters(
       ('identity0', nonlinear_bellman.IDENTITY_PAIR, 0),
       ('signed_logp11', nonlinear_bellman.SIGNED_LOGP1_PAIR, 1),
-      ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2))
+      ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2),
+      ('hyperbolic_sin3', nonlinear_bellman.HYPERBOLIC_SIN_PAIR, 3))
   def test_transformed_q_lambda_batch(self, tx_pair, td_index):
     """Tests correctness for full batch."""
     transformed_n_step_q_learning = self.variant(jax.vmap(functools.partial(
@@ -187,14 +193,16 @@ class TransformedRetraceTest(parameterized.TestCase):
     self.expected_td = np.array(
         [[[-2.4, -2.7905, -3.0313], [0.7889, -6.3645, -0.0795]],
          [[-1.9329, -4.2626, -6.7738], [-2.3989, -9.9802, 1.4852]],
-         [[-1.6179, -3.0165, -5.2699], [-2.7742, -9.9544, 2.3167]]],
+         [[-1.6179, -3.0165, -5.2699], [-2.7742, -9.9544, 2.3167]],
+         [[-2.1785, -4.2530, -6.7081], [-1.3654, -8.2213, 0.7641]]],
         dtype=np.float32)
 
   @chex.all_variants()
   @parameterized.named_parameters(
       ('identity0', nonlinear_bellman.IDENTITY_PAIR, 0),
       ('signed_logp11', nonlinear_bellman.SIGNED_LOGP1_PAIR, 1),
-      ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2))
+      ('signed_hyperbolic2', nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR, 2),
+      ('hyperbolic_sin3', nonlinear_bellman.HYPERBOLIC_SIN_PAIR, 3))
   def test_transformed_retrace_batch(self, tx_pair, td_index):
     """Tests correctness for full batch."""
     transformed_retrace = self.variant(jax.vmap(functools.partial(

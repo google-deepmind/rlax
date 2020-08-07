@@ -52,7 +52,7 @@ def l2_loss(predictions: Array,
   """
   if targets is None:
     targets = jnp.zeros_like(predictions)
-  chex.type_assert([predictions, targets], float)
+  chex.assert_type([predictions, targets], float)
   return 0.5 * (predictions - targets)**2
 
 
@@ -66,7 +66,7 @@ def likelihood(predictions: Array, targets: Array) -> Array:
   Returns:
     a vector of same shape of `predictions`.
   """
-  chex.type_assert([predictions, targets], float)
+  chex.assert_type([predictions, targets], float)
   likelihood_vals = predictions**targets * (1. - predictions)**(1. - targets)
   # Note: 0**0 evaluates to NaN on TPUs, manually set these cases to 1.
   filter_indices = jnp.logical_or(
@@ -88,7 +88,7 @@ def log_loss(
   Returns:
     a vector of same shape of `predictions`.
   """
-  chex.type_assert([predictions, targets], float)
+  chex.assert_type([predictions, targets], float)
   return -jnp.log(likelihood(predictions, targets))
 
 
@@ -133,8 +133,8 @@ def pixel_control_loss(
   assert len(actions.shape) == 1
   assert len(action_values.shape) == 4
   # Check types
-  chex.type_assert([observations], float)
-  chex.type_assert([actions], int)
+  chex.assert_type([observations], float)
+  chex.assert_type([actions], int)
   # Useful shapes.
   sequence_length = actions.shape[0]
   num_actions = action_values.shape[-1]

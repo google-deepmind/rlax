@@ -106,6 +106,98 @@ class EntropyLossTest(parameterized.TestCase):
     np.testing.assert_allclose(self.expected, actual, atol=1e-4)
 
 
+class QPGLossTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(QPGLossTest, self).setUp()
+
+    self.q_values = jnp.array([[0., -1., 1.], [1., -1., 0]])
+    self.policy_logits = jnp.array([[1., 1., 1.], [1., 1., 4.]])
+
+    # baseline = \sum_a pi_a * Q_a = 0.
+    # -\sum_a pi_a * relu(Q_a - baseline)
+    # negative sign as it's a loss term and loss needs to be minimized.
+    self.expected_policy_loss = (0.0 + 0.0) / 2
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_qpg_loss_batch(self, compile_fn, place_fn):
+    """Tests for a full batch."""
+    # Vmap and optionally compile.
+    qpg_loss = compile_fn(policy_gradients.qpg_loss)
+
+    # Optionally convert to device array.
+    policy_logits, q_values = jax.tree_map(place_fn,
+                                           (self.policy_logits, self.q_values))
+    # Test outputs.
+    actual = qpg_loss(policy_logits, q_values)
+    np.testing.assert_allclose(self.expected_policy_loss, actual, atol=1e-4)
+
+
+class RMLossTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(RMLossTest, self).setUp()
+    self.q_values = jnp.array([[0., -1., 1.], [1., -1., 0]])
+    self.policy_logits = jnp.array([[1., 1., 1.], [1., 1., 4.]])
+
+    # baseline = \sum_a pi_a * Q_a = 0.
+    # -\sum_a pi_a * relu(Q_a - baseline)
+    # negative sign as it's a loss term and loss needs to be minimized.
+    self.expected_policy_loss = -(.3333 + .0452) / 2
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_rm_loss_batch(self, compile_fn, place_fn):
+    """Tests for a full batch."""
+    # Vmap and optionally compile.
+    rm_loss = compile_fn(policy_gradients.rm_loss)
+
+    # Optionally convert to device array.
+    policy_logits, q_values = jax.tree_map(place_fn,
+                                           (self.policy_logits, self.q_values))
+    # Test outputs.
+    actual = rm_loss(policy_logits, q_values)
+    np.testing.assert_allclose(self.expected_policy_loss, actual, atol=1e-4)
+
+
+class RPGLossTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(RPGLossTest, self).setUp()
+
+    self.q_values = jnp.array([[0., -1., 1.], [1., -1., 0]])
+    self.policy_logits = jnp.array([[1., 1., 1.], [1., 1., 4.]])
+
+    # baseline = \sum_a pi_a * Q_a = 0.
+    # -\sum_a pi_a * relu(Q_a - baseline)
+    # negative sign as it's a loss term and loss needs to be minimized.
+    self.expected_policy_loss = (1.0 + 1.0) / 2
+
+  @parameterized.named_parameters(
+      ('JitOnp', jax.jit, lambda t: t),
+      ('NoJitOnp', lambda fn: fn, lambda t: t),
+      ('JitJnp', jax.jit, jax.device_put),
+      ('NoJitJnp', lambda fn: fn, jax.device_put))
+  def test_rpg_loss(self, compile_fn, place_fn):
+    """Tests for a full batch."""
+    # Vmap and optionally compile.
+    rpg_loss = compile_fn(policy_gradients.rpg_loss)
+
+    # Optionally convert to device array.
+    policy_logits, q_values = jax.tree_map(place_fn,
+                                           (self.policy_logits, self.q_values))
+    # Test outputs.
+    actual = rpg_loss(policy_logits, q_values)
+    np.testing.assert_allclose(self.expected_policy_loss, actual, atol=1e-4)
+
+
 if __name__ == '__main__':
   jax.config.update('jax_numpy_rank_promotion', 'raise')
   absltest.main()

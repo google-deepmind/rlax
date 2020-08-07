@@ -65,6 +65,78 @@ class OrnsteinUhlenbeckTest(parameterized.TestCase):
       np.testing.assert_allclose(action, noisy_action)
 
 
+class DirichletNoiseTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(DirichletNoiseTest, self).setUp()
+    self._batch_size = 5
+    self._num_actions = 10
+    self._rng_key = jax.random.PRNGKey(42)
+
+  @chex.all_variants()
+  def test_deterministic(self):
+    """Check that noisy and noisless actions match for zero stddev."""
+    add_noise = self.variant(exploration.add_dirichlet_noise)
+
+    # Test that noisy and noisless actions match for zero Dirichlet noise
+    for _ in range(10):
+      prior = np.random.normal(0., 1., (self._batch_size, self._num_actions))
+
+      # Test output.
+      self._rng_key, key = jax.random.split(self._rng_key)
+      noisy_prior = add_noise(
+          key, prior, dirichlet_alpha=0.3, dirichlet_fraction=0.)
+      np.testing.assert_allclose(prior, noisy_prior)
+
+
+class EMIntrinsicRewardTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(EMIntrinsicRewardTest, self).setUp()
+    self.num_neighbors = 2
+    self.reward_scale = 1.
+
+  @chex.all_variants()
+  def test_zeros(self):
+    """Check that we get reward or 1 for identical state and embeddings."""
+
+    @self.variant
+    def episodic_memory_intrinsic_rewards(embeddings, reward_scale):
+      return exploration.episodic_memory_intrinsic_rewards(
+          embeddings, self.num_neighbors, reward_scale)
+
+    embeddings = np.array([[0., 0.], [0., 0.]])
+    reward, intrinsic_reward_state = episodic_memory_intrinsic_rewards(
+        embeddings, self.reward_scale)
+
+    np.testing.assert_array_equal(intrinsic_reward_state.memory, embeddings)
+    np.testing.assert_allclose(reward, np.ones_like(reward), atol=1e-3)
+
+  @chex.all_variants()
+  def test_custom_memory(self):
+    """Check that embeddings are appended to non-empty memory."""
+
+    @self.variant
+    def episodic_memory_intrinsic_rewards(embeddings, memory, reward_scale):
+      return exploration.episodic_memory_intrinsic_rewards(
+          embeddings, self.num_neighbors, reward_scale,
+          exploration.IntrinsicRewardState(memory=memory))
+
+    embeddings = np.array([[2., 2.]])
+    memory = np.array([[
+        0.,
+        0.,
+    ], [1., 1.]])
+    _, intrinsic_reward_state = episodic_memory_intrinsic_rewards(
+        embeddings, memory, self.reward_scale)
+
+    np.testing.assert_array_equal(intrinsic_reward_state.memory,
+                                  np.array([[
+                                      0.,
+                                      0.,
+                                  ], [1., 1.], [2., 2.]]))
+
+
 if __name__ == '__main__':
   jax.config.update('jax_numpy_rank_promotion', 'raise')
   absltest.main()

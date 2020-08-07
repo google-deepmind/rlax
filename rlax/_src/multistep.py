@@ -93,8 +93,8 @@ def lambda_returns(
   Returns:
     Multistep lambda returns.
   """
-  chex.rank_assert([r_t, discount_t, v_t, lambda_], [1, 1, 1, [0, 1]])
-  chex.type_assert([r_t, discount_t, v_t, lambda_], float)
+  chex.assert_rank([r_t, discount_t, v_t, lambda_], [1, 1, 1, {0, 1}])
+  chex.assert_type([r_t, discount_t, v_t, lambda_], float)
 
   # If scalar make into vector.
   lambda_ = jnp.ones_like(discount_t) * lambda_
@@ -130,8 +130,8 @@ def n_step_bootstrapped_returns(
   Returns:
     estimated bootstrapped returns at times [1, ...., T]
   """
-  chex.rank_assert([r_t, discount_t, v_t], 1)
-  chex.type_assert([r_t, discount_t, v_t], float)
+  chex.assert_rank([r_t, discount_t, v_t], 1)
+  chex.assert_type([r_t, discount_t, v_t], float)
   seq_len = r_t.shape[0]
 
   # Pad end of reward and discount sequences with 0 and 1 respectively.
@@ -170,8 +170,8 @@ def discounted_returns(
   Returns:
     Discounted returns.
   """
-  chex.rank_assert([r_t, discount_t, v_t], [1, 1, [0, 1]])
-  chex.type_assert([r_t, discount_t, v_t], float)
+  chex.assert_rank([r_t, discount_t, v_t], [1, 1, {0, 1}])
+  chex.assert_type([r_t, discount_t, v_t], float)
 
   # If scalar make into vector.
   bootstrapped_v = jnp.ones_like(discount_t) * v_t
@@ -213,8 +213,8 @@ def importance_corrected_td_errors(
   Returns:
     Off-policy estimates of the multistep lambda returns from each state.
   """
-  chex.rank_assert([r_t, discount_t, rho_tm1, values], [1, 1, 1, 1])
-  chex.type_assert([r_t, discount_t, rho_tm1, values], float)
+  chex.assert_rank([r_t, discount_t, rho_tm1, values], [1, 1, 1, 1])
+  chex.assert_type([r_t, discount_t, rho_tm1, values], float)
 
   v_tm1 = values[:-1]  # Predictions to compute errors for.
   v_t = values[1:]  # Values for bootstrapping.
@@ -271,8 +271,8 @@ def general_off_policy_returns_from_action_values(
   Returns:
     Off-policy estimates of the multistep lambda returns from each state..
   """
-  chex.rank_assert([q_t, a_t, r_t, discount_t, c_t, pi_t], [2, 1, 1, 1, 1, 2])
-  chex.type_assert([q_t, a_t, r_t, discount_t, c_t, pi_t],
+  chex.assert_rank([q_t, a_t, r_t, discount_t, c_t, pi_t], [2, 1, 1, 1, 1, 2])
+  chex.assert_type([q_t, a_t, r_t, discount_t, c_t, pi_t],
                    [float, int, float, float, float, float])
 
   # Get the expected values and the values of actually selected actions.
@@ -323,8 +323,8 @@ def general_off_policy_returns_from_q_and_v(
     Off-policy estimates of the generalized returns from states visited at times
     [0, ..., K - 1].
   """
-  chex.rank_assert([q_t, v_t, r_t, discount_t, c_t], 1)
-  chex.type_assert([q_t, v_t, r_t, discount_t, c_t], float)
+  chex.assert_rank([q_t, v_t, r_t, discount_t, c_t], 1)
+  chex.assert_type([q_t, v_t, r_t, discount_t, c_t], float)
 
   # Work backwards to compute `G_K-1`, ..., `G_1`, `G_0`.
   g = r_t[-1] + discount_t[-1] * v_t[-1]  # G_K-1.

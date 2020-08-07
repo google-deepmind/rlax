@@ -15,6 +15,7 @@
 # ==============================================================================
 """Unit tests for `clipping.py`."""
 
+import functools
 from absl.testing import absltest
 from absl.testing import parameterized
 import chex
@@ -34,16 +35,18 @@ class HuberLossTest(parameterized.TestCase):
     self.ys = jnp.array([1.5, 0.5, 0.125, 0, 0.125, 0.5, 1.5])
     self.dys = jnp.array([-1, -1, -0.5, 0, 0.5, 1, 1])
 
+    self.loss_fn = functools.partial(clipping.huber_loss, delta=self.delta)
+
   @chex.all_variants()
   def test_huber_loss_scalar(self):
-    huber_loss = self.variant(clipping.huber_loss, delta=self.delta)
+    huber_loss = self.variant(self.loss_fn)
     x = jnp.array(0.5)
     # Test output.
     np.testing.assert_allclose(huber_loss(x), 0.125)
 
   @chex.all_variants()
   def test_huber_loss_vector(self):
-    huber_loss = self.variant(clipping.huber_loss, delta=self.delta)
+    huber_loss = self.variant(self.loss_fn)
     xs = self.xs
     # Compute transformation.
     actual = huber_loss(xs)
@@ -52,7 +55,7 @@ class HuberLossTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_gradients(self):
-    huber_loss = self.variant(clipping.huber_loss, delta=self.delta)
+    huber_loss = self.variant(self.loss_fn)
     xs = self.xs
     # Compute gradient in batch
     batch_grad_func = jax.vmap(jax.grad(huber_loss), (0))

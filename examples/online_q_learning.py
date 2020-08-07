@@ -22,8 +22,8 @@ from bsuite.environments import catch
 import haiku as hk
 from haiku import nets
 import jax
-from jax.experimental import optix
 import jax.numpy as jnp
+import optax
 import rlax
 from rlax.examples import experiment
 
@@ -53,7 +53,7 @@ def build_network(num_actions: int) -> hk.Transformed:
         [flatten, nets.MLP([FLAGS.hidden_units, num_actions])])
     return network(obs)
 
-  return hk.transform(q)
+  return hk.without_apply_rng(hk.transform(q, apply_rng=True))
 
 
 class TransitionAccumulator:
@@ -89,7 +89,7 @@ class OnlineQ:
     self._epsilon = epsilon
     # Neural net and optimiser.
     self._network = build_network(action_spec.num_values)
-    self._optimizer = optix.adam(learning_rate)
+    self._optimizer = optax.adam(learning_rate)
     # Jitting for speed.
     self.actor_step = jax.jit(self.actor_step)
     self.learner_step = jax.jit(self.learner_step)
@@ -114,7 +114,7 @@ class OnlineQ:
   def learner_step(self, params, data, learner_state, unused_key):
     dloss_dtheta = jax.grad(self._loss)(params, *data)
     updates, learner_state = self._optimizer.update(dloss_dtheta, learner_state)
-    params = optix.apply_updates(params, updates)
+    params = optax.apply_updates(params, updates)
     return params, learner_state
 
   def _loss(self, params, obs_tm1, a_tm1, r_t, discount_t, obs_t):

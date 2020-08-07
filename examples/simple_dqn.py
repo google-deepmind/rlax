@@ -23,7 +23,6 @@ from bsuite.environments import catch
 import haiku as hk
 from haiku import nets
 import jax
-from jax.experimental import optix
 import jax.numpy as jnp
 import optax
 import rlax
@@ -60,7 +59,7 @@ def build_network(num_actions: int) -> hk.Transformed:
         [hk.Flatten(), nets.MLP([FLAGS.hidden_units, num_actions])])
     return network(obs)
 
-  return hk.transform(q)
+  return hk.without_apply_rng(hk.transform(q, apply_rng=True))
 
 
 class ReplayBuffer(object):
@@ -106,7 +105,7 @@ class DQN:
     self._target_period = target_period
     # Neural net and optimiser.
     self._network = build_network(action_spec.num_values)
-    self._optimizer = optix.adam(learning_rate)
+    self._optimizer = optax.adam(learning_rate)
     self._epsilon_by_frame = optax.polynomial_schedule(**epsilon_cfg)
     # Jitting for speed.
     self.actor_step = jax.jit(self.actor_step)
@@ -143,7 +142,7 @@ class DQN:
     dloss_dtheta = jax.grad(self._loss)(params.online, target_params, *data)
     updates, opt_state = self._optimizer.update(
         dloss_dtheta, learner_state.opt_state)
-    online_params = optix.apply_updates(params.online, updates)
+    online_params = optax.apply_updates(params.online, updates)
     return (
         Params(online_params, target_params),
         LearnerState(learner_state.count + 1, opt_state))

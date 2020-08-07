@@ -15,13 +15,51 @@
 # ==============================================================================
 """Tree utilities."""
 
+from typing import Any, Callable, Sequence
 import chex
 import jax
 
 Array = chex.Array
+tree_structure = jax.tree_util.tree_structure
 
 
-def tree_split_key(rng_key: Array, tree_like):
+def tree_select(pred: Array, on_true: Any, on_false: Any):
+  """Select either one of two identical nested structs based on condition.
+
+  Args:
+    pred: a boolean condition.
+    on_true: an arbitrary nested structure.
+    on_false: a nested structure identical to `on_true`.
+
+  Returns:
+    the selected nested structure.
+  """
+  if tree_structure(on_true) != tree_structure(on_false):
+    raise ValueError('The two branches must have the same structure.')
+  return jax.tree_util.tree_multimap(
+      lambda x, y: jax.lax.select(pred, x, y), on_true, on_false)
+
+
+def tree_map_zipped(fn: Callable[..., Any], nests: Sequence[Any]):
+  """Map a function over a list of identical nested structures.
+
+  Args:
+    fn: the function to map; must have arity equal to `len(list_of_nests)`.
+    nests: a list of identical nested structures.
+
+  Returns:
+    a nested structure whose leaves are outputs of applying `fn`.
+  """
+  if not nests:
+    return nests
+  tree_def = tree_structure(nests[0])
+  if any([tree_structure(x) != tree_def for x in nests[1:]]):
+    raise ValueError('All elements must share the same tree structure.')
+  return jax.tree_unflatten(
+      tree_def, [fn(*d) for d in zip(*[jax.tree_leaves(x) for x in nests])])
+
+
+def tree_split_key(rng_key: Array, tree_like: Any):
   """Generate random keys for each leaf in a tree.
 
   Args:

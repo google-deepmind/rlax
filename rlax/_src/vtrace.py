@@ -66,8 +66,8 @@ def vtrace(
   Returns:
     V-Trace error.
   """
-  chex.rank_assert([v_tm1, v_t, r_t, discount_t, rho_t], [1, 1, 1, 1, 1])
-  chex.type_assert([v_tm1, v_t, r_t, discount_t, rho_t],
+  chex.assert_rank([v_tm1, v_t, r_t, discount_t, rho_t], [1, 1, 1, 1, 1])
+  chex.assert_type([v_tm1, v_t, r_t, discount_t, rho_t],
                    [float, float, float, float, float])
 
   # Clip importance sampling ratios.
@@ -129,8 +129,8 @@ def leaky_vtrace(
   Returns:
     Leaky V-Trace error.
   """
-  chex.rank_assert([v_tm1, v_t, r_t, discount_t, rho_t], [1, 1, 1, 1, 1])
-  chex.type_assert([v_tm1, v_t, r_t, discount_t, rho_t],
+  chex.assert_rank([v_tm1, v_t, r_t, discount_t, rho_t], [1, 1, 1, 1, 1])
+  chex.assert_type([v_tm1, v_t, r_t, discount_t, rho_t],
                    [float, float, float, float, float])
 
   # Mix clipped and unclipped importance sampling ratios.
@@ -194,8 +194,8 @@ def vtrace_td_error_and_advantage(
   Returns:
     a tuple of V-Trace error, policy gradient advantage, and estimated Q-values.
   """
-  chex.rank_assert([v_tm1, v_t, r_t, discount_t, rho_t], 1)
-  chex.type_assert([v_tm1, v_t, r_t, discount_t, rho_t], float)
+  chex.assert_rank([v_tm1, v_t, r_t, discount_t, rho_t], 1)
+  chex.assert_type([v_tm1, v_t, r_t, discount_t, rho_t], float)
 
   errors = vtrace(
       v_tm1, v_t, r_t, discount_t, rho_t,

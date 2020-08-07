@@ -123,6 +123,23 @@ class TransformsTest(parameterized.TestCase):
     # Test inverse.
     np.testing.assert_allclose(square(sqrt(self.xs)), self.xs, atol=1e-3)
 
+  @chex.all_variants()
+  def test_hyperbolic_sin_transform_scalar(self):
+    sinh = self.variant(transforms.hyperbolic_sin)
+    arcsinh = self.variant(transforms.hyperbolic_arcsin)
+    x = jnp.array(self.x)
+    # Test inverse.
+    np.testing.assert_allclose(sinh(arcsinh(x)), self.x, atol=1e-3)
+    np.testing.assert_allclose(arcsinh(sinh(x)), self.x, atol=1e-3)
+
+  @chex.all_variants()
+  def test_hyperbolic_sin_transform_vector(self):
+    sinh = self.variant(transforms.hyperbolic_sin)
+    arcsinh = self.variant(transforms.hyperbolic_arcsin)
+    # Test inverse.
+    np.testing.assert_allclose(sinh(arcsinh(self.xs)), self.xs, atol=1e-3)
+    np.testing.assert_allclose(arcsinh(sinh(self.xs)), self.xs, atol=1e-3)
+
   def test_transform_to_2hot(self):
     y = transforms.transform_to_2hot(
         scalar=jnp.array(TWO_HOT_SCALARS),

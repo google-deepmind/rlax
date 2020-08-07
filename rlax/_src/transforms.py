@@ -30,50 +30,62 @@ Numeric = chex.Numeric
 
 def identity(x: Array) -> Array:
   """Identity transform."""
-  chex.type_assert(x, float)
+  chex.assert_type(x, float)
   return x
 
 
 def sigmoid(x: Numeric) -> Array:
   """Sigmoid transform."""
-  chex.type_assert(x, float)
+  chex.assert_type(x, float)
   return jax.nn.sigmoid(x)
 
 
 def logit(x: Array) -> Array:
   """Logit transform, inverse of sigmoid."""
-  chex.type_assert(x, float)
+  chex.assert_type(x, float)
   return -jnp.log(1. / x - 1.)
 
 
 def signed_logp1(x: Array) -> Array:
   """Signed logarithm of x + 1."""
-  chex.type_assert(x, float)
+  chex.assert_type(x, float)
   return jnp.sign(x) * jnp.log1p(jnp.abs(x))
 
 
 def signed_expm1(x: Array) -> Array:
   """Signed exponential of x - 1, inverse of signed_logp1."""
-  chex.type_assert(x, float)
+  chex.assert_type(x, float)
   return jnp.sign(x) * (jnp.exp(jnp.abs(x)) - 1)
 
 
 def signed_hyperbolic(x: Array, eps: float = 1e-3) -> Array:
   """Signed hyperbolic transform, inverse of signed_parabolic."""
-  chex.type_assert(x, float)
+  chex.assert_type(x, float)
   return jnp.sign(x) * (jnp.sqrt(jnp.abs(x) + 1) - 1) + eps * x
+
+
+def hyperbolic_sin(x: Array) -> Array:
+  """Hyperbolic sinus transform."""
+  chex.assert_type(x, float)
+  return jnp.sinh(x)
+
+
+def hyperbolic_arcsin(x: Array) -> Array:
+  """Hyperbolic arcsinus transform."""
+  chex.assert_type(x, float)
+  return jnp.arcsinh(x)
 
 
 def signed_parabolic(x: Array, eps: float = 1e-3) -> Array:
   """Signed parabolic transform, inverse of signed_hyperbolic."""
-  chex.type_assert(x, float)
+  chex.assert_type(x, float)
   z = jnp.sqrt(1 + 4 * eps * (eps + 1 + jnp.abs(x))) / 2 / eps - 1 / 2 / eps
   return jnp.sign(x) * (jnp.square(z) - 1)
 
 
 def power(x: Array, p: float) -> Array:
   """Power transform; `power_tx(_, 1/p)` is the inverse of `power_tx(_, p)`."""
-  chex.type_assert(x, float)
+  chex.assert_type(x, float)
   q = jnp.sqrt(p)
   return jnp.sign(x) * (jnp.power(jnp.abs(x) / q + 1., p) - 1) / q
 

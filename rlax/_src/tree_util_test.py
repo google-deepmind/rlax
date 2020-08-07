@@ -17,7 +17,12 @@
 
 from absl.testing import absltest
 import jax
+import jax.numpy as jnp
+import numpy as np
 from rlax._src import tree_util
+
+
+NUM_NESTS = 4
 
 
 class TreeUtilTest(absltest.TestCase):
@@ -27,6 +32,42 @@ class TreeUtilTest(absltest.TestCase):
     tree_like = (1, (2, 3), {'a': 4})
     _, tree_keys = tree_util.tree_split_key(rng_key, tree_like)
     assert len(jax.tree_util.tree_leaves(tree_keys)) == 4
+
+  def test_tree_map_zipped(self):
+    nests = [
+        dict(a=jnp.zeros((1, 3)), b=jnp.zeros((1, 5)))] * NUM_NESTS
+    nest_output = tree_util.tree_map_zipped(
+        lambda *args: jnp.concatenate(args), nests)
+    assert nest_output['a'].shape == (NUM_NESTS, 3)
+    assert nest_output['b'].shape == (NUM_NESTS, 5)
+
+  def test_tree_map_zipped_wrong_structure(self):
+    nests = [
+        dict(a=jnp.zeros((1, 3)), b=jnp.zeros((1, 5)))] * (NUM_NESTS - 1)
+    nests.append(dict(c=jnp.zeros((1, 3))))  # add a non-matching nest
+    with self.assertRaisesRegex(ValueError, 'must share the same tree'):
+      tree_util.tree_map_zipped(
+          lambda *args: jnp.concatenate(args), nests)
+
+  def test_tree_map_zipped_empty(self):
+    outputs = tree_util.tree_map_zipped(lambda *args: jnp.concatenate(args), [])
+    assert not outputs
+
+  def test_select_true(self):
+    on_true = ((jnp.zeros(3,),), jnp.zeros(4,))
+    on_false = ((jnp.ones(3,),), jnp.ones(4,))
+    output = tree_util.tree_select(True, on_true, on_false)
+    for x, y in zip(
+        jax.tree_util.tree_leaves(on_true), jax.tree_util.tree_leaves(output)):
+      np.testing.assert_array_equal(x, y)
+
+  def test_select_false(self):
+    on_true = ((jnp.zeros(3,),), jnp.zeros(4,))
+    on_false = ((jnp.ones(3,),), jnp.ones(4,))
+    output = tree_util.tree_select(False, on_true, on_false)
+    for x, y in zip(
+        jax.tree_util.tree_leaves(on_false), jax.tree_util.tree_leaves(output)):
+      np.testing.assert_array_equal(x, y)
 
 
 if __name__ == '__main__':

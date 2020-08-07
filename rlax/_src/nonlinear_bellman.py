@@ -48,6 +48,8 @@ SIGNED_LOGP1_PAIR = TxPair(
     transforms.signed_logp1, transforms.signed_expm1)
 SIGNED_HYPERBOLIC_PAIR = TxPair(
     transforms.signed_hyperbolic, transforms.signed_parabolic)
+HYPERBOLIC_SIN_PAIR = TxPair(
+    transforms.hyperbolic_arcsin, transforms.hyperbolic_sin)
 
 
 def transform_values(build_targets, *value_argnums):
@@ -101,9 +103,9 @@ def transformed_q_lambda(
   Returns:
     Q(lambda) temporal difference error.
   """
-  chex.rank_assert([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
-                   [2, 1, 1, 1, 2, [0, 1]])
-  chex.type_assert([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
+  chex.assert_rank([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
+                   [2, 1, 1, 1, 2, {0, 1}])
+  chex.assert_type([q_tm1, a_tm1, r_t, discount_t, q_t, lambda_],
                    [float, int, float, float, float, float])
 
   qa_tm1 = base.batched_index(q_tm1, a_tm1)
@@ -153,9 +155,9 @@ def transformed_retrace(
   Returns:
     Transformed Retrace error.
   """
-  chex.rank_assert([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
+  chex.assert_rank([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
                    [2, 2, 1, 1, 1, 1, 2, 1])
-  chex.type_assert([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
+  chex.assert_type([q_tm1, q_t, a_tm1, a_t, r_t, discount_t, pi_t, mu_t],
                    [float, float, int, int, float, float, float, float])
 
   pi_a_t = base.batched_index(pi_t, a_t)
@@ -202,9 +204,9 @@ def transformed_n_step_q_learning(
   Returns:
     Transformed N-step TD error.
   """
-  chex.rank_assert([q_tm1, target_q_t, a_tm1, a_t, r_t, discount_t],
+  chex.assert_rank([q_tm1, target_q_t, a_tm1, a_t, r_t, discount_t],
                    [2, 2, 1, 1, 1, 1])
-  chex.type_assert([q_tm1, target_q_t, a_tm1, a_t, r_t, discount_t],
+  chex.assert_type([q_tm1, target_q_t, a_tm1, a_t, r_t, discount_t],
                    [float, float, int, int, float, float])
 
   v_t = base.batched_index(target_q_t, a_t)

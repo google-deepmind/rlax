@@ -24,6 +24,7 @@ the loss function optimized by a suitable gradient descent algorithm.
 import chex
 import jax
 import jax.numpy as jnp
+from jax.tree_util import tree_multimap
 
 Array = chex.Array
 
@@ -43,7 +44,7 @@ def huber_loss(x: Array, delta: float = 1.) -> Array:
   Returns:
     a vector of same shape of `x`.
   """
-  chex.type_assert(x, float)
+  chex.assert_type(x, float)
 
   # 0.5 * x^2                  if |x| <= d
   # 0.5 * d^2 + d * (|x| - d)  if |x| > d
@@ -55,7 +56,7 @@ def huber_loss(x: Array, delta: float = 1.) -> Array:
 
 
 @jax.custom_gradient
-def clip_gradient(x: Array, gradient_min: float, gradient_max: float):
+def clip_gradient(x, gradient_min: float, gradient_max: float):
   """Identity but the gradient in the backward pass is clipped.
 
   See "Human-level control through deep reinforcement learning" by Mnih et al,
@@ -63,13 +64,23 @@ def clip_gradient(x: Array, gradient_min: float, gradient_max: float):
 
   Note `grad(0.5 * clip_gradient(x)**2)` is equivalent to `grad(huber_loss(x))`.
 
+  Note: x cannot be properly annotated because pytype does not support recursive
+  types; we would otherwise use the chex.ArrayTree pytype annotation here. Most
+  often x will be a single array of arbitrary shape, but the implementation
+  supports pytrees.
+
   Args:
-    x: a vector of arbitrary shape.
+    x: a pytree of arbitrary shape.
     gradient_min: min elementwise size of the gradient.
     gradient_max: max elementwise size of the gradient.
 
   Returns:
     a vector of same shape of `x`.
   """
-  chex.type_assert(x, float)
-  return x, lambda g: (jnp.clip(g, gradient_min, gradient_max), 0., 0.)
+  chex.assert_type(x, float)
+
+  def _compute_gradient(g):
+    return (tree_multimap(lambda g: jnp.clip(g, gradient_min, gradient_max),
+                          g), 0., 0.)
+
+  return x, _compute_gradient

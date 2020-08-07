@@ -57,8 +57,8 @@ def pixel_control_rewards(
     A tensor of pixel control rewards calculated from the observation. The
     shape is `[T,H',W']`, where `H'=H/cell_size` and `W'=W/cell_size`.
   """
-  chex.rank_assert(observations, 4)
-  chex.type_assert(observations, float)
+  chex.assert_rank(observations, 4)
+  chex.assert_type(observations, float)
 
   # Shape info.
   h = observations.shape[1] // cell_size  # new height.
@@ -99,8 +99,8 @@ def feature_control_rewards(
   Returns:
     A tensor of cumulants calculated from the features. The shape is `[T,D]`.
   """
-  chex.rank_assert(features, 2)
-  chex.type_assert(features, float)
+  chex.assert_rank(features, 2)
+  chex.assert_type(features, float)
 
   if cumulant_type == 'feature':
     return features[1:]

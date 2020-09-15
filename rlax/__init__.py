@@ -55,6 +55,7 @@ from rlax._src.multistep import general_off_policy_returns_from_action_values
 from rlax._src.multistep import general_off_policy_returns_from_q_and_v
 from rlax._src.multistep import lambda_returns
 from rlax._src.multistep import n_step_bootstrapped_returns
+from rlax._src.multistep import truncated_generalized_advantage_estimation
 from rlax._src.nested_updates import incremental_update
 from rlax._src.nested_updates import periodic_update
 from rlax._src.nonlinear_bellman import HYPERBOLIC_SIN_PAIR
@@ -68,6 +69,7 @@ from rlax._src.nonlinear_bellman import transformed_n_step_returns
 from rlax._src.nonlinear_bellman import transformed_q_lambda
 from rlax._src.nonlinear_bellman import transformed_retrace
 from rlax._src.nonlinear_bellman import TxPair
+from rlax._src.policy_gradients import clipped_surrogate_pg_loss
 from rlax._src.policy_gradients import dpg_loss
 from rlax._src.policy_gradients import entropy_loss
 from rlax._src.policy_gradients import policy_gradient_loss
@@ -78,6 +80,7 @@ from rlax._src.pop_art import art
 from rlax._src.pop_art import normalize
 from rlax._src.pop_art import pop
 from rlax._src.pop_art import popart
+from rlax._src.pop_art import PopArtState
 from rlax._src.pop_art import unnormalize
 from rlax._src.pop_art import unnormalize_linear
 from rlax._src.transforms import identity
@@ -101,6 +104,7 @@ from rlax._src.value_learning import expected_sarsa
 from rlax._src.value_learning import persistent_q_learning
 from rlax._src.value_learning import q_lambda
 from rlax._src.value_learning import q_learning
+from rlax._src.value_learning import quantile_expected_sarsa
 from rlax._src.value_learning import quantile_q_learning
 from rlax._src.value_learning import qv_learning
 from rlax._src.value_learning import qv_max
@@ -127,6 +131,7 @@ __all__ = (
     "categorical_q_learning",
     "categorical_td_learning",
     "clip_gradient",
+    "clipped_surrogate_pg_loss",
     "discounted_returns",
     "double_q_learning",
     "dpg_loss",
@@ -140,33 +145,43 @@ __all__ = (
     "HYPERBOLIC_SIN_PAIR",
     "squashed_gaussian",
     "clipped_entropy_softmax",
+    "art",
+    "compute_parametric_kl_penalty_and_dual_loss",
+    "general_off_policy_returns_from_action_values",
+    "general_off_policy_returns_from_q_and_v",
     "greedy",
     "huber_loss",
     "identity",
     "IDENTITY_PAIR",
     "incremental_update",
     "l2_loss",
+    "LagrangePenalty",
     "lambda_returns",
     "leaky_vtrace",
     "likelihood",
-    "log_loss",
     "logit",
+    "log_loss",
+    "mpo_compute_weights_and_temperature_loss",
+    "mpo_loss",
     "multivariate_normal_kl_divergence",
+    "normalize",
     "n_step_bootstrapped_returns",
     "one_hot",
     "periodic_update",
     "persistent_q_learning",
     "pixel_control_rewards",
     "policy_gradient_loss",
+    "pop",
+    "popart",
+    "PopArtState",
     "power",
-    "q_lambda",
-    "q_learning",
-    "general_off_policy_returns_from_action_values",
-    "general_off_policy_returns_from_q_and_v",
     "qpg_loss",
+    "quantile_expected_sarsa",
     "quantile_q_learning",
     "qv_learning",
     "qv_max",
+    "q_lambda",
+    "q_learning",
     "rm_loss",
     "rpg_loss",
     "sarsa",
@@ -175,32 +190,31 @@ __all__ = (
     "signed_expm1",
     "signed_hyperbolic",
     "SIGNED_HYPERBOLIC_PAIR",
-    "SIGNED_LOGP1_PAIR",
     "signed_logp1",
+    "SIGNED_LOGP1_PAIR",
     "signed_parabolic",
     "softmax",
     "td_lambda",
     "td_learning",
-    "transform_to_2hot",
-    "transform_from_2hot",
     "transformed_general_off_policy_returns_from_action_values",
     "transformed_lambda_returns",
     "transformed_n_step_q_learning",
     "transformed_n_step_returns",
     "transformed_q_lambda",
     "transformed_retrace",
+    "transform_from_2hot",
+    "transform_to_2hot",
     "tree_map_zipped",
     "tree_select",
     "tree_split_key",
+    "truncated_generalized_advantage_estimation",
     "TxPair",
-    "vtrace",
-    "vtrace_td_error_and_advantage",
-    "LagrangePenalty",
-    "mpo_compute_weights_and_temperature_loss",
-    "mpo_loss",
-    "compute_parametric_kl_penalty_and_dual_loss",
+    "unnormalize",
+    "unnormalize_linear",
     "vmpo_compute_weights_and_temperature_loss",
     "vmpo_loss",
+    "vtrace",
+    "vtrace_td_error_and_advantage",
 )
 
 #  _________________________________________

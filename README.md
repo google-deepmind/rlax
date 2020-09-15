@@ -9,10 +9,16 @@ RLax can be installed with pip directly from github, with the following command:
 
 `pip install git+git://github.com/deepmind/rlax.git`.
 
+or from PyPI:
+
+`pip install rlax`
+
 All RLax code may then be just in time compiled for different hardware
 (e.g. CPU, GPU, TPU) using `jax.jit`.
 
-In order to run the `examples/` you will also need to install
+In order to run the `examples/` you will also need to clone the repo and
+install the additional requirements:
+[optax](https://github.com/deepmind/optax),
 [haiku](https://github.com/deepmind/haiku), and
 [bsuite](https://github.com/deepmind/bsuite).
 
@@ -42,7 +48,7 @@ on BSuite's version of the Catch environment (a common unit-test for
 agent development in the reinforcement learning literature):
 
 Other examples of JAX reinforcement learning agents using `rlax` can be found in
-[bsuite](`https://github.com/deepmind/bsuite/tree/master/bsuite/baselines`).
+[bsuite](https://github.com/deepmind/bsuite/tree/master/bsuite/baselines).
 
 ## Background
 

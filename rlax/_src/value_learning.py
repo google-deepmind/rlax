@@ -761,3 +761,48 @@ def quantile_q_learning(
 
   return _quantile_regression_loss(
       dist_qa_tm1, tau_q_tm1, dist_target, huber_param)
+
+
+def quantile_expected_sarsa(
+    dist_q_tm1: Array,
+    tau_q_tm1: Array,
+    a_tm1: Numeric,
+    r_t: Numeric,
+    discount_t: Numeric,
+    dist_q_t: Array,
+    probs_a_t: Array,
+    huber_param: float = 0.
+) -> Numeric:
+  """Implements Expected SARSA for quantile-valued Q distributions.
+
+  Args:
+    dist_q_tm1: Q distribution at time t-1.
+    tau_q_tm1: Q distribution probability thresholds.
+    a_tm1: action index at time t-1.
+    r_t: reward at time t.
+    discount_t: discount at time t.
+    dist_q_t: target Q distribution at time t.
+    probs_a_t: action probabilities at time t.
+    huber_param: Huber loss parameter, defaults to 0 (no Huber loss).
+
+  Returns:
+    Quantile regression Expected SARSA learning loss.
+  """
+  chex.assert_rank([
+      dist_q_tm1, tau_q_tm1, a_tm1, r_t, discount_t, dist_q_t, probs_a_t
+  ], [2, 1, 0, 0, 0, 2, 1])
+  chex.assert_type([
+      dist_q_tm1, tau_q_tm1, a_tm1, r_t, discount_t, dist_q_t, probs_a_t
+  ], [float, float, int, float, float, float, float])
+
+  # Only update the taken actions.
+  dist_qa_tm1 = dist_q_tm1[:, a_tm1]
+
+  dist_qa_t = jnp.einsum('qa,a->q', dist_q_t, probs_a_t)
+
+  # Compute target, do not backpropagate into it.
+  dist_target = r_t + discount_t * dist_qa_t
+  dist_target = jax.lax.stop_gradient(dist_target)
+
+  return _quantile_regression_loss(
+      dist_qa_tm1, tau_q_tm1, dist_target, huber_param)

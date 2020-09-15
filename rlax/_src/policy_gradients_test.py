@@ -22,6 +22,7 @@ import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
+from rlax._src import distributions
 from rlax._src import policy_gradients
 
 
@@ -196,6 +197,35 @@ class RPGLossTest(parameterized.TestCase):
     # Test outputs.
     actual = rpg_loss(policy_logits, q_values)
     np.testing.assert_allclose(self.expected_policy_loss, actual, atol=1e-4)
+
+
+class ClippedSurrogatePGLossTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(ClippedSurrogatePGLossTest, self).setUp()
+
+    logits = np.array(
+        [[1., 1., 1.], [2., 0., 0.], [-1., -2., -3.]], dtype=np.float32)
+    old_logits = np.array(
+        [[1., 1., 1.], [2., 0., 0.], [-3., -2., -1.]], dtype=np.float32)
+    self.logits = np.stack([logits, logits])
+    self.old_logits = np.stack([old_logits, old_logits])
+
+    advantages = np.array([0.3, 0.2, 0.1], dtype=np.float32)
+    self.advantages = np.stack([advantages, -advantages])
+    self.actions = np.array([[0, 1, 2], [0, 1, 2]], dtype=np.int32)
+    self.epsilon = 0.2
+    self.expected = np.array([-0.17117467, 0.19333333])
+
+  @chex.all_variants()
+  def test_clipped_surrogate_pg_loss_batch(self):
+    """Tests for a full batch."""
+    get_ratios = jax.vmap(distributions.categorical_importance_sampling_ratios)
+    prob_ratios = get_ratios(self.logits, self.old_logits, self.actions)
+    batched_fn_variant = self.variant(jax.vmap(functools.partial(
+        policy_gradients.clipped_surrogate_pg_loss, epsilon=self.epsilon)))
+    actual = batched_fn_variant(prob_ratios, self.advantages)
+    np.testing.assert_allclose(actual, self.expected, atol=1e-4)
 
 
 if __name__ == '__main__':

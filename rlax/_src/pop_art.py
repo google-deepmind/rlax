@@ -17,7 +17,7 @@
 
 import collections
 
-from typing import Mapping, Text, Tuple
+from typing import Mapping, Tuple
 
 import chex
 import jax
@@ -26,7 +26,7 @@ from rlax._src import base
 
 Array = chex.Array
 
-LinearParams = Mapping[Text, Array]
+LinearParams = Mapping[str, Array]
 PopArtState = collections.namedtuple(
     "PopArtState", ["shift", "scale", "second_moment"])
 PopArtOutput = collections.namedtuple(
@@ -41,7 +41,8 @@ def _cross_replica_scatter_add(source: Array, indices: Array, updates: Array,
     source: An array of shape [O].
     indices: An array indicating which index each update is for.
     updates: The updates to apply to `source`. Of same shape as indices.
-    axis_name: pmap axis to aggregate over.
+    axis_name: What axis to aggregate over, if str. If passed an iterable,
+      aggregates over multiple axes. Defaults to no aggregation, i.e. None.
 
   Returns:
     An array of shape [O], which is source + the scattered updates from all
@@ -59,7 +60,9 @@ def _cross_replica_scatter_add(source: Array, indices: Array, updates: Array,
   # Aggregate locally first, then across replicas.
   total_updates = jnp.sum(updates_at_idxs, axis=0)
   if axis_name is not None:
-    total_updates = jax.lax.psum(total_updates, axis_name)
+    axis_names = (axis_name,) if isinstance(axis_name, str) else axis_name
+    for axis_name in axis_names:
+      total_updates = jax.lax.psum(total_updates, axis_name=axis_name)
   return source + total_updates
 
 
@@ -132,7 +135,8 @@ def art(state: PopArtState,
     step_size: The step size for learning the scale & shift parameters.
     scale_lb: Lower bound for the scale.
     scale_ub: Upper bound for the scale.
-    axis_name: What axis to aggregate over. By default, None.
+    axis_name: What axis to aggregate over, if str. If passed an iterable,
+      aggregates over multiple axes. Defaults to no aggregation, i.e. None.
 
   Returns:
     New popart state which can be used to rescale targets.
@@ -193,7 +197,8 @@ def popart(num_outputs: int,
     step_size: The step size for learning the scale & shift parameters.
     scale_lb: Lower bound for the scale.
     scale_ub: Upper bound for the scale.
-    axis_name: What axis to aggregate over. By default, None.
+    axis_name: What axis to aggregate over, if str. If passed an iterable,
+      aggregates over multiple axes. Defaults to no aggregation, i.e. None.
 
   Returns:
     A tuple of:

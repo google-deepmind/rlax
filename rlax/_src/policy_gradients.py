@@ -226,3 +226,34 @@ def rpg_loss(
 
   total_regret_t = jnp.mean(regrets_t, axis=0)
   return total_regret_t
+
+
+def clipped_surrogate_pg_loss(
+    prob_ratios_t: Array,
+    adv_t: Array,
+    epsilon: Scalar) -> Array:
+  """Computes the clipped surrogate policy gradient loss.
+
+  L_clipₜ(θ) = - min(rₜ(θ)Âₜ, clip(rₜ(θ), 1-ε, 1+ε)Âₜ)
+
+  Where rₜ(θ) = π_θ(aₜ| sₜ) / π_θ_old(aₜ| sₜ) and Âₜ are the advantages.
+
+  See Proximal Policy Optimization Algorithms, Schulman et al.:
+  https://arxiv.org/abs/1707.06347
+
+  Args:
+    prob_ratios_t: Ratio of action probabilities for actions a_t:
+        rₜ(θ) = π_θ(aₜ| sₜ) / π_θ_old(aₜ| sₜ)
+    adv_t: the observed or estimated advantages from executing actions a_t.
+    epsilon: Scalar value corresponding to how much to clip the objecctive.
+
+  Returns:
+    Loss whose gradient corresponds to a clipped surrogate policy gradient
+        update.
+  """
+  chex.assert_rank([prob_ratios_t, adv_t], [1, 1])
+  chex.assert_type([prob_ratios_t, adv_t], [float, float])
+
+  clipped_ratios_t = jnp.clip(prob_ratios_t, 1. - epsilon, 1. + epsilon)
+  clipped_objective = jnp.fmin(prob_ratios_t * adv_t, clipped_ratios_t * adv_t)
+  return -jnp.mean(clipped_objective)

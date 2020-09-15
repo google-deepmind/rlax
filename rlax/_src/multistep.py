@@ -21,12 +21,13 @@ rewards collected by an agent). These estimate compute returns from trajectories
 of experience; trajectories are not assumed to align with episode boundaries,
 and bootstrapping is used to estimate returns beyond the end of a trajectory.
 """
-
+from typing import Union
 import chex
 import jax.numpy as jnp
 from rlax._src import base
 
 Array = chex.Array
+Scalar = chex.Scalar
 Numeric = chex.Numeric
 
 
@@ -95,6 +96,7 @@ def lambda_returns(
   """
   chex.assert_rank([r_t, discount_t, v_t, lambda_], [1, 1, 1, {0, 1}])
   chex.assert_type([r_t, discount_t, v_t, lambda_], float)
+  chex.assert_equal_shape([r_t, discount_t, v_t])
 
   # If scalar make into vector.
   lambda_ = jnp.ones_like(discount_t) * lambda_
@@ -132,6 +134,7 @@ def n_step_bootstrapped_returns(
   """
   chex.assert_rank([r_t, discount_t, v_t], 1)
   chex.assert_type([r_t, discount_t, v_t], float)
+  chex.assert_equal_shape([r_t, discount_t, v_t])
   seq_len = r_t.shape[0]
 
   # Pad end of reward and discount sequences with 0 and 1 respectively.
@@ -211,10 +214,11 @@ def importance_corrected_td_errors(
     values: sequence of state values under π for all timesteps t in [0, T].
 
   Returns:
-    Off-policy estimates of the multistep lambda returns from each state.
+    Off-policy estimates of the multistep td errors.
   """
   chex.assert_rank([r_t, discount_t, rho_tm1, values], [1, 1, 1, 1])
   chex.assert_type([r_t, discount_t, rho_tm1, values], float)
+  chex.assert_equal_shape([r_t, discount_t, rho_tm1, values[1:]])
 
   v_tm1 = values[:-1]  # Predictions to compute errors for.
   v_t = values[1:]  # Values for bootstrapping.
@@ -231,6 +235,48 @@ def importance_corrected_td_errors(
     errors.insert(0, delta)
 
   return rho_tm1 * jnp.array(errors)
+
+
+def truncated_generalized_advantage_estimation(
+    r_t: Array,
+    discount_t: Array,
+    lambda_: Union[Array, Scalar],
+    values: Array,
+) -> Array:
+  """Computes truncated generalized advantage estimates for a sequence length k.
+
+   The advantages are computed in a backwards fashion according to the equation:
+   Âₜ = δₜ + (γλ) * δₜ₊₁ + ... + ... + (γλ)ᵏ⁻ᵗ⁺¹ * δₖ₋₁
+   where δₜ = rₜ₊₁ + γₜ₊₁ * v(sₜ₊₁) - v(sₜ).
+
+   See Proximal Policy Optimization Algorithms, Schulman et al.:
+   https://arxiv.org/abs/1707.06347
+
+   * Note: This paper uses a different notation than the RLax standard
+   convention that follows Sutton & Barto. We use rₜ₊₁ to denote the reward
+   received after acting in state sₜ, while the PPO paper uses rₜ.
+
+  Args:
+    r_t: Sequence of rewards at times [1, k]
+    discount_t: Sequence of discounts at times [1, k]
+    lambda_: Mixing parameter; a scalar or sequence of lambda_t at times [1, k]
+    values: Sequence of values under π at times [0, k]
+
+  Returns:
+    Multistep truncated generalized advantage estimation.
+  """
+  chex.assert_rank([r_t, values, discount_t], 1)
+  chex.assert_type([r_t, values, discount_t], float)
+  lambda_ = jnp.ones_like(discount_t) * lambda_  # If scalar, make into vector.
+
+  delta_t = r_t + discount_t * values[1:] - values[:-1]
+
+  # Iterate backwards to calculate advantages.
+  advantage_t = [0.]
+  for t in reversed(range(delta_t.shape[0])):
+    advantage_t.insert(0,
+                       delta_t[t] + lambda_[t] * discount_t[t] * advantage_t[0])
+  return jnp.array(advantage_t[:-1])
 
 
 def general_off_policy_returns_from_action_values(
@@ -274,6 +320,8 @@ def general_off_policy_returns_from_action_values(
   chex.assert_rank([q_t, a_t, r_t, discount_t, c_t, pi_t], [2, 1, 1, 1, 1, 2])
   chex.assert_type([q_t, a_t, r_t, discount_t, c_t, pi_t],
                    [float, int, float, float, float, float])
+  chex.assert_equal_shape(
+      [q_t[..., 0], a_t, r_t, discount_t, c_t, pi_t[..., 0]])
 
   # Get the expected values and the values of actually selected actions.
   exp_q_t = (pi_t * q_t).sum(axis=-1)
@@ -325,6 +373,7 @@ def general_off_policy_returns_from_q_and_v(
   """
   chex.assert_rank([q_t, v_t, r_t, discount_t, c_t], 1)
   chex.assert_type([q_t, v_t, r_t, discount_t, c_t], float)
+  chex.assert_equal_shape([q_t, v_t[:-1], r_t[:-1], discount_t[:-1], c_t])
 
   # Work backwards to compute `G_K-1`, ..., `G_1`, `G_0`.
   g = r_t[-1] + discount_t[-1] * v_t[-1]  # G_K-1.
@@ -334,4 +383,3 @@ def general_off_policy_returns_from_q_and_v(
     returns.insert(0, g)
 
   return jnp.array(returns)
-

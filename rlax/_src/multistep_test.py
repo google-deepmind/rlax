@@ -20,6 +20,7 @@ from absl.testing import absltest
 from absl.testing import parameterized
 import chex
 import jax
+import jax.numpy as jnp
 import numpy as np
 from rlax._src import multistep
 
@@ -151,6 +152,89 @@ class TDErrorTest(parameterized.TestCase):
     # Check equivalence.
     np.testing.assert_allclose(td_direct, td_from_returns, rtol=1e-5)
 
+
+class TruncatedGeneralizedAdvantageEstimationTest(parameterized.TestCase):
+
+  def setUp(self):
+    super(TruncatedGeneralizedAdvantageEstimationTest, self).setUp()
+
+    self.r_t = jnp.array([[0., 0., 1., 0., -0.5],
+                          [0., 0., 0., 0., 1.]])
+    self.v_t = jnp.array([[1., 4., -3., -2., -1., -1.],
+                          [-3., -2., -1., 0.0, 5., -1.]])
+    self.discount_t = jnp.array([[0.99, 0.99, 0.99, 0.99, 0.99],
+                                 [0.9, 0.9, 0.9, 0.0, 0.9]])
+    self.dummy_rho_tm1 = jnp.array([[1., 1., 1., 1., 1],
+                                    [1., 1., 1., 1., 1.]])
+    self.array_lambda = jnp.array([[0.9, 0.9, 0.9, 0.9, 0.9],
+                                   [0.9, 0.9, 0.9, 0.9, 0.9]])
+
+    # Different expected results for different values of lambda.
+    self.expected = dict()
+    self.expected[1.] = np.array(
+        [[-1.45118, -4.4557, 2.5396, 0.5249, -0.49],
+         [3., 2., 1., 0., -4.9]],
+        dtype=np.float32)
+    self.expected[0.7] = np.array(
+        [[-0.676979, -5.248167, 2.4846, 0.6704, -0.49],
+         [2.2899, 1.73, 1., 0., -4.9]],
+        dtype=np.float32)
+    self.expected[0.4] = np.array(
+        [[0.56731, -6.042, 2.3431, 0.815, -0.49],
+         [1.725, 1.46, 1., 0., -4.9]],
+        dtype=np.float32)
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('lambda1', 1.0),
+      ('lambda0.7', 0.7),
+      ('lambda0.4', 0.4))
+  def test_truncated_gae(self, lambda_):
+    """Tests truncated GAE for a full batch."""
+    batched_advantage_fn_variant = self.variant(jax.vmap(
+        multistep.truncated_generalized_advantage_estimation,
+        in_axes=(0, 0, None, 0), out_axes=0))
+    actual = batched_advantage_fn_variant(
+        self.r_t, self.discount_t, lambda_, self.v_t)
+    np.testing.assert_allclose(self.expected[lambda_], actual, atol=1e-3)
+
+  @chex.all_variants()
+  def test_array_lambda(self):
+    """Tests that truncated GAE is consistent with scalar or array lambda_."""
+    scalar_lambda_fn = self.variant(jax.vmap(
+        multistep.truncated_generalized_advantage_estimation,
+        in_axes=(0, 0, None, 0), out_axes=0))
+    array_lambda_fn = self.variant(jax.vmap(
+        multistep.truncated_generalized_advantage_estimation))
+    scalar_lambda_result = scalar_lambda_fn(
+        self.r_t, self.discount_t, 0.9, self.v_t)
+    array_lambda_result = array_lambda_fn(
+        self.r_t, self.discount_t, self.array_lambda, self.v_t)
+    np.testing.assert_allclose(scalar_lambda_result, array_lambda_result,
+                               atol=1e-3)
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('lambda1', 1.0),
+      ('lambda0.7', 0.7),
+      ('lambda0.4', 0.4))
+  def test_gae_as_special_case_of_importance_corrected_td_errors(self, lambda_):
+    """Tests that truncated GAE yields same output as importance corrected td errors with dummy ratios."""
+    batched_gae_fn_variant = self.variant(jax.vmap(
+        multistep.truncated_generalized_advantage_estimation,
+        in_axes=(0, 0, None, 0), out_axes=0))
+    gae_result = batched_gae_fn_variant(
+        self.r_t, self.discount_t, lambda_, self.v_t)
+
+    batched_ictd_errors_fn_variant = self.variant(jax.vmap(
+        multistep.importance_corrected_td_errors))
+    ictd_errors_result = batched_ictd_errors_fn_variant(
+        self.r_t,
+        self.discount_t,
+        self.dummy_rho_tm1,
+        jnp.ones_like(self.discount_t) * lambda_,
+        self.v_t)
+    np.testing.assert_allclose(gae_result, ictd_errors_result, atol=1e-3)
 
 if __name__ == '__main__':
   jax.config.update('jax_numpy_rank_promotion', 'raise')

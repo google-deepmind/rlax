@@ -699,10 +699,10 @@ class QuantileRegressionLossTest(parameterized.TestCase):
     np.testing.assert_allclose(actual, self.expected_loss[huber_param])
 
 
-class QuantileQLearningTest(parameterized.TestCase):
+class QuantileLearningTest(parameterized.TestCase):
 
   def setUp(self):
-    super(QuantileQLearningTest, self).setUp()
+    super(QuantileLearningTest, self).setUp()
 
     self.dist_q_tm1 = np.array(  # n_batch = 3, n_taus = 2, n_actions = 4
         [[[0, 1, -5, 6], [-1, 3, 0, -2]],
@@ -732,6 +732,13 @@ class QuantileQLearningTest(parameterized.TestCase):
         [[[0, 7, 2, -2], [0, 4, 2, 2]],
          [[-3, -1, 4, 3], [1, 3, 1, 4]],
          [[-1, -2, -5, -6], [-1, -5, 2, -2]]],
+        dtype=np.float32)
+
+    # Scenario 1: these match the dist_q_t_selector above
+    self.greedy_probs_a_t = np.array(
+        [[0, 1, 0, 0],
+         [0, 0, 0, 1],
+         [1, 0, 0, 0]],
         dtype=np.float32)
 
     dist_qa_tm1 = np.array(
@@ -765,6 +772,26 @@ class QuantileQLearningTest(parameterized.TestCase):
            for (dqa, tau, dt) in zip(dist_qa_tm1, self.tau_q_tm1, dist_target)],
           dtype=np.float32)
 
+    # Scenario 2:
+    # bootstrap targets are nor an argmax, but averaging across actions
+    self.uniform_probs_a_t = np.ones((3, 4), dtype=np.float32) / 4.
+    #                                             [ 2.25, 0.25]
+    # dist_qa_t                              =    [-0.75, 0.25]
+    #                                             [-3.00, 1.00]
+    uniform_dist_target = np.array(
+        [[1.625, 0.625],
+         [-1, -1],
+         [-3, 1]],
+        dtype=np.float32)
+
+    self.uniform_expected = {}
+    for huber_param in [0.0, 1.0]:
+      self.uniform_expected[huber_param] = np.array(  # loop over batch
+          [value_learning._quantile_regression_loss(dqa, tau, dt, huber_param)
+           for (dqa, tau, dt) in zip(dist_qa_tm1, self.tau_q_tm1,
+                                     uniform_dist_target)],
+          dtype=np.float32)
+
   @chex.all_variants()
   @parameterized.named_parameters(
       ('nohuber', 0.0),
@@ -778,6 +805,35 @@ class QuantileQLearningTest(parameterized.TestCase):
         self.dist_q_tm1, self.tau_q_tm1, self.a_tm1, self.r_t, self.discount_t,
         self.dist_q_t_selector, self.dist_q_t)
     np.testing.assert_allclose(self.expected[huber_param], actual, rtol=1e-5)
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('nohuber', 0.0),
+      ('huber', 1.0))
+  def test_quantile_expected_sarsa_batch_greedy(self, huber_param):
+    """Tests for a full batch."""
+    quantile_expected_sarsa = self.variant(jax.vmap(functools.partial(
+        value_learning.quantile_expected_sarsa, huber_param=huber_param)))
+    # Test outputs.
+    actual = quantile_expected_sarsa(
+        self.dist_q_tm1, self.tau_q_tm1, self.a_tm1, self.r_t, self.discount_t,
+        self.dist_q_t, self.greedy_probs_a_t)
+    np.testing.assert_allclose(self.expected[huber_param], actual, rtol=1e-5)
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('nohuber', 0.0),
+      ('huber', 1.0))
+  def test_quantile_expected_sarsa_batch_uniform(self, huber_param):
+    """Tests for a full batch."""
+    quantile_expected_sarsa = self.variant(jax.vmap(functools.partial(
+        value_learning.quantile_expected_sarsa, huber_param=huber_param)))
+    # Test outputs.
+    actual = quantile_expected_sarsa(
+        self.dist_q_tm1, self.tau_q_tm1, self.a_tm1, self.r_t, self.discount_t,
+        self.dist_q_t, self.uniform_probs_a_t)
+    np.testing.assert_allclose(
+        self.uniform_expected[huber_param], actual, rtol=1e-5)
 
 
 if __name__ == '__main__':

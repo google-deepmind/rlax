@@ -15,7 +15,12 @@
 # ==============================================================================
 """Tests for pop_art.py."""
 
+import functools
+
 from absl.testing import absltest
+from absl.testing import parameterized
+
+import chex
 import haiku as hk
 from haiku import data_structures
 from haiku import initializers
@@ -26,6 +31,11 @@ import numpy as np
 from rlax._src import pop_art
 
 _INPUT_DIM = 3
+
+
+def setUpModule():
+  chex.set_n_cpu_devices(n=4)
+  chex.assert_devices_available(n=4, devtype='cpu', backend='cpu')
 
 
 def get_constant_linear_params(num_outputs):
@@ -42,7 +52,45 @@ def get_fake_pop_art_state(num_outputs):
   return pop_art.PopArtState(shift, scale, second_moment)
 
 
-class PopArtTest(absltest.TestCase):
+class PopArtTest(parameterized.TestCase):
+
+  @parameterized.parameters(
+      (None, np.array([[[0., 0., 1.],
+                        [0., 5., 0.]],
+                       [[9., 0., 0.],
+                        [0., 0., 0.]]])),
+      ([], np.array([[[0., 0., 1.],
+                      [0., 5., 0.]],
+                     [[9., 0., 0.],
+                      [0., 0., 0.]]])),
+      (['i'], np.array([[[0., 5., 1.],
+                         [0., 5., 1.]],
+                        [[9., 0., 0.],
+                         [9., 0., 0.]]])),
+      (['j'], np.array([[[9., 0., 1.],
+                         [0., 5., 0.]],
+                        [[9., 0., 1.],
+                         [0., 5., 0.]]])),
+      (['i', 'j'], np.array([[[9., 5., 1.],
+                              [9., 5., 1.]],
+                             [[9., 5., 1.],
+                              [9., 5., 1.]]])))
+  def test_cross_replica_scatter_add(self, axes, expected):
+    shape = (2, 2, 3)
+    source = np.zeros(shape)
+    fn = functools.partial(pop_art._cross_replica_scatter_add, axis_name=axes)
+    mapped_fn = jax.pmap(fn, axis_name='i', backend='cpu')
+    mapped_fn = jax.pmap(mapped_fn, axis_name='j', backend='cpu')
+
+    updates = np.array([[[1., 0., 0.],
+                         [0., 5., 0.]],
+                        [[0., 0., 9.],
+                         [0., 0., 0.]]])
+    indices = np.array([[[2, 2, 2],
+                         [1, 1, 1]],
+                        [[0, 0, 0],
+                         [0, 1, 2]]])
+    np.testing.assert_equal(mapped_fn(source, indices, updates), expected)
 
   def test_normalize_unnormalize_is_identity(self):
     num_outputs = 3

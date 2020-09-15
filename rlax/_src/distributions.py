@@ -133,7 +133,7 @@ def epsilon_softmax(epsilon, temperature):
   def entropy_fn(logits: Array):
     probs = jax.nn.softmax(logits / temperature)
     probs = _mix_with_uniform(probs, epsilon)
-    return -jnp.sum(probs * jnp.log(probs), axis=-1)
+    return -jnp.nansum(probs * jnp.log(probs), axis=-1)
 
   def kl_fn(p_logits: Array, q_logits: Array):
     return categorical_kl_divergence(p_logits, q_logits, temperature)

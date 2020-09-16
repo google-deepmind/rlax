@@ -49,6 +49,7 @@ setup(
         'dm-env>=1.2',
         'numpy>=1.18.0',
     ],
+    python_requires='>=3.6',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Console',

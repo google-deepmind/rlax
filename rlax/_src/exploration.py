@@ -274,4 +274,7 @@ def episodic_memory_intrinsic_rewards(
   # r <- β * r
   reward *= reward_scale
 
-  return reward, IntrinsicRewardState(new_memory, distance_sum, distance_counts)
+  return reward, IntrinsicRewardState(
+      memory=new_memory,
+      distance_sum=distance_sum,
+      distance_counts=distance_counts)

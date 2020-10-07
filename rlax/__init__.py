@@ -108,6 +108,8 @@ from rlax._src.value_learning import quantile_expected_sarsa
 from rlax._src.value_learning import quantile_q_learning
 from rlax._src.value_learning import qv_learning
 from rlax._src.value_learning import qv_max
+from rlax._src.value_learning import retrace
+from rlax._src.value_learning import retrace_continuous
 from rlax._src.value_learning import sarsa
 from rlax._src.value_learning import sarsa_lambda
 from rlax._src.value_learning import td_lambda
@@ -182,6 +184,8 @@ __all__ = (
     "qv_max",
     "q_lambda",
     "q_learning",
+    "retrace",
+    "retrace_continuous",
     "rm_loss",
     "rpg_loss",
     "sarsa",

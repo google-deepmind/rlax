@@ -21,7 +21,7 @@ implements a number of functions for value learning in discrete scalar action
 spaces. Actions are assumed to be represented as indices in the range `[0, A)`
 where `A` is the number of distinct actions.
 """
-
+from typing import Union
 import chex
 import jax
 import jax.numpy as jnp
@@ -451,6 +451,53 @@ def retrace(
   if stop_target_gradients:
     target_tm1 = jax.lax.stop_gradient(target_tm1)
   return target_tm1 - q_a_tm1
+
+
+def retrace_continuous(q_tm1: Array,
+                       q_t: Array,
+                       v_t: Array,
+                       r_t: Array,
+                       discount_t: Array,
+                       log_rhos: Array,
+                       lambda_: Union[Array, float],
+                       stop_target_gradients: bool = True) -> Array:
+  """Retrace continuous.
+
+  See "Safe and Efficient Off-Policy Reinforcement Learning" by Munos et al.
+  (https://arxiv.org/abs/1606.02647).
+
+  Args:
+    q_tm1: Q-values at time t-1.
+    q_t: Q-values at time t evaluated at actions collected using behavior
+      policy.
+    v_t: Value estimates of the target policy.
+    r_t: reward at time t.
+    discount_t: discount at time t.
+    log_rhos: Log importance weight pi_target/pi_behavior evaluated at actions
+      collected using behavior policy.
+    lambda_: scalar or a vector of mixing parameter lambda.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
+
+  Returns:
+    Retrace error.
+  """
+
+  chex.assert_rank([q_tm1, q_t, r_t, discount_t, log_rhos, lambda_],
+                   [1, 1, 1, 1, 1, {0, 1}])
+  chex.assert_type([q_tm1, q_t, r_t, discount_t, log_rhos],
+                   [float, float, float, float, float])
+
+  c_t = jnp.minimum(1.0, jnp.exp(log_rhos)) * lambda_
+
+  # The generalized returns are independent of Q-values and cs at the final
+  # state.
+  target_tm1 = multistep.general_off_policy_returns_from_q_and_v(
+      q_t[:-1], v_t, r_t, discount_t, c_t[:-1])
+
+  if stop_target_gradients:
+    target_tm1 = jax.lax.stop_gradient(target_tm1)
+  return target_tm1 - q_tm1
 
 
 def _categorical_l2_project(

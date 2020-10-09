@@ -41,8 +41,8 @@ flags.DEFINE_integer("batch_size", 32, "Size of the training batch")
 flags.DEFINE_float("target_period", 50, "How often to update the target net.")
 flags.DEFINE_integer("replay_capacity", 2000, "Capacity of the replay buffer.")
 flags.DEFINE_integer("hidden_units", 50, "Number of network hidden units.")
-flags.DEFINE_float("epsilon_begin", 1., "Initial eps-greedy exploration.")
-flags.DEFINE_float("epsilon_end", 0.01, "Final eps-greedy exploration.")
+flags.DEFINE_float("epsilon_begin", 1., "Initial epsilon-greedy exploration.")
+flags.DEFINE_float("epsilon_end", 0.01, "Final epsilon-greedy exploration.")
 flags.DEFINE_integer("epsilon_steps", 1000, "Steps over which to anneal eps.")
 flags.DEFINE_float("discount_factor", 0.99, "Q-learning discount factor.")
 flags.DEFINE_float("learning_rate", 0.005, "Optimizer learning rate.")
@@ -56,7 +56,8 @@ def build_network(num_actions: int) -> hk.Transformed:
 
   def q(obs):
     network = hk.Sequential(
-        [hk.Flatten(), nets.MLP([FLAGS.hidden_units, num_actions])])
+        [hk.Flatten(),
+         nets.MLP([FLAGS.hidden_units, num_actions])])
     return network(obs)
 
   return hk.without_apply_rng(hk.transform(q, apply_rng=True))
@@ -77,19 +78,15 @@ class ReplayBuffer(object):
     self._latest = env_output
 
     if action is not None:
-      self.buffer.append((
-          self._prev.observation, self._action, self._latest.reward,
-          self._latest.discount, self._latest.observation))
+      self.buffer.append(
+          (self._prev.observation, self._action, self._latest.reward,
+           self._latest.discount, self._latest.observation))
 
   def sample(self, batch_size):
     obs_tm1, a_tm1, r_t, discount_t, obs_t = zip(
         *random.sample(self.buffer, batch_size))
-    return (
-        jnp.stack(obs_tm1),
-        jnp.asarray(a_tm1),
-        jnp.asarray(r_t),
-        jnp.asarray(discount_t) * FLAGS.discount_factor,
-        jnp.stack(obs_t))
+    return (jnp.stack(obs_tm1), jnp.asarray(a_tm1), jnp.asarray(r_t),
+            jnp.asarray(discount_t) * FLAGS.discount_factor, jnp.stack(obs_t))
 
   def is_ready(self, batch_size):
     return batch_size <= len(self.buffer)
@@ -98,9 +95,9 @@ class ReplayBuffer(object):
 class DQN:
   """A simple DQN agent."""
 
-  def __init__(
-      self, obs_spec, action_spec, epsilon_cfg, target_period, learning_rate):
-    self._obs_spec = obs_spec
+  def __init__(self, observation_spec, action_spec, epsilon_cfg, target_period,
+               learning_rate):
+    self._observation_spec = observation_spec
     self._action_spec = action_spec
     self._target_period = target_period
     # Neural net and optimiser.
@@ -112,7 +109,7 @@ class DQN:
     self.learner_step = jax.jit(self.learner_step)
 
   def initial_params(self, key):
-    sample_input = self._obs_spec.generate_value()
+    sample_input = self._observation_spec.generate_value()
     sample_input = jnp.expand_dims(sample_input, 0)
     online_params = self._network.init(key, sample_input)
     return Params(online_params, online_params)
@@ -160,17 +157,29 @@ class DQN:
 def main(unused_arg):
   env = catch.Catch(seed=FLAGS.seed)
   epsilon_cfg = dict(
-      init_value=FLAGS.epsilon_begin, end_value=FLAGS.epsilon_end,
-      transition_steps=FLAGS.epsilon_steps, power=1.)
+      init_value=FLAGS.epsilon_begin,
+      end_value=FLAGS.epsilon_end,
+      transition_steps=FLAGS.epsilon_steps,
+      power=1.)
   agent = DQN(
-      env.observation_spec(), env.action_spec(), epsilon_cfg,
-      FLAGS.target_period, FLAGS.learning_rate)
+      observation_spec=env.observation_spec(),
+      action_spec=env.action_spec(),
+      epsilon_cfg=epsilon_cfg,
+      target_period=FLAGS.target_period,
+      learning_rate=FLAGS.learning_rate,
+  )
 
   accumulator = ReplayBuffer(FLAGS.replay_capacity)
   experiment.run_loop(
-      agent, env, accumulator, FLAGS.seed,
-      FLAGS.batch_size, FLAGS.train_episodes,
-      FLAGS.evaluate_every, FLAGS.eval_episodes)
+      agent=agent,
+      environment=env,
+      accumulator=accumulator,
+      seed=FLAGS.seed,
+      batch_size=FLAGS.batch_size,
+      train_episodes=FLAGS.train_episodes,
+      evaluate_every=FLAGS.evaluate_every,
+      eval_episodes=FLAGS.eval_episodes,
+  )
 
 
 if __name__ == "__main__":

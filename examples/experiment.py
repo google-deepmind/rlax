@@ -20,7 +20,7 @@ import jax
 
 
 def run_loop(
-    agent, env, accumulator, seed,
+    agent, environment, accumulator, seed,
     batch_size, train_episodes, evaluate_every, eval_episodes):
   """A simple run loop for examples of reinforcement learning with rlax."""
 
@@ -33,8 +33,8 @@ def run_loop(
   print("Returns range [-1.0, 1.0]")
   for episode in range(train_episodes):
 
-    # Prepare agent, env and accumulator for a new episode.
-    timestep = env.reset()
+    # Prepare agent, environment and accumulator for a new episode.
+    timestep = environment.reset()
     accumulator.push(timestep, None)
     actor_state = agent.initial_actor_state()
 
@@ -45,7 +45,7 @@ def run_loop(
           params, timestep, actor_state, next(rng), evaluation=False)
 
       # Agent-environment interaction.
-      timestep = env.step(int(actor_output.actions))
+      timestep = environment.step(int(actor_output.actions))
 
       # Accumulate experience.
       accumulator.push(timestep, actor_output.actions)
@@ -59,13 +59,13 @@ def run_loop(
     if not episode % evaluate_every:
       returns = 0.
       for _ in range(eval_episodes):
-        timestep = env.reset()
+        timestep = environment.reset()
         actor_state = agent.initial_actor_state()
 
         while not timestep.last():
           actor_output, actor_state = agent.actor_step(
               params, timestep, actor_state, next(rng), evaluation=True)
-          timestep = env.step(int(actor_output.actions))
+          timestep = environment.step(int(actor_output.actions))
           returns += timestep.reward
 
       avg_returns = returns / eval_episodes

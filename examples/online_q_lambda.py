@@ -13,29 +13,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""A simple online Q-learning agent trained to play BSuite's Catch env."""
+"""An online Q-lambda agent trained to play BSuite's Catch env."""
 
 import collections
 from absl import app
 from absl import flags
 from bsuite.environments import catch
+import dm_env
 import haiku as hk
 from haiku import nets
 import jax
 import jax.numpy as jnp
+import numpy as np
 import optax
 import rlax
 from rlax.examples import experiment
 
-ActorOutput = collections.namedtuple("ActorOutput", "actions q_values")
-Transition = collections.namedtuple("Transition",
-                                    "obs_tm1 a_tm1 r_t discount_t obs_t")
+ActorOutput = collections.namedtuple("ActorOutput", ["actions", "q_values"])
 
 FLAGS = flags.FLAGS
 flags.DEFINE_integer("seed", 42, "Random seed.")
 flags.DEFINE_integer("train_episodes", 500, "Number of train episodes.")
 flags.DEFINE_integer("num_hidden_units", 50, "Number of network hidden units.")
+flags.DEFINE_integer("sequence_length", 4,
+                     "Length of (action, timestep) sequences.")
 flags.DEFINE_float("epsilon", 0.01, "Epsilon-greedy exploration probability.")
+flags.DEFINE_float("lambda_", 0.9, "Mixing parameter for Q(lambda).")
 flags.DEFINE_float("discount_factor", 0.99, "Q-learning discount factor.")
 flags.DEFINE_float("learning_rate", 0.005, "Optimizer learning rate.")
 flags.DEFINE_integer("eval_episodes", 100, "Number of evaluation episodes.")
@@ -55,39 +58,55 @@ def build_network(num_hidden_units: int, num_actions: int) -> hk.Transformed:
   return hk.without_apply_rng(hk.transform(q))
 
 
-class TransitionAccumulator:
-  """Simple Python accumulator for transitions."""
+class SequenceAccumulator:
+  """Accumulator for gathering the latest timesteps into sequences.
 
-  def __init__(self):
-    self._prev = None
-    self._action = None
-    self._latest = None
+  Note sequences can overlap and cross episode boundaries.
+  """
 
-  def push(self, env_output, action):
-    self._prev = self._latest
-    self._action = action
-    self._latest = env_output
+  def __init__(self, length):
+    self._timesteps = collections.deque(maxlen=length)
+
+  def push(self, timestep, action):
+    # Replace `None`s with zeros as these will be put into NumPy arrays.
+    a_tm1 = 0 if action is None else action
+    timestep_t = timestep._replace(
+        step_type=int(timestep.step_type),
+        reward=0. if timestep.reward is None else timestep.reward,
+        discount=0. if timestep.discount is None else timestep.discount,
+    )
+    self._timesteps.append((a_tm1, timestep_t))
 
   def sample(self, batch_size):
-    assert batch_size == 1
-    return Transition(self._prev.observation, self._action, self._latest.reward,
-                      self._latest.discount, self._latest.observation)
+    """Returns current sequence of accumulated timesteps."""
+    if batch_size != 1:
+      raise ValueError("Require batch_size == 1.")
+    if len(self._timesteps) != self._timesteps.maxlen:
+      raise ValueError("Not enough timesteps for a full sequence.")
+
+    actions, timesteps = jax.tree_multimap(lambda *ts: np.stack(ts),
+                                           *self._timesteps)
+    return actions, timesteps
 
   def is_ready(self, batch_size):
-    assert batch_size == 1
-    return self._prev is not None
+    if batch_size != 1:
+      raise ValueError("Require batch_size == 1.")
+    return len(self._timesteps) == self._timesteps.maxlen
 
 
-class OnlineQ:
-  """An online Q-learning deep RL agent."""
+class OnlineQLambda:
+  """An online Q-lambda agent."""
 
   def __init__(self, observation_spec, action_spec, num_hidden_units, epsilon,
-               learning_rate):
+               lambda_, learning_rate):
     self._observation_spec = observation_spec
     self._action_spec = action_spec
     self._epsilon = epsilon
+    self._lambda = lambda_
+
     # Neural net and optimiser.
     self._network = build_network(num_hidden_units, action_spec.num_values)
+
     self._optimizer = optax.adam(learning_rate)
     # Jitting for speed.
     self.actor_step = jax.jit(self.actor_step)
@@ -116,24 +135,38 @@ class OnlineQ:
     params = optax.apply_updates(params, updates)
     return params, learner_state
 
-  def _loss(self, params, obs_tm1, a_tm1, r_t, discount_t, obs_t):
-    q_tm1 = self._network.apply(params, obs_tm1)
-    q_t = self._network.apply(params, obs_t)
-    td_error = rlax.q_learning(q_tm1, a_tm1, r_t, discount_t, q_t)
-    return rlax.l2_loss(td_error)
+  def _loss(self, params, actions, timesteps):
+    """Calculates Q-lambda loss given parameters, actions and timesteps."""
+    network_apply_sequence = jax.vmap(self._network.apply, in_axes=(None, 0))
+    q = network_apply_sequence(params, timesteps.observation)
+
+    # Use a mask since the sequence could cross episode boundaries.
+    mask = jnp.not_equal(timesteps.step_type, int(dm_env.StepType.LAST))
+    a_tm1 = actions[1:]
+    r_t = timesteps.reward[1:]
+    # Discount ought to be zero on a LAST timestep, use the mask to ensure this.
+    discount_t = timesteps.discount[1:] * mask[1:]
+    q_tm1 = q[:-1]
+    q_t = q[1:]
+    mask_tm1 = mask[:-1]
+
+    # Mask out TD errors for the last state in an episode.
+    td_error_tm1 = mask_tm1 * rlax.q_lambda(
+        q_tm1, a_tm1, r_t, discount_t, q_t, lambda_=self._lambda)
+    return jnp.sum(rlax.l2_loss(td_error_tm1)) / jnp.sum(mask_tm1)
 
 
 def main(unused_arg):
   env = catch.Catch(seed=FLAGS.seed)
-  agent = OnlineQ(
+  agent = OnlineQLambda(
       observation_spec=env.observation_spec(),
       action_spec=env.action_spec(),
       num_hidden_units=FLAGS.num_hidden_units,
       epsilon=FLAGS.epsilon,
-      learning_rate=FLAGS.learning_rate,
-  )
+      lambda_=FLAGS.lambda_,
+      learning_rate=FLAGS.learning_rate)
 
-  accumulator = TransitionAccumulator()
+  accumulator = SequenceAccumulator(length=FLAGS.sequence_length)
   experiment.run_loop(
       agent=agent,
       environment=env,

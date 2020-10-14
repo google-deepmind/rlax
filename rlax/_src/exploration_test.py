@@ -96,44 +96,44 @@ class EMIntrinsicRewardTest(parameterized.TestCase):
     self.reward_scale = 1.
 
   @chex.all_variants()
-  def test_zeros(self):
-    """Check that we get reward or 1 for identical state and embeddings."""
+  def test_novelty_reward(self):
+    """Check reward is higher for novel embeddings than those identical to memory."""
 
     @self.variant
     def episodic_memory_intrinsic_rewards(embeddings, reward_scale):
       return exploration.episodic_memory_intrinsic_rewards(
-          embeddings, self.num_neighbors, reward_scale)
-
-    embeddings = np.array([[0., 0.], [0., 0.]])
-    reward, intrinsic_reward_state = episodic_memory_intrinsic_rewards(
-        embeddings, self.reward_scale)
-
-    np.testing.assert_array_equal(intrinsic_reward_state.memory, embeddings)
-    np.testing.assert_allclose(reward, np.ones_like(reward), atol=1e-3)
+          embeddings, self.num_neighbors, reward_scale, max_memory_size=10)
+    # Memory starts out as all zeros, if we try to add more zeros we should get
+    # a lower reward than if we try to add 2 novel embeddings.
+    identical_embeddings = np.array([[0., 0.], [0., 0.]])
+    novel_embeddings = np.array([[1.3, 2.7], [-10.4, 16.01]])
+    low_reward, state = episodic_memory_intrinsic_rewards(
+        identical_embeddings, self.reward_scale)
+    np.testing.assert_equal(np.array(state.distance_sum), 0)
+    high_reward, _ = episodic_memory_intrinsic_rewards(
+        novel_embeddings, self.reward_scale)
+    np.testing.assert_array_less(low_reward, high_reward)
 
   @chex.all_variants()
   def test_custom_memory(self):
-    """Check that embeddings are appended to non-empty memory."""
+    """Check that embeddings are added appropriately to a custom memory."""
 
     @self.variant
     def episodic_memory_intrinsic_rewards(embeddings, memory, reward_scale):
       return exploration.episodic_memory_intrinsic_rewards(
           embeddings, self.num_neighbors, reward_scale,
-          exploration.IntrinsicRewardState(memory=memory))
+          exploration.IntrinsicRewardState(memory=memory, next_memory_index=2),
+          max_memory_size=4)
 
-    embeddings = np.array([[2., 2.]])
-    memory = np.array([[
-        0.,
-        0.,
-    ], [1., 1.]])
+    embeddings = np.array([[2., 2.], [3., 3.], [4., 4.]])
+    memory = np.array([[-1., -1.,], [1., 1.], [0., 0.], [0., 0.]])
     _, intrinsic_reward_state = episodic_memory_intrinsic_rewards(
         embeddings, memory, self.reward_scale)
 
-    np.testing.assert_array_equal(intrinsic_reward_state.memory,
-                                  np.array([[
-                                      0.,
-                                      0.,
-                                  ], [1., 1.], [2., 2.]]))
+    np.testing.assert_array_equal(
+        intrinsic_reward_state.memory,
+        # Embeddings should have been added in a ring buffer way.
+        np.array([[4., 4.,], [1., 1.], [2., 2.], [3., 3.]]))
 
 
 if __name__ == '__main__':

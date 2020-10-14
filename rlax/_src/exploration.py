@@ -146,7 +146,8 @@ def add_dirichlet_noise(
 
 @chex.dataclass
 class IntrinsicRewardState():
-  memory: jnp.ndarray = None
+  memory: jnp.ndarray
+  next_memory_index: Scalar = 0
   distance_sum: Scalar = 0
   distance_count: Scalar = 0
 
@@ -159,8 +160,9 @@ def episodic_memory_intrinsic_rewards(
     constant: float = 1e-3,
     epsilon: float = 1e-4,
     cluster_distance: float = 8e-3,
-    max_similarity: float = 8.):
-  r"""Compute intrinsic rewards for exploration via episodic memory.
+    max_similarity: float = 8.,
+    max_memory_size: int = 30_000):
+  """Compute intrinsic rewards for exploration via episodic memory.
 
   This method is adopted from the intrinsic reward computation used in "Never
   Give Up: Learning Directed Exploration Strategies" by Puigdomènech Badia et
@@ -182,16 +184,22 @@ def episodic_memory_intrinsic_rewards(
     num_neighbors: int for K neighbors used in kNN query
     reward_scale: The β term used in the Agent57 paper to scale the reward.
     intrinsic_reward_state: An IntrinsicRewardState namedtuple, containing:
-        - memory: Array, Optional; an array of previous memories within an
-              episode (if they exist). NOTE: If the memory is not provided, a
-                0-memory array of size (1, D) is used to compute the negative
-                distances from the kNN query.
+        - memory: Array; an array of previous memories within an episode padded
+              with zeros up to max_memory_size.
+        - next_memory_index: The index in the static memory array to add next
+              embeddings at. Is updated in a ring buffer fashion.
         - distance_sum: Scalar, Optional; running sum of total negative squared
           distances computed by consecutive kNN queries used to compute mean
           distance.
         - distance_count: Scalar, Optional; running count of total negative
           squared distances computed by consecutive kNN queries used to compute
           mean distance.
+        NOTE- On (only) the first call to episodic_memory_intrinsic_rewards, the
+        intrinsic_reward_state is optional, if None is given, an
+        IntrinsicRewardState will be initialized with default parameters,
+        specifically, the memory will be initialized to an array of jnp.inf of
+        shape [max_memory_size x feature dim D], and default values of 0 will be
+        provided for next_memory_index, distance_sum, and distance_count.
     constant: float; small constant used for numerical stability used during
       normalizing distances.
     epsilon: float; small constant used for numerical stability when computing
@@ -201,40 +209,53 @@ def episodic_memory_intrinsic_rewards(
     max_similarity: float; max limit of similarity; used to zero rewards when
       similarity between memories is too high to be considered 'useful' for an
       agent.
+    max_memory_size: int; the maximum number of memories to store. Note that
+      performance will be marginally faster if max_memory_size is an exact
+      multiple of M (the number of embeddings to add to memory per call to
+      episodic_memory_intrinsic_reward).
 
   Returns:
     reward: Array, shaped [M, 1]; Intrinsic reward for each embedding computed
         by using similarity measure to memories.
-    intrinsic_reward_state: IntrinsicRewardState namedtuple containing:
-        - memory: Array; an array of previous memories
-              concatenated with new embeddings.
-        - distance_sum: Scalar; running sum of total negative squared
-              distances computed by consecutive kNN queries used to compute
-              mean distance.
-        - distance_count: Scalar; running count of total negative
-              squared distances computed by consecutive kNN queries used to
-              compute mean distance.
+
+    intrinsic_reward_state: An IntrinsicRewardState namedtuple, containing:
+        - memory: Array; an array of previous memories within an episode padded
+              with zeros up to max_memory_size.
+        - next_memory_index: The index in the static memory array to add next
+              embeddings at. Is updated in a ring buffer fashion.
+        - distance_sum: Scalar, Optional; running sum of total negative squared
+          distances computed by consecutive kNN queries used to compute mean
+          distance.
+        - distance_count: Scalar, Optional; running count of total negative
+          squared distances computed by consecutive kNN queries used to compute
+          mean distance.
   """
 
   # Initialize IntrinsicRewardState if not provided to default values.
-  intrinsic_reward_state = intrinsic_reward_state or IntrinsicRewardState()
+  if not intrinsic_reward_state:
+    intrinsic_reward_state = IntrinsicRewardState(
+        memory=jnp.inf * jnp.ones(shape=(max_memory_size,
+                                         embeddings.shape[-1])))
+    # Pad the first num_neighbors entries with zeros.
+    intrinsic_reward_state.memory = jax.ops.index_update(
+        intrinsic_reward_state.memory,
+        jax.ops.index[:num_neighbors, :],
+        jnp.zeros((num_neighbors, embeddings.shape[-1])))
+  else:
+    chex.assert_shape(intrinsic_reward_state.memory,
+                      (max_memory_size, embeddings.shape[-1]))
 
   # Compute the KNN from the embeddings using the square distances from
   # the KNN d²(xₖ, x). Results are not guaranteed to be ordered.
-  jit_knn_query = jax.jit(
-      episodic_memory.knn_query, static_argnums=[
-          2,
-      ])
-  if intrinsic_reward_state.memory is None:
-    # Forward empty memory of size 1 if not provided.
-    knn_query_result = jit_knn_query(
-        jnp.zeros(shape=(1, embeddings.shape[-1])), embeddings, num_neighbors)
-    new_memory = embeddings
+  jit_knn_query = jax.jit(episodic_memory.knn_query, static_argnums=[2,])
+  knn_query_result = jit_knn_query(intrinsic_reward_state.memory, embeddings,
+                                   num_neighbors)
 
-  else:
-    knn_query_result = jit_knn_query(intrinsic_reward_state.memory, embeddings,
-                                     num_neighbors)
-    new_memory = jnp.concatenate((intrinsic_reward_state.memory, embeddings), 0)
+  # Insert embeddings into memory in a ring buffer fashion.
+  memory = intrinsic_reward_state.memory
+  start_index = intrinsic_reward_state.next_memory_index % memory.shape[0]
+  indices = (jnp.arange(embeddings.shape[0]) + start_index) % memory.shape[0]
+  memory = jax.ops.index_update(memory, indices, embeddings)
 
   nn_distances_sq = knn_query_result.neighbor_neg_distances
 
@@ -274,6 +295,7 @@ def episodic_memory_intrinsic_rewards(
   reward *= reward_scale
 
   return reward, IntrinsicRewardState(
-      memory=new_memory,
+      memory=memory,
+      next_memory_index=start_index + embeddings.shape[0] % max_memory_size,
       distance_sum=distance_sum,
-      distance_counts=distance_counts)
+      distance_count=distance_counts)

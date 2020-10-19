@@ -33,23 +33,23 @@ class NestedUpdatesTest(parameterized.TestCase):
     self._new_struct = ((new, new), new)
 
   @chex.all_variants()
-  def test_periodic_update_is_time(self):
+  def test_conditional_update_is_time(self):
     """Check periodic update enabled."""
-    periodic_update = self.variant(nested_updates.periodic_update)
+    conditional_update = self.variant(nested_updates.conditional_update)
 
     is_time = jnp.array(True)
-    output = periodic_update(self._new_struct, self._old_struct, is_time)
+    output = conditional_update(self._new_struct, self._old_struct, is_time)
     for o, exp in zip(
         jax.tree_leaves(output), jax.tree_leaves(self._new_struct)):
       np.testing.assert_allclose(o, exp)
 
   @chex.all_variants()
-  def test_periodic_update_is_not_time(self):
+  def test_conditional_update_is_not_time(self):
     """Check periodic update disables."""
-    periodic_update = self.variant(nested_updates.periodic_update)
+    conditional_update = self.variant(nested_updates.conditional_update)
 
     is_not_time = jnp.array(False)
-    output = periodic_update(self._new_struct, self._old_struct, is_not_time)
+    output = conditional_update(self._new_struct, self._old_struct, is_not_time)
     for o, exp in zip(
         jax.tree_leaves(output), jax.tree_leaves(self._old_struct)):
       np.testing.assert_allclose(o, exp)

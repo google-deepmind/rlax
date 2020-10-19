@@ -17,15 +17,28 @@
 from typing import Any
 import chex
 import jax
+import jax.numpy as jnp
+
 
 Numeric = chex.Numeric
 
 
-def periodic_update(new_tensors: Any, old_tensors: Any, is_time: Numeric):
-  """Periodically switch all elements from a nested struct with new elements."""
+def conditional_update(new_tensors: Any, old_tensors: Any, is_time: Numeric):
+  """Checks whether to update the params and returns the correct params."""
   return jax.tree_multimap(
       lambda new, old: jax.lax.select(is_time, new, old),
       new_tensors, old_tensors)
+
+
+def periodic_update(
+    new_tensors: Any, old_tensors: Any,
+    steps: chex.Array, update_period: int):
+  """Periodically switch all elements from a nested struct with new elements."""
+  return jax.lax.cond(
+      jnp.mod(steps, update_period) == 0,
+      lambda _: new_tensors,
+      lambda _: old_tensors,
+      None)
 
 
 def incremental_update(new_tensors, old_tensors, tau: Numeric):

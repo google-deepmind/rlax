@@ -132,9 +132,8 @@ class DQN:
     return ActorOutput(actions=a, q_values=q), ActorState(actor_state.count + 1)
 
   def learner_step(self, params, data, learner_state, unused_key):
-    is_update_time = (learner_state.count % self._target_period == 0)
     target_params = rlax.periodic_update(
-        params.online, params.target, is_update_time)
+        params.online, params.target, learner_state.count, self._target_period)
     dloss_dtheta = jax.grad(self._loss)(params.online, target_params, *data)
     updates, opt_state = self._optimizer.update(
         dloss_dtheta, learner_state.opt_state)

@@ -466,14 +466,14 @@ def retrace_continuous(q_tm1: Array,
   (https://arxiv.org/abs/1606.02647).
 
   Args:
-    q_tm1: Q-values at time t-1.
-    q_t: Q-values at time t evaluated at actions collected using behavior
-      policy.
-    v_t: Value estimates of the target policy.
-    r_t: reward at time t.
-    discount_t: discount at time t.
+    q_tm1: Q-values at times [0, ..., K - 1].
+    q_t: Q-values evaluated at actions collected using behavior
+      policy at times [1, ..., K - 1].
+    v_t: Value estimates of the target policy at times [1, ..., K].
+    r_t: reward at times [1, ..., K].
+    discount_t: discount at times [1, ..., K].
     log_rhos: Log importance weight pi_target/pi_behavior evaluated at actions
-      collected using behavior policy.
+      collected using behavior policy [1, ..., K - 1].
     lambda_: scalar or a vector of mixing parameter lambda.
     stop_target_gradients: bool indicating whether or not to apply stop gradient
       to targets.
@@ -492,7 +492,7 @@ def retrace_continuous(q_tm1: Array,
   # The generalized returns are independent of Q-values and cs at the final
   # state.
   target_tm1 = multistep.general_off_policy_returns_from_q_and_v(
-      q_t[:-1], v_t, r_t, discount_t, c_t[:-1])
+      q_t, v_t, r_t, discount_t, c_t)
 
   if stop_target_gradients:
     target_tm1 = jax.lax.stop_gradient(target_tm1)

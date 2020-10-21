@@ -431,7 +431,7 @@ class RetraceContinuousTest(parameterized.TestCase):
 
   def setUp(self):
     super(RetraceContinuousTest, self).setUp()
-    self._lambda = 0.9 * np.ones((2, 3), dtype=np.float32)
+    self._lambda = 0.9 * np.ones((2, 2), dtype=np.float32)
 
     self._qs = np.array([[1.1, 1.1, 3.1, -1.2], [3.1, 9.5, -2.1, 7.4]],
                         dtype=np.float32)
@@ -451,8 +451,8 @@ class RetraceContinuousTest(parameterized.TestCase):
         self._pcontinues, self._log_rhos
     ]
 
-    self.expected = np.array([[2.8800001, 3.8934109, 4.5942383],
-                              [3.1121615e-1, 2.0253206e1, 3.1601219e-3]],
+    self.expected = np.array([[2.880000e+00, 5.643226e+00, 4.594238e+00],
+                              [4.236919e-02, 2.044066e+01, 3.160141e-03]],
                              dtype=np.float32)
 
   @chex.all_variants()
@@ -460,26 +460,28 @@ class RetraceContinuousTest(parameterized.TestCase):
     """Tests for a full batch."""
     retrace = self.variant(jax.vmap(value_learning.retrace_continuous))
     # Test outputs.
-    actual_td = retrace(self._qs[:, :-1], self._targnet_qs[:, 1:],
-                        self._exp_q_t, self._rewards[:, :-1],
-                        self._pcontinues[:, :-1], self._log_rhos, self._lambda)
+    actual_td = retrace(self._qs[:, :-1], self._targnet_qs[:,
+                                                           1:-1], self._exp_q_t,
+                        self._rewards[:, :-1], self._pcontinues[:, :-1],
+                        self._log_rhos[:, 1:], self._lambda)
     actual_loss = 0.5 * np.square(actual_td)
     np.testing.assert_allclose(self.expected, actual_loss, rtol=1e-5)
 
   @chex.all_variants()
   def test_retrace_terminal_batch(self):
     """Tests for a full batch with terminal state."""
-    is_terminal = np.array([[0., 1., 0.], [0., 1., 0.]], dtype=np.float32)
+    is_terminal = np.array([[0., 1.], [0., 1.]], dtype=np.float32)
     lambda_ = (1. - is_terminal) * self._lambda
     expected = np.array([[2.880000e+00, 1.365213e+00, 4.594238e+00],
-                         [4.984015e-01, 1.860500e+01, 3.160141e-03]],
+                         [2.448239e-02, 1.860500e+01, 3.160141e-03]],
                         dtype=np.float32)
     retrace = self.variant(jax.vmap(value_learning.retrace_continuous))
 
     # Test outputs.
-    actual_td = retrace(self._qs[:, :-1], self._targnet_qs[:, 1:],
+    actual_td = retrace(self._qs[:, :-1], self._targnet_qs[:, 1:-1],
                         self._exp_q_t, self._rewards[:, :-1],
-                        self._pcontinues[:, :-1], self._log_rhos, lambda_)
+                        self._pcontinues[:, :-1], self._log_rhos[:,
+                                                                 1:], lambda_)
     actual_loss = 0.5 * np.square(actual_td)
     np.testing.assert_allclose(expected, actual_loss, rtol=1e-5)
 

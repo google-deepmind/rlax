@@ -101,6 +101,7 @@ from rlax._src.value_learning import categorical_q_learning
 from rlax._src.value_learning import categorical_td_learning
 from rlax._src.value_learning import double_q_learning
 from rlax._src.value_learning import expected_sarsa
+from rlax._src.value_learning import expectile_naive_q_learning
 from rlax._src.value_learning import persistent_q_learning
 from rlax._src.value_learning import q_lambda
 from rlax._src.value_learning import q_learning
@@ -143,6 +144,7 @@ __all__ = (
     "epsilon_greedy",
     "epsilon_softmax",
     "expected_sarsa",
+    "expectile_naive_q_learning",
     "feature_control_rewards",
     "gaussian_diagonal",
     "HYPERBOLIC_SIN_PAIR",

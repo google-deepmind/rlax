@@ -16,6 +16,7 @@
 
 from rlax._src.base import AllSum
 from rlax._src.base import batched_index
+from rlax._src.base import lhs_broadcast
 from rlax._src.base import one_hot
 from rlax._src.clipping import clip_gradient
 from rlax._src.clipping import huber_loss
@@ -161,6 +162,7 @@ __all__ = (
     "LagrangePenalty",
     "lambda_returns",
     "leaky_vtrace",
+    "lhs_broadcast",
     "likelihood",
     "logit",
     "log_loss",

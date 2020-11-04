@@ -36,6 +36,28 @@ class OneHotTest(parameterized.TestCase):
     np.testing.assert_array_almost_equal(result, expected_result)
 
 
+class BroadcastTest(parameterized.TestCase):
+
+  @parameterized.parameters(
+      ([1], [1, 2, 3], [1, 1, 1]),
+      ([1, 2, 1], [1, 2, 3], [1, 2, 1]),
+      ([2, 1, 2], [2, 2, 2, 3], [2, 1, 2, 1]),
+      ([1, 2, 4], [1, 2, 4], [1, 2, 4]),
+  )
+  def test_lhs_broadcasting(
+      self, source_shape, target_shape, expected_result_shape):
+    source = jnp.ones(shape=source_shape, dtype=jnp.float32)
+    target = jnp.ones(shape=target_shape, dtype=jnp.float32)
+    expected_result = jnp.ones(shape=expected_result_shape, dtype=jnp.float32)
+    result = base.lhs_broadcast(source, target)
+    np.testing.assert_array_almost_equal(result, expected_result)
+
+  def test_lhs_broadcast_raises(self):
+    source = jnp.ones(shape=(1, 2), dtype=jnp.float32)
+    target = jnp.ones(shape=(1, 3, 1, 1), dtype=jnp.float32)
+    with self.assertRaisesRegex(ValueError, 'source shape'):
+      base.lhs_broadcast(source, target)
+
 if __name__ == '__main__':
   jax.config.update('jax_numpy_rank_promotion', 'raise')
   absltest.main()

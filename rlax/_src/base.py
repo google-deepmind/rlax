@@ -61,6 +61,18 @@ def one_hot(indices, num_classes, dtype=jnp.float32):
       indices[..., jnp.newaxis] == labels, dtype=dtype)
 
 
+def lhs_broadcast(source, target):
+  """Ensures that source is compatible with target for broadcasting."""
+  same_shape = jnp.array(source.shape) == jnp.array(target.shape[:source.ndim])
+  ones = jnp.array(source.shape) == jnp.ones((source.ndim,))
+  if jnp.all(same_shape + ones):
+    broadcast_shape = source.shape + (1,) * (target.ndim - source.ndim)
+    return jnp.reshape(source, broadcast_shape)
+  raise ValueError(
+      "source shape {} is not compatible with target shape {}".format(
+          source.shape, target.shape))
+
+
 class AllSum:
   """Helper for summing over elements in an array and over devices."""
 

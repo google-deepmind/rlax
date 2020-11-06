@@ -24,11 +24,26 @@ from rlax._src import distributions
 
 class CategoricalSampleTest(parameterized.TestCase):
 
+  @chex.all_variants()
   def test_categorical_sample(self):
     key = np.array([1, 2], dtype=np.uint32)
     probs = np.array([0.2, 0.3, 0.5])
-    sample = distributions.categorical_sample(key, probs)
+    sample = self.variant(distributions.categorical_sample)(key, probs)
     self.assertEqual(sample, 0)
+
+  @chex.all_variants()
+  @parameterized.parameters(
+      ((-1., 10., -1.),),
+      ((0., 0., 0.),),
+      ((1., np.inf, 3.),),
+      ((1., 2., -np.inf),),
+      ((1., 2., np.nan),),
+  )
+  def test_categorical_sample_on_invalid_distributions(self, probs):
+    key = np.array([1, 2], dtype=np.uint32)
+    probs = np.asarray(probs)
+    sample = self.variant(distributions.categorical_sample)(key, probs)
+    self.assertEqual(sample, -1)
 
 
 class SoftmaxTest(parameterized.TestCase):

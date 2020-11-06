@@ -43,11 +43,13 @@ ContinuousDistribution = collections.namedtuple(
 def categorical_sample(key, probs):
   """Sample from a set of discrete probabilities."""
   probs = probs / probs.sum(axis=-1, keepdims=True)
+  is_valid = jnp.logical_and(jnp.all(jnp.isfinite(probs)), jnp.all(probs >= 0))
   cpi = jnp.cumsum(probs, axis=-1)
   eps = jnp.finfo(probs.dtype).eps
   rnds = jax.random.uniform(
       key=key, shape=probs.shape[:-1] + (1,), dtype=probs.dtype, minval=eps)
-  return jnp.argmin(jnp.logical_or(rnds > cpi, probs < eps), axis=-1)
+  argmin = jnp.argmin(jnp.logical_or(rnds > cpi, probs < eps), axis=-1)
+  return jnp.where(is_valid, argmin, -1)
 
 
 def softmax(temperature=1.):

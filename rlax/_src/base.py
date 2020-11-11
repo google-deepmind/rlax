@@ -18,7 +18,7 @@ from typing import Optional, Sequence, Union
 import chex
 import jax
 import jax.numpy as jnp
-
+import numpy as np
 Array = chex.Array
 Numeric = chex.Numeric
 
@@ -63,9 +63,9 @@ def one_hot(indices, num_classes, dtype=jnp.float32):
 
 def lhs_broadcast(source, target):
   """Ensures that source is compatible with target for broadcasting."""
-  same_shape = jnp.array(source.shape) == jnp.array(target.shape[:source.ndim])
-  ones = jnp.array(source.shape) == jnp.ones((source.ndim,))
-  if jnp.all(same_shape + ones):
+  same_shape = np.array(source.shape) == np.array(target.shape[:source.ndim])
+  ones = np.array(source.shape) == np.ones((source.ndim,))
+  if np.all(same_shape + ones):
     broadcast_shape = source.shape + (1,) * (target.ndim - source.ndim)
     return jnp.reshape(source, broadcast_shape)
   raise ValueError(

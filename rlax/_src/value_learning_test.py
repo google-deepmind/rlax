@@ -507,7 +507,7 @@ class L2ProjectTest(parameterized.TestCase):
   def test_categorical_l2_project_batch(self):
     """Testsfor a full batch."""
     l2_project = self.variant(jax.vmap(functools.partial(
-        value_learning._categorical_l2_project)))
+        value_learning.categorical_l2_project)))
     # Compute projection in batch.
     actual = l2_project(self.old_supports, self.weights, self.new_supports)
     # Test outputs.

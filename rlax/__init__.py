@@ -98,6 +98,7 @@ from rlax._src.tree_util import tree_map_zipped
 from rlax._src.tree_util import tree_select
 from rlax._src.tree_util import tree_split_key
 from rlax._src.value_learning import categorical_double_q_learning
+from rlax._src.value_learning import categorical_l2_project
 from rlax._src.value_learning import categorical_q_learning
 from rlax._src.value_learning import categorical_td_learning
 from rlax._src.value_learning import double_q_learning
@@ -131,6 +132,7 @@ __all__ = (
     "categorical_double_q_learning",
     "categorical_importance_sampling_ratios",
     "categorical_kl_divergence",
+    "categorical_l2_project",
     "categorical_q_learning",
     "categorical_td_learning",
     "clip_gradient",

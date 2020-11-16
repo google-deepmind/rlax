@@ -499,7 +499,7 @@ def retrace_continuous(q_tm1: Array,
   return target_tm1 - q_tm1
 
 
-def _categorical_l2_project(
+def categorical_l2_project(
     z_p: Array,
     probs: Array,
     z_q: Array
@@ -600,7 +600,7 @@ def categorical_td_learning(
 
   # Project using the Cramer distance.
   target = jax.lax.stop_gradient(
-      _categorical_l2_project(target_z, v_t_probs, v_atoms_tm1))
+      categorical_l2_project(target_z, v_t_probs, v_atoms_tm1))
 
   # Compute loss (i.e. temporal difference error).
   return distributions.categorical_cross_entropy(
@@ -653,7 +653,7 @@ def categorical_q_learning(
 
   # Project using the Cramer distance.
   target = jax.lax.stop_gradient(
-      _categorical_l2_project(target_z, p_target_z, q_atoms_tm1))
+      categorical_l2_project(target_z, p_target_z, q_atoms_tm1))
 
   # Compute loss (i.e. temporal difference error).
   logit_qa_tm1 = q_logits_tm1[a_tm1]
@@ -708,7 +708,7 @@ def categorical_double_q_learning(
 
   # Project using the Cramer distance.
   target = jax.lax.stop_gradient(
-      _categorical_l2_project(target_z, p_target_z, q_atoms_tm1))
+      categorical_l2_project(target_z, p_target_z, q_atoms_tm1))
 
   # Compute loss (i.e. temporal difference error).
   logit_qa_tm1 = q_logits_tm1[a_tm1]

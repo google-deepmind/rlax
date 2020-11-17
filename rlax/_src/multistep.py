@@ -114,39 +114,55 @@ def n_step_bootstrapped_returns(
     r_t: Array,
     discount_t: Array,
     v_t: Array,
-    n: int
+    n: int,
+    lambda_t: Numeric = 1.,
 ) -> Array:
   """Computes strided n-step bootstrapped return targets over a sequence.
 
-  The returns are computed in a backwards fashion according to the equation:
+  The returns are computed according to the below equation iterated `n` times:
 
-     Gₜ = rₜ₊₁ + γₜ₊₁ * (rₜ₊₂ + γₜ₊₂ * (... * (rₜ₊ₙ + γₜ₊ₙ * vₜ₊ₙ ))),
+     Gₜ = rₜ₊₁ + γₜ₊₁ [(1 - λₜ₊₁) vₜ₊₁ + λₜ₊₁ Gₜ₊₁].
+
+  When lambda_t == 1. (default), this reduces to
+
+     Gₜ = rₜ₊₁ + γₜ₊₁ * (rₜ₊₂ + γₜ₊₂ * (... * (rₜ₊ₙ + γₜ₊ₙ * vₜ₊ₙ ))).
 
   Args:
     r_t: rewards at times [1, ..., T].
     discount_t: discounts at times [1, ..., T].
-    v_t: state or state-action values to bootstrap from at time [1, ...., T]
+    v_t: state or state-action values to bootstrap from at time [1, ...., T].
     n: number of steps over which to accumulate reward before bootstrapping.
+    lambda_t: lambdas at times [1, ..., T]. Shape is [], or [T-1].
 
   Returns:
-    estimated bootstrapped returns at times [1, ...., T]
+    estimated bootstrapped returns at times [0, ...., T-1]
   """
-  chex.assert_rank([r_t, discount_t, v_t], 1)
-  chex.assert_type([r_t, discount_t, v_t], float)
+  chex.assert_rank([r_t, discount_t, v_t, lambda_t], [1, 1, 1, {0, 1}])
+  chex.assert_type([r_t, discount_t, v_t, lambda_t], float)
   chex.assert_equal_shape([r_t, discount_t, v_t])
   seq_len = r_t.shape[0]
 
-  # Pad end of reward and discount sequences with 0 and 1 respectively.
-  r_t = jnp.concatenate([r_t, jnp.zeros(n - 1)])
-  discount_t = jnp.concatenate([discount_t, jnp.ones(n - 1)])
+  # Maybe change scalar lambda to an array.
+  lambda_t = jnp.ones_like(discount_t) * lambda_t
 
   # Shift bootstrap values by n and pad end of sequence with last value v_t[-1].
   pad_size = min(n - 1, seq_len)
   targets = jnp.concatenate([v_t[n - 1:], jnp.array([v_t[-1]] * pad_size)])
 
-  # Work backwards to compute discounted, bootstrapped n-step returns.
+  # Pad sequences. Shape is now (T + n - 1,).
+  r_t = jnp.concatenate([r_t, jnp.zeros(n - 1)])
+  discount_t = jnp.concatenate([discount_t, jnp.ones(n - 1)])
+  lambda_t = jnp.concatenate([lambda_t, jnp.ones(n - 1)])
+  v_t = jnp.concatenate([v_t, jnp.array([v_t[-1]] * (n - 1))])
+
+  # Work backwards to compute n-step returns.
   for i in reversed(range(n)):
-    targets = r_t[i:i + seq_len] + discount_t[i:i + seq_len] * targets
+    r_ = r_t[i:i + seq_len]
+    discount_ = discount_t[i:i + seq_len]
+    lambda_ = lambda_t[i:i + seq_len]
+    v_ = v_t[i:i + seq_len]
+    targets = r_ + discount_ * ((1. - lambda_) * v_ + lambda_ * targets)
+
   return targets
 
 

@@ -119,6 +119,17 @@ class NStepBootstrappedReturnsTest(parameterized.TestCase):
     # Test return estimate.
     np.testing.assert_allclose(self.expected[n], actual, rtol=1e-5)
 
+  def test_reduces_to_lambda_returns(self):
+    """Test function is the same as lambda_returns when n is sequence length."""
+    lambda_t = 0.75
+    n = len(self.r_t[0])
+    expected = multistep.lambda_returns(self.r_t[0], self.discount_t[0],
+                                        self.v_t[0], lambda_t)
+    actual = multistep.n_step_bootstrapped_returns(self.r_t[0],
+                                                   self.discount_t[0],
+                                                   self.v_t[0], n, lambda_t)
+    np.testing.assert_allclose(expected, actual, rtol=1e-5)
+
 
 class TDErrorTest(parameterized.TestCase):
 

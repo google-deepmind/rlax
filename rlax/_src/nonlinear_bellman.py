@@ -194,7 +194,7 @@ def transformed_n_step_q_learning(
       bootstrap from; max(target_q_t) for normal Q-learning, max(q_t) for double
       Q-learning.
     r_t: reward at times [1, ..., T].
-    discount_t: discount at times [1, ..., T]
+    discount_t: discount at times [1, ..., T].
     n: number of steps over which to accumulate reward before bootstrapping.
     stop_target_gradients: bool indicating whether or not to apply stop gradient
       to targets.

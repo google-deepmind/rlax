@@ -97,6 +97,7 @@ from rlax._src.transforms import transform_to_2hot
 from rlax._src.tree_util import tree_map_zipped
 from rlax._src.tree_util import tree_select
 from rlax._src.tree_util import tree_split_key
+from rlax._src.tree_util import tree_split_leaves
 from rlax._src.value_learning import categorical_double_q_learning
 from rlax._src.value_learning import categorical_l2_project
 from rlax._src.value_learning import categorical_q_learning
@@ -216,6 +217,7 @@ __all__ = (
     "tree_map_zipped",
     "tree_select",
     "tree_split_key",
+    "tree_split_leaves",
     "truncated_generalized_advantage_estimation",
     "TxPair",
     "unnormalize",

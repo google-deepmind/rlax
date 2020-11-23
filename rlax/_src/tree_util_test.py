@@ -15,13 +15,13 @@
 """Tests for `tree_util.py`."""
 
 from absl.testing import absltest
+import chex
 import jax
 import jax.numpy as jnp
 import numpy as np
 from rlax._src import tree_util
 
-
-NUM_NESTS = 4
+NUM_NESTS = 5
 
 
 class TreeUtilTest(absltest.TestCase):
@@ -30,15 +30,15 @@ class TreeUtilTest(absltest.TestCase):
     rng_key = jax.random.PRNGKey(42)
     tree_like = (1, (2, 3), {'a': 4})
     _, tree_keys = tree_util.tree_split_key(rng_key, tree_like)
-    assert len(jax.tree_util.tree_leaves(tree_keys)) == 4
+    self.assertLen(jax.tree_leaves(tree_keys), 4)
 
   def test_tree_map_zipped(self):
     nests = [
         dict(a=jnp.zeros((1, 3)), b=jnp.zeros((1, 5)))] * NUM_NESTS
     nest_output = tree_util.tree_map_zipped(
         lambda *args: jnp.concatenate(args), nests)
-    assert nest_output['a'].shape == (NUM_NESTS, 3)
-    assert nest_output['b'].shape == (NUM_NESTS, 5)
+    self.assertEqual(nest_output['a'].shape, (NUM_NESTS, 3))
+    self.assertEqual(nest_output['b'].shape, (NUM_NESTS, 5))
 
   def test_tree_map_zipped_wrong_structure(self):
     nests = [
@@ -50,23 +50,44 @@ class TreeUtilTest(absltest.TestCase):
 
   def test_tree_map_zipped_empty(self):
     outputs = tree_util.tree_map_zipped(lambda *args: jnp.concatenate(args), [])
-    assert not outputs
+    self.assertEmpty(outputs)
 
   def test_select_true(self):
     on_true = ((jnp.zeros(3,),), jnp.zeros(4,))
     on_false = ((jnp.ones(3,),), jnp.ones(4,))
     output = tree_util.tree_select(True, on_true, on_false)
-    for x, y in zip(
-        jax.tree_util.tree_leaves(on_true), jax.tree_util.tree_leaves(output)):
-      np.testing.assert_array_equal(x, y)
+    chex.assert_tree_all_close(output, on_true)
 
   def test_select_false(self):
     on_true = ((jnp.zeros(3,),), jnp.zeros(4,))
     on_false = ((jnp.ones(3,),), jnp.ones(4,))
     output = tree_util.tree_select(False, on_true, on_false)
-    for x, y in zip(
-        jax.tree_util.tree_leaves(on_false), jax.tree_util.tree_leaves(output)):
-      np.testing.assert_array_equal(x, y)
+    chex.assert_tree_all_close(output, on_false)
+
+  def test_tree_split_leaves(self):
+    t = {
+        'a0': np.zeros(3),
+        'd': {
+            'a1': np.arange(3),
+            'a2': np.zeros([3, 3]) + 2,
+        },
+        't4': (np.zeros([3, 2]) + 4, np.arange(3)),
+    }
+
+    for keepdim in (False, True):
+      expd_shapes = jax.tree_map(lambda x: np.zeros(x.shape[1:]), t)
+      if keepdim:
+        expd_shapes = jax.tree_map(lambda x: np.expand_dims(x, 0), expd_shapes)
+
+      res_trees = tree_util.tree_split_leaves(t, axis=0, keepdim=keepdim)
+      self.assertLen(res_trees, 3)
+      chex.assert_tree_all_equal_shapes(expd_shapes, *res_trees)
+      for i, res_t in enumerate(res_trees):
+        np.testing.assert_allclose(res_t['a0'], 0)
+        np.testing.assert_allclose(res_t['d']['a1'], i)
+        np.testing.assert_allclose(res_t['d']['a2'], 2)
+        np.testing.assert_allclose(res_t['t4'][0], 4)
+        np.testing.assert_allclose(res_t['t4'][1], i)
 
 
 if __name__ == '__main__':

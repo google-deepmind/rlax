@@ -17,6 +17,7 @@
 from typing import Any, Callable, Sequence
 import chex
 import jax
+import numpy as np
 
 Array = chex.Array
 tree_structure = jax.tree_util.tree_structure
@@ -35,11 +36,11 @@ def tree_select(pred: Array, on_true: Any, on_false: Any):
   """
   if tree_structure(on_true) != tree_structure(on_false):
     raise ValueError('The two branches must have the same structure.')
-  return jax.tree_util.tree_multimap(
-      lambda x, y: jax.lax.select(pred, x, y), on_true, on_false)
+  return jax.tree_util.tree_multimap(lambda x, y: jax.lax.select(pred, x, y),
+                                     on_true, on_false)
 
 
-def tree_map_zipped(fn: Callable[..., Any], nests: Sequence[Any]):
+def tree_map_zipped(fn: Callable[..., Any], nests: Sequence[chex.ArrayTree]):
   """Map a function over a list of identical nested structures.
 
   Args:
@@ -58,7 +59,7 @@ def tree_map_zipped(fn: Callable[..., Any], nests: Sequence[Any]):
       tree_def, [fn(*d) for d in zip(*[jax.tree_leaves(x) for x in nests])])
 
 
-def tree_split_key(rng_key: Array, tree_like: Any):
+def tree_split_key(rng_key: Array, tree_like: chex.ArrayTree):
   """Generate random keys for each leaf in a tree.
 
   Args:
@@ -69,5 +70,32 @@ def tree_split_key(rng_key: Array, tree_like: Any):
     a new key, and a tree of keys with same shape as `tree_like`.
   """
   leaves, treedef = jax.tree_util.tree_flatten(tree_like)
-  rng_key, *keys = jax.random.split(rng_key, num=len(leaves)+1)
+  rng_key, *keys = jax.random.split(rng_key, num=len(leaves) + 1)
   return rng_key, jax.tree_util.tree_unflatten(treedef, keys)
+
+
+def tree_split_leaves(tree_like: chex.ArrayTree,
+                      axis: int = 0,
+                      keepdim: bool = False):
+  """Splits a tree of arrays into an array of trees avoiding data copying.
+
+  Note: `jax.numpy.DeviceArray`'s data gets copied.
+
+  Args:
+    tree_like: a nested object with leaves to split.
+    axis: an axis for splitting.
+    keepdim: a bool indicating whether to keep `axis` dimension.
+
+  Returns:
+   A tuple of `size(axis)` trees containing results of splitting.
+  """
+
+  # Disable pylint to correctly process `np.ndarray`s.
+  if len(tree_like) == 0:  # pylint: disable=g-explicit-length-test
+    return tree_like
+  leaves, treedef = jax.tree_flatten(tree_like)
+  axis_size = leaves[0].shape[axis]
+  split_leaves = [np.split(l, axis_size, axis=axis) for l in leaves]
+  ind_ = lambda x, i: x[i] if keepdim else x[i][0]
+  split_trees = ((ind_(l, i) for l in split_leaves) for i in range(axis_size))
+  return tuple(jax.tree_unflatten(treedef, t) for t in split_trees)

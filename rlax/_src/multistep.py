@@ -278,7 +278,7 @@ def truncated_generalized_advantage_estimation(
     values: Sequence of values under π at times [0, k]
 
   Returns:
-    Multistep truncated generalized advantage estimation.
+    Multistep truncated generalized advantage estimation at times [0, k-1].
   """
   chex.assert_rank([r_t, values, discount_t], 1)
   chex.assert_type([r_t, values, discount_t], float)

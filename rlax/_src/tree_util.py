@@ -40,7 +40,7 @@ def tree_select(pred: Array, on_true: Any, on_false: Any):
                                      on_true, on_false)
 
 
-def tree_map_zipped(fn: Callable[..., Any], nests: Sequence[chex.ArrayTree]):
+def tree_map_zipped(fn: Callable[..., Any], nests: Sequence[Any]):
   """Map a function over a list of identical nested structures.
 
   Args:
@@ -59,7 +59,7 @@ def tree_map_zipped(fn: Callable[..., Any], nests: Sequence[chex.ArrayTree]):
       tree_def, [fn(*d) for d in zip(*[jax.tree_leaves(x) for x in nests])])
 
 
-def tree_split_key(rng_key: Array, tree_like: chex.ArrayTree):
+def tree_split_key(rng_key: Array, tree_like: Any):
   """Generate random keys for each leaf in a tree.
 
   Args:
@@ -74,7 +74,7 @@ def tree_split_key(rng_key: Array, tree_like: chex.ArrayTree):
   return rng_key, jax.tree_util.tree_unflatten(treedef, keys)
 
 
-def tree_split_leaves(tree_like: chex.ArrayTree,
+def tree_split_leaves(tree_like: Any,
                       axis: int = 0,
                       keepdim: bool = False):
   """Splits a tree of arrays into an array of trees avoiding data copying.

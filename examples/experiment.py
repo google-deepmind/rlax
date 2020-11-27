@@ -29,7 +29,6 @@ def run_loop(
   learner_state = agent.initial_learner_state(params)
 
   print(f"Training agent for {train_episodes} episodes")
-  print("Returns range [-1.0, 1.0]")
   for episode in range(train_episodes):
 
     # Prepare agent, environment and accumulator for a new episode.

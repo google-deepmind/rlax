@@ -30,7 +30,7 @@ import optax
 import rlax
 from rlax.examples import experiment
 
-ActorOutput = collections.namedtuple("ActorOutput", "actions q_values")
+ActorOutput = collections.namedtuple("ActorOutput", "actions")
 Transition = collections.namedtuple("Transition",
                                     "obs_tm1 a_tm1 r_t discount_t obs_t")
 
@@ -111,11 +111,13 @@ class PopArtAgent:
     return self._optimizer.init(params), self._initial_pop_art_state()
 
   def actor_step(self, params, env_output, actor_state, key, evaluation):
-    q = self._network.apply(params, env_output.observation)
-    train_a = rlax.epsilon_greedy(self._epsilon).sample(key, q)
-    eval_a = rlax.greedy().sample(key, q)
+    norm_q = self._network.apply(params, env_output.observation)
+    # This is equivalent to epsilon-greedy on the (unnormalized) Q-values
+    # because normalization is linear, therefore the argmaxes are the same.
+    train_a = rlax.epsilon_greedy(self._epsilon).sample(key, norm_q)
+    eval_a = rlax.greedy().sample(key, norm_q)
     a = jax.lax.select(evaluation, eval_a, train_a)
-    return ActorOutput(actions=a, q_values=q), actor_state
+    return ActorOutput(actions=a), actor_state
 
   def learner_step(self, params, data, learner_state, unused_key):
     opt_state, pop_art_state = learner_state

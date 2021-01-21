@@ -39,7 +39,7 @@ def vtrace(
     v_t: Array,
     r_t: Array,
     discount_t: Array,
-    rho_t: Array,
+    rho_tm1: Array,
     lambda_: float = 1.0,
     clip_rho_threshold: float = 1.0,
     stop_target_gradients: bool = True,
@@ -57,7 +57,7 @@ def vtrace(
     v_t: values at time t.
     r_t: reward at time t.
     discount_t: discount at time t.
-    rho_t: importance sampling ratios.
+    rho_tm1: importance sampling ratios.
     lambda_: scalar mixing parameter lambda.
     clip_rho_threshold: clip threshold for importance weights.
     stop_target_gradients: whether or not to apply stop gradient to targets.
@@ -65,14 +65,14 @@ def vtrace(
   Returns:
     V-Trace error.
   """
-  chex.assert_rank([v_tm1, v_t, r_t, discount_t, rho_t], [1, 1, 1, 1, 1])
-  chex.assert_type([v_tm1, v_t, r_t, discount_t, rho_t],
+  chex.assert_rank([v_tm1, v_t, r_t, discount_t, rho_tm1], [1, 1, 1, 1, 1])
+  chex.assert_type([v_tm1, v_t, r_t, discount_t, rho_tm1],
                    [float, float, float, float, float])
-  chex.assert_equal_shape([v_tm1, v_t, r_t, discount_t, rho_t])
+  chex.assert_equal_shape([v_tm1, v_t, r_t, discount_t, rho_tm1])
 
   # Clip importance sampling ratios.
-  c_t = jnp.minimum(1.0, rho_t) * lambda_
-  clipped_rhos = jnp.minimum(clip_rho_threshold, rho_t)
+  c_t = jnp.minimum(1.0, rho_tm1) * lambda_
+  clipped_rhos = jnp.minimum(clip_rho_threshold, rho_tm1)
 
   # Compute the temporal difference errors.
   td_errors = clipped_rhos * (r_t + discount_t * v_t - v_tm1)
@@ -102,7 +102,7 @@ def leaky_vtrace(
     v_t: Array,
     r_t: Array,
     discount_t: Array,
-    rho_t: Array,
+    rho_tm1: Array,
     alpha_: float = 1.0,
     lambda_: float = 1.0,
     clip_rho_threshold: float = 1.0,
@@ -120,7 +120,7 @@ def leaky_vtrace(
     v_t: values at time t.
     r_t: reward at time t.
     discount_t: discount at time t.
-    rho_t: importance weights at time t.
+    rho_tm1: importance weights at time t.
     alpha_: mixing parameter for Importance Sampling and V-trace.
     lambda_: scalar mixing parameter lambda.
     clip_rho_threshold: clip threshold for importance weights.
@@ -129,16 +129,17 @@ def leaky_vtrace(
   Returns:
     Leaky V-Trace error.
   """
-  chex.assert_rank([v_tm1, v_t, r_t, discount_t, rho_t], [1, 1, 1, 1, 1])
-  chex.assert_type([v_tm1, v_t, r_t, discount_t, rho_t],
+  chex.assert_rank([v_tm1, v_t, r_t, discount_t, rho_tm1], [1, 1, 1, 1, 1])
+  chex.assert_type([v_tm1, v_t, r_t, discount_t, rho_tm1],
                    [float, float, float, float, float])
-  chex.assert_equal_shape([v_tm1, v_t, r_t, discount_t, rho_t])
+  chex.assert_equal_shape([v_tm1, v_t, r_t, discount_t, rho_tm1])
 
   # Mix clipped and unclipped importance sampling ratios.
   c_t = (
-      (1 - alpha_) * rho_t + alpha_ * jnp.minimum(1.0, rho_t)) * lambda_
+      (1 - alpha_) * rho_tm1 + alpha_ * jnp.minimum(1.0, rho_tm1)) * lambda_
   clipped_rhos = (
-      (1 - alpha_) * rho_t + alpha_ * jnp.minimum(clip_rho_threshold, rho_t))
+      (1 - alpha_) * rho_tm1 + alpha_ * jnp.minimum(clip_rho_threshold, rho_tm1)
+  )
 
   # Compute the temporal difference errors.
   td_errors = clipped_rhos * (r_t + discount_t * v_t - v_tm1)
@@ -167,7 +168,7 @@ def vtrace_td_error_and_advantage(
     v_t: Array,
     r_t: Array,
     discount_t: Array,
-    rho_t: Array,
+    rho_tm1: Array,
     lambda_: float = 1.0,
     clip_rho_threshold: float = 1.0,
     clip_pg_rho_threshold: float = 1.0,
@@ -186,7 +187,7 @@ def vtrace_td_error_and_advantage(
     v_t: values at time t.
     r_t: reward at time t.
     discount_t: discount at time t.
-    rho_t: importance weights at time t.
+    rho_tm1: importance weights at time t.
     lambda_: scalar mixing parameter lambda.
     clip_rho_threshold: clip threshold for importance ratios.
     clip_pg_rho_threshold: clip threshold for policy gradient importance ratios.
@@ -195,12 +196,12 @@ def vtrace_td_error_and_advantage(
   Returns:
     a tuple of V-Trace error, policy gradient advantage, and estimated Q-values.
   """
-  chex.assert_rank([v_tm1, v_t, r_t, discount_t, rho_t], 1)
-  chex.assert_type([v_tm1, v_t, r_t, discount_t, rho_t], float)
-  chex.assert_equal_shape([v_tm1, v_t, r_t, discount_t, rho_t])
+  chex.assert_rank([v_tm1, v_t, r_t, discount_t, rho_tm1], 1)
+  chex.assert_type([v_tm1, v_t, r_t, discount_t, rho_tm1], float)
+  chex.assert_equal_shape([v_tm1, v_t, r_t, discount_t, rho_tm1])
 
   errors = vtrace(
-      v_tm1, v_t, r_t, discount_t, rho_t,
+      v_tm1, v_t, r_t, discount_t, rho_tm1,
       lambda_, clip_rho_threshold, stop_target_gradients)
   targets_tm1 = errors + v_tm1
   q_bootstrap = jnp.concatenate([
@@ -208,7 +209,7 @@ def vtrace_td_error_and_advantage(
       v_t[-1:],
   ], axis=0)
   q_estimate = r_t + discount_t * q_bootstrap
-  clipped_pg_rho_tm1 = jnp.minimum(clip_pg_rho_threshold, rho_t)
+  clipped_pg_rho_tm1 = jnp.minimum(clip_pg_rho_threshold, rho_tm1)
   pg_advantages = clipped_pg_rho_tm1 * (q_estimate - v_tm1)
   return VTraceOutput(
       errors=errors, pg_advantage=pg_advantages, q_estimate=q_estimate)
@@ -219,7 +220,7 @@ def leaky_vtrace_td_error_and_advantage(
     v_t: chex.Array,
     r_t: chex.Array,
     discount_t: chex.Array,
-    rho_t: chex.Array,
+    rho_tm1: chex.Array,
     alpha: float = 1.0,
     lambda_: float = 1.0,
     clip_rho_threshold: float = 1.0,
@@ -239,7 +240,7 @@ def leaky_vtrace_td_error_and_advantage(
     v_t: values at time t.
     r_t: reward at time t.
     discount_t: discount at time t.
-    rho_t: importance weights at time t.
+    rho_tm1: importance weights at time t.
     alpha: mixing the clipped importance sampling weights with unclipped ones.
     lambda_: scalar mixing parameter lambda.
     clip_rho_threshold: clip threshold for importance ratios.
@@ -249,12 +250,12 @@ def leaky_vtrace_td_error_and_advantage(
   Returns:
     a tuple of V-Trace error, policy gradient advantage, and estimated Q-values.
   """
-  chex.assert_rank([v_tm1, v_t, r_t, discount_t, rho_t], 1)
-  chex.assert_type([v_tm1, v_t, r_t, discount_t, rho_t], float)
-  chex.assert_equal_shape([v_tm1, v_t, r_t, discount_t, rho_t])
+  chex.assert_rank([v_tm1, v_t, r_t, discount_t, rho_tm1], 1)
+  chex.assert_type([v_tm1, v_t, r_t, discount_t, rho_tm1], float)
+  chex.assert_equal_shape([v_tm1, v_t, r_t, discount_t, rho_tm1])
 
   errors = leaky_vtrace(
-      v_tm1, v_t, r_t, discount_t, rho_t, alpha,
+      v_tm1, v_t, r_t, discount_t, rho_tm1, alpha,
       lambda_, clip_rho_threshold, stop_target_gradients)
   targets_tm1 = errors + v_tm1
   q_bootstrap = jnp.concatenate([
@@ -262,8 +263,8 @@ def leaky_vtrace_td_error_and_advantage(
       v_t[-1:],
   ], axis=0)
   q_estimate = r_t + discount_t * q_bootstrap
-  clipped_pg_rho_tm1 = (
-      (1 - alpha) * rho_t + alpha * jnp.minimum(clip_pg_rho_threshold, rho_t))
+  clipped_pg_rho_tm1 = ((1 - alpha) * rho_tm1 + alpha *
+                        jnp.minimum(clip_pg_rho_threshold, rho_tm1))
   pg_advantages = clipped_pg_rho_tm1 * (q_estimate - v_tm1)
   return VTraceOutput(
       errors=errors, pg_advantage=pg_advantages, q_estimate=q_estimate)

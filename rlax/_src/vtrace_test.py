@@ -38,7 +38,7 @@ class VTraceTest(parameterized.TestCase):
          [[1.0, 0.9], [1.0, -1.0], [-4.3, 8.7], [0.8, 0.3]]],
         dtype=np.float32)
     actions = np.array([[0, 1, 0, 0], [1, 0, 0, 1]], dtype=np.int32)
-    self._rho_t = distributions.categorical_importance_sampling_ratios(
+    self._rho_tm1 = distributions.categorical_importance_sampling_ratios(
         target_policy_logits, behavior_policy_logits, actions)
     self._rewards = np.array(
         [[-1.3, -1.3, 2.3, 42.0],
@@ -54,7 +54,7 @@ class VTraceTest(parameterized.TestCase):
         dtype=np.float32)
     self._bootstrap_value = np.array([8.4, -1.2], dtype=np.float32)
     self._inputs = [
-        self._rewards, self._discounts, self._rho_t,
+        self._rewards, self._discounts, self._rho_tm1,
         self._values, self._bootstrap_value]
 
     self._clip_rho_threshold = 1.0
@@ -77,11 +77,11 @@ class VTraceTest(parameterized.TestCase):
         vtrace.vtrace_td_error_and_advantage,
         clip_rho_threshold=self._clip_rho_threshold, lambda_=self._lambda)))
     # Get function arguments.
-    r_t, discount_t, rho_t, v_tm1, bootstrap_value = self._inputs
+    r_t, discount_t, rho_tm1, v_tm1, bootstrap_value = self._inputs
     v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)
     # Compute vtrace output.
     vtrace_output = vtrace_td_error_and_advantage(
-        v_tm1, v_t, r_t, discount_t, rho_t)
+        v_tm1, v_t, r_t, discount_t, rho_tm1)
     # Test output.
     np.testing.assert_allclose(
         self._expected_td, vtrace_output.errors, rtol=1e-3)
@@ -96,14 +96,14 @@ class VTraceTest(parameterized.TestCase):
         vtrace.vtrace_td_error_and_advantage,
         clip_rho_threshold=self._clip_rho_threshold, lambda_=lambda_)))
     # Get function arguments.
-    r_t, discount_t, rho_t, v_tm1, bootstrap_value = self._inputs
+    r_t, discount_t, rho_tm1, v_tm1, bootstrap_value = self._inputs
     v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)
     # Compute vtrace output.
     vtrace_output = vtrace_td_error_and_advantage(
-        v_tm1, v_t, r_t, discount_t, rho_t)
+        v_tm1, v_t, r_t, discount_t, rho_tm1)
     expected_vs = vtrace_output.errors + v_tm1
-    clipped_rho_t = np.minimum(self._clip_rho_threshold, rho_t)
-    vs_from_q = v_tm1 + clipped_rho_t * (vtrace_output.q_estimate - v_tm1)
+    clipped_rho_tm1 = np.minimum(self._clip_rho_threshold, rho_tm1)
+    vs_from_q = v_tm1 + clipped_rho_tm1 * (vtrace_output.q_estimate - v_tm1)
     # Test output.
     np.testing.assert_allclose(expected_vs, vs_from_q, rtol=1e-3)
 
@@ -115,11 +115,11 @@ class VTraceTest(parameterized.TestCase):
     leaky_vtrace_fn = self.variant(jax.vmap(functools.partial(
         vtrace.leaky_vtrace, alpha_=1., lambda_=self._lambda)))
     # Get function arguments.
-    r_t, discount_t, rho_t, v_tm1, bootstrap_value = self._inputs
+    r_t, discount_t, rho_tm1, v_tm1, bootstrap_value = self._inputs
     v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)
     # Compute vtrace and leaky vtrace output.
-    vtrace_output = vtrace_fn(v_tm1, v_t, r_t, discount_t, rho_t)
-    leaky_vtrace_output = leaky_vtrace_fn(v_tm1, v_t, r_t, discount_t, rho_t)
+    vtrace_output = vtrace_fn(v_tm1, v_t, r_t, discount_t, rho_tm1)
+    leaky_vtrace_output = leaky_vtrace_fn(v_tm1, v_t, r_t, discount_t, rho_tm1)
     # Test output.
     np.testing.assert_allclose(vtrace_output, leaky_vtrace_output, rtol=1e-3)
 

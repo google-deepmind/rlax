@@ -117,11 +117,6 @@ def entropy_loss(
   return -jnp.mean(entropy_per_timestep * w_t)
 
 
-def _compute_baseline(pi_t, q_t):
-  """Computes baseline given a policy and action values at a state."""
-  return jnp.sum(pi_t * q_t, axis=1)
-
-
 def _compute_advantages(logits_t: Array,
                         q_t: Array,
                         use_stop_gradient=True) -> Array:
@@ -131,7 +126,7 @@ def _compute_advantages(logits_t: Array,
   # Avoid computing gradients for action_values.
   if use_stop_gradient:
     q_t = jax.lax.stop_gradient(q_t)
-  baseline_t = _compute_baseline(policy_t, q_t)
+  baseline_t = jnp.sum(policy_t * q_t, axis=1)
 
   adv_t = q_t - jnp.expand_dims(baseline_t, 1)
   return policy_t, adv_t

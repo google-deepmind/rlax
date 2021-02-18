@@ -42,7 +42,7 @@ setup(
     packages=find_namespace_packages(exclude=['*_test.py']),
     install_requires=[
         'absl-py>=0.9.0',
-        'chex>=0.0.3',
+        'chex>=0.0.4',
         'jax>=0.1.55',
         'jaxlib>=0.1.37',
         'dm-env>=1.2',

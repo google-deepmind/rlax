@@ -24,8 +24,12 @@
   for Discrete and Continuous Control.
   https://openreview.net/forum?id=SylOlp4FvH
 
-In the doc strings and comments below we use S to denote the number of samples,
-T for the unroll length and B for the batch size.
+Since these functions are calculated per-example (with some aggregation over
+all examples), they work with many input shapes as long
+as input shapes are consistent across inputs. We use E* to denote the shape of
+the examples. For example, E* could be [T, B], [B, T], [T], etc as long as E* is
+consistent across all function inputs, and function output shape will also
+depend on E*.
 """
 import functools
 from typing import Callable, NamedTuple, Optional, Sequence, Tuple
@@ -58,9 +62,9 @@ class LagrangePenalty(NamedTuple):
 class MpoOutputs(NamedTuple):
   """Additional outputs for mpo loss functions."""
   # In VMPO temperature loss is computed across all data so should be scalar, in
-  # MPO this is per example with shape [T, B].
+  # MPO this is per example with shape E*
   temperature_loss: Numeric
-  # These losses are per example with shape [T, B].
+  # These losses are per example with shape E*.
   policy_loss: Array
   kl_loss: Array
   alpha_loss: Array
@@ -83,60 +87,83 @@ def mpo_loss(
     temperature_loss_weight: float = 1.0,
     kl_loss_weight: float = 1.0,
     alpha_loss_weight: float = 1.0,
+    sample_axis: int = 0,
 ) -> Tuple[Array, MpoOutputs]:
   """Implements the MPO loss with a KL bound.
 
   This loss implements the MPO algorithm for policies with a bound for the KL
   between the current and target policy.
 
+  Note: This is a per-example loss which works on any shape inputs as long as
+  they are consistent. We denote this shape E* for ease of reference. Args
+  sample_log_probs and sample_q_values are shape E + an extra sample axis that
+  contains the sampled actions' log probs and q values respectively. For
+  example, if sample_axis = 0, the shapes expected will be [S, E*]. Or if
+  E* = [T, B] and sample_axis = 1, the shapes expected will be [T, S, B].
+
   Args:
-    sample_log_probs: An array of shape
-      [S, T, B] containing the log probabilities of the
-      sampled actions under the current policy.
-    sample_q_values: An array of shape [S, T, B] containing
-      the q function values evaluated on the sampled actions.
+    sample_log_probs: An array of shape E* + a sample axis inserted at
+      sample_axis containing the log probabilities of the sampled actions under
+      the current policy.
+    sample_q_values: An array of shape E* + a sample axis inserted at
+      sample_axis containing the q function values evaluated on the sampled
+      actions.
     temperature_constraint: Lagrange constraint for the E-step temperature
       optimization.
     kl_constraints: KL and variables for applying Lagrangian penalties to bound
-      them in the M-step, KLs are [T, B] or [T, B, A]. Here A is the action
-      dimension in the case of per-dimension KL constraints.
+      them in the M-step, KLs are  [E*, A?]. Here A is the action dimension
+      in the case of per-dimension KL constraints.
     projection_operator: Function to project dual variables (temperature and kl
       constraint alphas) into the positive range.
     policy_loss_weight: Weight for the policy loss.
     temperature_loss_weight: Weight for the temperature loss.
     kl_loss_weight: Weight for the KL loss.
     alpha_loss_weight: Weight for the alpha loss.
+    sample_axis: Axis in sample_log_probs and sample_q_values that contains the
+      sampled actions' log probs and q values respectively. For example, if
+      sample_axis = 0, the shapes expected will be [S, E*]. Or if E* = [T, B]
+      and sample_axis = 1, the shapes expected will be [T, S, B].
 
   Returns:
-    Per example `loss` with shape [T, B], and additional data including the
-    components of this loss and the normalized weights in the AdditionalOutputs.
+    Per example `loss` with shape E*, and additional data including
+    the components of this loss and the normalized weights in the
+    AdditionalOutputs.
   """
   chex.assert_equal_shape([sample_log_probs, sample_q_values])
-  chex.assert_rank([sample_log_probs, temperature_constraint.epsilon], [3, 0])
+  chex.assert_rank(temperature_constraint.epsilon, 0)
   chex.assert_type([
       sample_log_probs, sample_q_values, temperature_constraint.alpha,
       temperature_constraint.epsilon], float)
 
   for kl, penalty in kl_constraints:
-    chex.assert_rank([kl, penalty.epsilon], [{2, 3}, 0])
+    chex.assert_rank(penalty.epsilon, 0)
     chex.assert_type([kl, penalty.alpha, penalty.epsilon], float)
+    if penalty.per_dimension:
+      chex.assert_rank(kl, sample_q_values.ndim)
+    else:
+      chex.assert_rank(kl, sample_q_values.ndim - 1)
+
+  if not 0 <= sample_axis < sample_q_values.ndim:
+    raise ValueError(
+        f"`sample_axis` {sample_axis} not in array rank {sample_q_values.ndim}")
 
   # E-Step. Compute temperature loss, weights, and temperature.
   temperature_loss, norm_weights, num_samples = (
       mpo_compute_weights_and_temperature_loss(
-          sample_q_values, temperature_constraint, projection_operator))
+          sample_q_values, temperature_constraint, projection_operator,
+          sample_axis=sample_axis))
 
   norm_weights = jax.lax.stop_gradient(norm_weights)
 
   # M-Step. Supervised learning on reweighted probabilities using the weights
   # from the E-Step under an additional KL constraint.
-  policy_loss = -jnp.sum(norm_weights * sample_log_probs, axis=0)
+  policy_loss = -jnp.sum(norm_weights * sample_log_probs, axis=sample_axis)
   kl_loss, alpha_loss = compute_parametric_kl_penalty_and_dual_loss(
       kl_constraints, projection_operator)
 
   chex.assert_equal_shape([policy_loss, kl_loss, alpha_loss])
 
-  # Combine all loss components. The final loss is of shape [T, B].
+  # Combine all loss components. The final loss is of shape E*.
   loss = (policy_loss_weight * policy_loss +
           temperature_loss_weight * temperature_loss +
           kl_loss_weight * kl_loss +
@@ -151,6 +178,7 @@ def mpo_compute_weights_and_temperature_loss(
     sample_q_values: Array,
     temperature_constraint: LagrangePenalty,
     projection_operator: Callable[[Numeric], Numeric],
+    sample_axis: int = 0,
 ) -> Tuple[Array, Array, Scalar]:
   """Computes the weights and temperature loss for MPO.
 
@@ -161,22 +189,28 @@ def mpo_compute_weights_and_temperature_loss(
   parameter used in the reweighting.
 
   Args:
-    sample_q_values: An array of shape [S, T, B] containing
-      the q function values evaluated on the sampled actions.
+    sample_q_values: An array of shape E* + a sample axis inserted at
+      sample_axis containing the q function values evaluated on the sampled
+      actions.
     temperature_constraint: Lagrange constraint for the E-step temperature
       optimization.
     projection_operator: Function to project temperature into the positive
       range.
+    sample_axis: Axis in sample_q_values containing sampled actions.
 
   Returns:
     The temperature loss, normalized weights and number of actions samples per
     state.
   """
-  chex.assert_rank([sample_q_values, temperature_constraint.epsilon], [3, 0])
+  chex.assert_rank(temperature_constraint.epsilon, 0)
   chex.assert_type([sample_q_values, temperature_constraint.alpha,
                     temperature_constraint.epsilon], float)
 
-  n_action_samples = sample_q_values.shape[0]
+  if not 0 <= sample_axis < sample_q_values.ndim:
+    raise ValueError(
+        f"`sample_axis` {sample_axis} not in array rank {sample_q_values.ndim}")
+
+  n_action_samples = sample_q_values.shape[sample_axis]
 
   # Clip the temperature value (temperature must be positive).
   temperature = projection_operator(temperature_constraint.alpha)
@@ -187,21 +221,21 @@ def mpo_compute_weights_and_temperature_loss(
 
   # Temperature optimization.
   q_logsumexp = jax.scipy.special.logsumexp(
-      scaled_sample_q_values, axis=0, keepdims=True)
+      scaled_sample_q_values, axis=sample_axis, keepdims=True)
 
   # The temperature loss encourages the current and previous policy to stay
   # close. This loss optimizes the convex dual of an upper bound on the average
   # KL (epsilon) between the current and previous state-action values.
   temperature_loss = (
       temperature * epsilon +
-      (temperature * (jnp.squeeze(q_logsumexp, axis=0)
+      (temperature * (jnp.squeeze(q_logsumexp, axis=sample_axis)
                       - jnp.log(n_action_samples))))
 
   # The weights corresponds to a softmax over state-action values.
   weights = jnp.exp(scaled_sample_q_values - q_logsumexp)
 
   # Normalize the weights before the M-Step
-  norm_weights = weights / jnp.sum(weights, axis=0)
+  norm_weights = weights / jnp.sum(weights, axis=sample_axis, keepdims=True)
 
   return temperature_loss, norm_weights, n_action_samples
 
@@ -239,38 +273,40 @@ def vmpo_loss(
     temperature_loss_weight: float = 1.0,
     kl_loss_weight: float = 1.0,
     alpha_loss_weight: float = 1.0,
-    axis_name: Optional[str] = None
+    axis_name: Optional[str] = None,
 ) -> Tuple[Array, MpoOutputs]:
   """Calculates the V-MPO policy improvement loss.
 
-  Note: While [T, B] is the most common usage, the following also works if
-    all occurrences of T, B are replaced by B.
+  Note: This is a per-example loss which works on any shape inputs as long as
+  they are consistent. We denote the shape of the examples E* for ease of
+  reference.
 
   Args:
-    sample_log_probs: Log probabilities of actions, [T, B].
-    advantages: Advantages for the E-step, [T, B].
+    sample_log_probs: Log probabilities of actions for each example. Shape E*.
+    advantages: Advantages for the E-step. Shape E*.
     temperature_constraint: Lagrange constraint for the E-step temperature
       optimization.
     kl_constraints: KL and variables for applying Lagrangian penalties to bound
-      them in the M-step, KLs are [T, B] or [T, B, A]. Here A is the action
-      dimension in the case of per-dimension KL constraints.
+      them in the M-step, KLs are E* or [E*, A]. Here A is the action dimension
+      in the case of per-dimension KL constraints.
     projection_operator: Function to project dual variables (temperature and kl
       constraint alphas) into the positive range.
-    restarting_weights: Optional restarting weights, [T, B], 0 means that this
+    restarting_weights: Optional restarting weights, shape E*, 0 means that this
       step is the start of a new episode and we ignore losses at this step
       because the agent cannot influence these.
-    importance_weights: Optional importance weights, [T, B].
+    importance_weights: Optional importance weights, shape E*.
     top_k_fraction: Fraction of samples to use in the E-step.
     policy_loss_weight: Weight for the policy loss.
     temperature_loss_weight: Weight for the temperature loss.
     kl_loss_weight: Weight for the KL loss.
     alpha_loss_weight: Weight for the alpha loss.
-    axis_name: Optional axis name for `pmap`. If `None`, computations are
-      performed locally on each device.
+    axis_name: Optional axis name for `pmap`. If `None`, computations
+      are performed locally on each device.
 
   Returns:
-    Per example `loss` with shape [T, B], and additional data including the
-    components of this loss and the normalized weights in the AdditionalOutputs.
+    Per example `loss` with same shape E* as array inputs, and additional data
+    including the components of this loss and the normalized weights in the
+    AdditionalOutputs.
   """
   # Define default restarting weights and importance weights.
   if restarting_weights is None:
@@ -282,15 +318,19 @@ def vmpo_loss(
   chex.assert_equal_shape(
       [advantages, sample_log_probs, restarting_weights, importance_weights])
 
-  chex.assert_rank([sample_log_probs, temperature_constraint.epsilon],
-                   [{2, 1}, 0])
+  chex.assert_rank(temperature_constraint.epsilon, 0)
   chex.assert_type([
       sample_log_probs, advantages, restarting_weights, importance_weights,
       temperature_constraint.alpha, temperature_constraint.epsilon], float)
 
   for kl, penalty in kl_constraints:
-    chex.assert_rank([kl, penalty.epsilon], [{1, 2, 3}, 0])
+    chex.assert_rank(penalty.epsilon, 0)
     chex.assert_type([kl, penalty.alpha, penalty.epsilon], float)
+    if penalty.per_dimension:
+      chex.assert_rank(kl, advantages.ndim + 1)
+      chex.assert_equal_shape_prefix([kl, advantages], advantages.ndim)
+    else:
+      chex.assert_equal_shape([kl, advantages])
 
   # E-step: Calculate the reweighting and the temperature loss.
   temperature_loss, norm_weights, num_samples = (
@@ -338,10 +378,10 @@ def get_top_k_weights(
 
   Args:
     top_k_fraction: The fraction of weights to use.
-    restarting_weights: Restarting weights, [T, B], 0 means that this step is
+    restarting_weights: Restarting weights, shape E*, 0 means that this step is
       the start of a new episode and we ignore losses at this step because the
       agent cannot influence these.
-    scaled_advantages: The advantages for each example [T, B], scaled by
+    scaled_advantages: The advantages for each example (shape E*), scaled by
       temperature.
     axis_name: Optional axis name for `pmap`. If `None`, computations are
       performed locally on each device.
@@ -350,7 +390,6 @@ def get_top_k_weights(
     Weights for the top top_k_fraction of advantages
   """
   chex.assert_equal_shape([scaled_advantages, restarting_weights])
-  chex.assert_rank([scaled_advantages], [{1, 2}])
   chex.assert_type([scaled_advantages, restarting_weights], float)
 
   if not 0.0 < top_k_fraction <= 1.0:
@@ -398,24 +437,24 @@ def vmpo_compute_weights_and_temperature_loss(
   """Computes the weights and temperature loss for V-MPO.
 
   Args:
-    advantages: Advantages for the E-step, [T, B].
-    restarting_weights: Restarting weights, [T, B], 0 means that this step is
-      the start of a new episode and we ignore losses at this step because the
-      agent cannot influence these.
-    importance_weights: Optional importance weights, [T, B].
+    advantages: Advantages for the E-step. Shape E*.
+    restarting_weights: Restarting weights, 0 means that this
+      step is the start of a new episode and we ignore losses at this step
+      because the agent cannot influence these. Shape E*.
+    importance_weights: Optional importance weights. Shape E*
     temperature_constraint: Lagrange constraint for the E-step temperature
       optimization.
     projection_operator: Function to project dual variables (temperature and kl
       constraint alphas) into the positive range.
     top_k_fraction: Fraction of samples to use in the E-step.
-    axis_name: Optional axis name for `pmap`. If `None`, computations are
-      performed locally on each device.
+    axis_name: Optional axis name for `pmap` or 'vmap'. If `None`, computations
+      are performed locally on each device.
 
   Returns:
     The temperature loss, normalized weights and number of samples used.
   """
   chex.assert_equal_shape([advantages, restarting_weights, importance_weights])
-  chex.assert_rank([advantages, temperature_constraint.epsilon], [{2, 1}, 0])
+  chex.assert_rank(temperature_constraint.epsilon, 0)
   chex.assert_type([
       advantages, restarting_weights, importance_weights,
       temperature_constraint.alpha, temperature_constraint.epsilon], float)
@@ -495,8 +534,7 @@ def kl_constraint_loss(
   alpha_constant = jax.lax.stop_gradient(penalty.alpha)
 
   # First step: Optimize w.r.t. alphas
-  alpha_loss = alpha * (
-      penalty.epsilon - jax.lax.stop_gradient(kl))
+  alpha_loss = alpha * (penalty.epsilon - jax.lax.stop_gradient(kl))
 
   # Second step: KL loss.
   kl_loss = alpha_constant * kl
@@ -517,24 +555,25 @@ def kl_alpha_loss(
   """Calculates the losses for multiple KL constraints.
 
   Args:
-    restarting_weights: Restarting weights, [T, B], 0 means that this step is
+    restarting_weights: Restarting weights, shape E*, 0 means that this step is
       the start of a new episode and we ignore losses at this step because the
       agent cannot influence these.
     kl_constraints: KL and variables for applying Lagrangian penalties to bound
-      them in the M-step, KLs are [T, B] or [T, B, A]. Here A is the action
-      dimension in the case of per-dimension KL constraints.
+      them in the M-step, KLs are [E*, A?]. Here A is the action dimension
+      in the case of per-dimension KL constraints.
     axis_name: Optional axis name for `pmap`. If `None`, computations are
       performed locally on each device.
 
   Returns:
-    The kl loss and dual variable loss both [T, B].
+    The kl loss and dual variable loss both shape E*.
   """
-  chex.assert_rank(restarting_weights, {2, 1})
   chex.assert_type(restarting_weights, float)
   if kl_constraints:
     for kl, penalty in kl_constraints:
-      chex.assert_rank([kl, penalty.epsilon], [{1, 2, 3}, 0])
+      chex.assert_rank(penalty.epsilon, 0)
       chex.assert_type([kl, penalty.alpha, penalty.epsilon], float)
+      chex.assert_equal_shape_prefix([kl, restarting_weights],
+                                     restarting_weights.ndim)
 
     # Implement decoupled KL constraints.
     kl_alpha_losses = [kl_constraint_loss(kl, penalty, lambda x: x)[:2]
@@ -550,3 +589,4 @@ def kl_alpha_loss(
     kl_loss = jnp.asarray(0.0)
     alpha_loss = jnp.asarray(0.0)
   return kl_loss, alpha_loss
+

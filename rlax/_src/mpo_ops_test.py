@@ -482,5 +482,76 @@ class MPOTest(parameterized.TestCase):
     self.assertAlmostEqual(
         temperature_loss, expected_temperature_loss, places=4)
 
+  @parameterized.parameters({'per_dimension': True}, {'per_dimension': False})
+  def test_mpo_input_axis_order_equivalence(self, per_dimension):
+    """Test loss functions are equivalent regardless of axis order."""
+    key = jax.random.PRNGKey(_RANDOM_SEED)
+    key, new_key = jax.random.split(key)
+    params = _init_params(new_key)
+    out, mpo_inputs = get_common_loss_fn_inputs(params, key, 'sample_q_values')
+    kl_constraints = get_coupled_kl_constraints(out, params,
+                                                per_dimension=per_dimension)
+    mpo_inputs.update({'kl_constraints': kl_constraints})
+
+    # Original loss fn inputs are [S T B],
+    stb_loss, stb_outputs = mpo_ops.mpo_loss(**mpo_inputs)
+    mean_stb_loss = jnp.mean(stb_loss)
+
+    # Swap axes and try [S B T]
+    mpo_inputs.update({
+        'sample_log_probs': jnp.swapaxes(mpo_inputs['sample_log_probs'], 1, 2),
+        'sample_q_values': jnp.swapaxes(mpo_inputs['sample_q_values'], 1, 2),
+        'kl_constraints': [(jnp.swapaxes(kl, 0, 1), mpo_ops.LagrangePenalty(
+            alpha=jnp.swapaxes(pen.alpha, 0, 1), epsilon=pen.epsilon,
+            per_dimension=pen.per_dimension)) for (kl, pen) in kl_constraints],
+    })
+    sbt_loss, sbt_outputs = mpo_ops.mpo_loss(**mpo_inputs)
+    mean_sbt_loss = jnp.mean(sbt_loss)
+
+    # Try [T B S] denoting sample_axis at 2 instead of 0.
+    mpo_inputs.update({
+        'sample_log_probs': jnp.swapaxes(mpo_inputs['sample_log_probs'], 0, 2),
+        'sample_q_values': jnp.swapaxes(mpo_inputs['sample_q_values'], 0, 2),
+        'kl_constraints': kl_constraints,  # T B
+        'sample_axis': 2
+    })
+    tbs_loss, tbs_outputs = mpo_ops.mpo_loss(**mpo_inputs)
+    mean_tbs_loss = jnp.mean(tbs_loss)
+
+    self.assertAlmostEqual(mean_stb_loss, mean_sbt_loss, places=4)
+    self.assertAlmostEqual(mean_tbs_loss, mean_sbt_loss, places=4)
+    self.assertEqual(tbs_outputs.num_samples, sbt_outputs.num_samples)
+    self.assertEqual(tbs_outputs.num_samples, stb_outputs.num_samples)
+
+  @parameterized.parameters({'per_dimension': True}, {'per_dimension': False})
+  def test_vmpo_input_axis_order_equivalence(self, per_dimension):
+    """Test loss functions are equivalent regardless of axis order."""
+    key = jax.random.PRNGKey(_RANDOM_SEED)
+    key, new_key = jax.random.split(key)
+    params = _init_params(new_key)
+    out, vmpo_inputs = get_common_loss_fn_inputs(params, key, 'advantages')
+    kl_constraints = get_coupled_kl_constraints(out, params,
+                                                per_dimension=per_dimension)
+    vmpo_inputs.update({'kl_constraints': kl_constraints})
+
+    # Original loss fn inputs are [T B],
+    tb_loss, tb_outputs = mpo_ops.vmpo_loss(**vmpo_inputs)
+    mean_tb_loss = jnp.mean(tb_loss)
+
+    # Swap axes and try [B T]
+    vmpo_inputs.update({
+        'sample_log_probs': jnp.swapaxes(vmpo_inputs['sample_log_probs'], 0, 1),
+        'advantages': jnp.swapaxes(vmpo_inputs['advantages'], 0, 1),
+        'kl_constraints': [(jnp.swapaxes(kl, 0, 1), mpo_ops.LagrangePenalty(
+            alpha=jnp.swapaxes(pen.alpha, 0, 1), epsilon=pen.epsilon,
+            per_dimension=pen.per_dimension)) for (kl, pen) in kl_constraints],
+    })
+    bt_loss, bt_outputs = mpo_ops.vmpo_loss(**vmpo_inputs)
+    mean_bt_loss = jnp.mean(bt_loss)
+
+    self.assertAlmostEqual(mean_tb_loss, mean_bt_loss, places=4)
+    self.assertEqual(tb_outputs.num_samples, bt_outputs.num_samples)
+
+
 if __name__ == '__main__':
   absltest.main()

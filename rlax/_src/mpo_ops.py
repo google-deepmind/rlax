@@ -143,6 +143,8 @@ def mpo_loss(
     else:
       chex.assert_rank(kl, sample_q_values.ndim - 1)
 
+  if sample_axis < 0:
+    sample_axis += sample_q_values.ndim
   if not 0 <= sample_axis < sample_q_values.ndim:
     raise ValueError(
         f"`sample_axis` {sample_axis} not in array rank {sample_q_values.ndim}")
@@ -206,6 +208,8 @@ def mpo_compute_weights_and_temperature_loss(
   chex.assert_type([sample_q_values, temperature_constraint.alpha,
                     temperature_constraint.epsilon], float)
 
+  if sample_axis < 0:
+    sample_axis += sample_q_values.ndim
   if not 0 <= sample_axis < sample_q_values.ndim:
     raise ValueError(
         f"`sample_axis` {sample_axis} not in array rank {sample_q_values.ndim}")

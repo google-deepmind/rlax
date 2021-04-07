@@ -54,7 +54,7 @@ def signed_logp1(x: Array) -> Array:
 def signed_expm1(x: Array) -> Array:
   """Signed exponential of x - 1, inverse of signed_logp1."""
   chex.assert_type(x, float)
-  return jnp.sign(x) * (jnp.exp(jnp.abs(x)) - 1)
+  return jnp.sign(x) * jnp.expm1(jnp.abs(x))
 
 
 def signed_hyperbolic(x: Array, eps: float = 1e-3) -> Array:

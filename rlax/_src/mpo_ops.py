@@ -88,6 +88,7 @@ def mpo_loss(
     kl_loss_weight: float = 1.0,
     alpha_loss_weight: float = 1.0,
     sample_axis: int = 0,
+    use_stop_gradient: bool = True,
 ) -> Tuple[Array, MpoOutputs]:
   """Implements the MPO loss with a KL bound.
 
@@ -123,6 +124,7 @@ def mpo_loss(
       sampled actions' log probs and q values respectively. For example, if
       sample_axis = 0, the shapes expected will be [S, E*]. Or if E* = [T, B]
       and sample_axis = 1, the shapes expected will be [T, S, B].
+    use_stop_gradient: bool indicating whether or not to apply stop gradient.
 
   Returns:
     Per example `loss` with shape E*, and additional data including
@@ -155,13 +157,14 @@ def mpo_loss(
           sample_q_values, temperature_constraint, projection_operator,
           sample_axis=sample_axis))
 
-  norm_weights = jax.lax.stop_gradient(norm_weights)
+  norm_weights = jax.lax.select(
+      use_stop_gradient, jax.lax.stop_gradient(norm_weights), norm_weights)
 
   # M-Step. Supervised learning on reweighted probabilities using the weights
   # from the E-Step under an additional KL constraint.
   policy_loss = -jnp.sum(norm_weights * sample_log_probs, axis=sample_axis)
   kl_loss, alpha_loss = compute_parametric_kl_penalty_and_dual_loss(
-      kl_constraints, projection_operator)
+      kl_constraints, projection_operator, use_stop_gradient)
 
   chex.assert_equal_shape([policy_loss, kl_loss, alpha_loss])
 
@@ -247,6 +250,7 @@ def mpo_compute_weights_and_temperature_loss(
 def compute_parametric_kl_penalty_and_dual_loss(
     kl_constraints: Sequence[Tuple[Array, LagrangePenalty]],
     projection_operator: Callable[[Numeric], Numeric],
+    use_stop_gradient: bool = True,
 ) -> Tuple[Array, Array]:
   """Optimize hard KL constraints between the current and previous policies."""
   for kl, penalty in kl_constraints:
@@ -256,7 +260,7 @@ def compute_parametric_kl_penalty_and_dual_loss(
   kl_losses, alpha_losses = [], []
   for kl, penalty in kl_constraints:
     kl_loss, alpha_loss, _ = kl_constraint_loss(
-        kl, penalty, projection_operator)
+        kl, penalty, projection_operator, use_stop_gradient)
     kl_losses.append(kl_loss)
     alpha_losses.append(alpha_loss)
   kl_loss, alpha_loss = sum(kl_losses), sum(alpha_losses)
@@ -278,6 +282,7 @@ def vmpo_loss(
     kl_loss_weight: float = 1.0,
     alpha_loss_weight: float = 1.0,
     axis_name: Optional[str] = None,
+    use_stop_gradient: bool = True,
 ) -> Tuple[Array, MpoOutputs]:
   """Calculates the V-MPO policy improvement loss.
 
@@ -306,6 +311,7 @@ def vmpo_loss(
     alpha_loss_weight: Weight for the alpha loss.
     axis_name: Optional axis name for `pmap`. If `None`, computations
       are performed locally on each device.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient.
 
   Returns:
     Per example `loss` with same shape E* as array inputs, and additional data
@@ -341,7 +347,7 @@ def vmpo_loss(
       vmpo_compute_weights_and_temperature_loss(
           advantages, restarting_weights, importance_weights,
           temperature_constraint, projection_operator, top_k_fraction,
-          axis_name=axis_name))
+          axis_name=axis_name, use_stop_gradient=use_stop_gradient))
 
   # M-step: Supervised learning of reweighted trajectories using the weights
   # from the E-step, with additional KL constraints.
@@ -356,7 +362,7 @@ def vmpo_loss(
   policy_loss = -sample_log_probs * norm_weights * num_examples
 
   kl_loss, alpha_loss = compute_parametric_kl_penalty_and_dual_loss(
-      kl_constraints, projection_operator)
+      kl_constraints, projection_operator, use_stop_gradient)
 
   chex.assert_equal_shape([policy_loss, kl_loss, alpha_loss])
 
@@ -376,7 +382,8 @@ def get_top_k_weights(
     top_k_fraction: float,
     restarting_weights: Array,
     scaled_advantages: Array,
-    axis_name: Optional[str] = None
+    axis_name: Optional[str] = None,
+    use_stop_gradient: bool = True,
 ):
   """Get the weights for the top top_k_fraction of advantages.
 
@@ -389,6 +396,7 @@ def get_top_k_weights(
       temperature.
     axis_name: Optional axis name for `pmap`. If `None`, computations are
       performed locally on each device.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient.
 
   Returns:
     Weights for the top top_k_fraction of advantages
@@ -421,7 +429,8 @@ def get_top_k_weights(
     # Fold the top-k into the restarting weights.
     top_k_weights = jnp.greater_equal(valid_scaled_advantages,
                                       top_k_min).astype(jnp.float32)
-    top_k_weights = jax.lax.stop_gradient(top_k_weights)
+    top_k_weights = jax.lax.select(
+        use_stop_gradient, jax.lax.stop_gradient(top_k_weights), top_k_weights)
     top_k_restarting_weights = restarting_weights * top_k_weights
   else:
     top_k_restarting_weights = restarting_weights
@@ -436,7 +445,8 @@ def vmpo_compute_weights_and_temperature_loss(
     temperature_constraint: LagrangePenalty,
     projection_operator: Callable[[Numeric], Numeric],
     top_k_fraction: float,
-    axis_name: Optional[str] = None
+    axis_name: Optional[str] = None,
+    use_stop_gradient: bool = True,
 ) -> Tuple[Scalar, Array, Scalar]:
   """Computes the weights and temperature loss for V-MPO.
 
@@ -453,6 +463,7 @@ def vmpo_compute_weights_and_temperature_loss(
     top_k_fraction: Fraction of samples to use in the E-step.
     axis_name: Optional axis name for `pmap` or 'vmap'. If `None`, computations
       are performed locally on each device.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient.
 
   Returns:
     The temperature loss, normalized weights and number of samples used.
@@ -463,7 +474,9 @@ def vmpo_compute_weights_and_temperature_loss(
       advantages, restarting_weights, importance_weights,
       temperature_constraint.alpha, temperature_constraint.epsilon], float)
 
-  importance_weights = jax.lax.stop_gradient(importance_weights)
+  importance_weights = jax.lax.select(
+      use_stop_gradient, jax.lax.stop_gradient(importance_weights),
+      importance_weights)
 
   # Lagrange constraint.
   temperature = projection_operator(temperature_constraint.alpha)
@@ -472,15 +485,20 @@ def vmpo_compute_weights_and_temperature_loss(
   # Scale the advantages.
   scaled_advantages = restarting_weights * advantages / temperature
   max_scaled_advantage = jnp.max(scaled_advantages)
-  max_scaled_advantage = jax.lax.stop_gradient(max_scaled_advantage)
   # If the axis_name is not None find the maximum across all devices.
   if axis_name:
+    assert use_stop_gradient  # Cant differentiate through pmax.
+    max_scaled_advantage = jax.lax.stop_gradient(max_scaled_advantage)
     max_scaled_advantage = jax.lax.pmax(
         max_scaled_advantage, axis_name=axis_name)
-
+  else:
+    max_scaled_advantage = jax.lax.select(
+        use_stop_gradient, jax.lax.stop_gradient(max_scaled_advantage),
+        max_scaled_advantage)
   # Maybe don't use all of the advantages.
   top_k_restarting_weights = get_top_k_weights(
-      top_k_fraction, restarting_weights, scaled_advantages, axis_name)
+      top_k_fraction, restarting_weights, scaled_advantages, axis_name,
+      use_stop_gradient)
 
   all_sum = base.AllSum(axis_name)
 
@@ -505,6 +523,7 @@ def kl_constraint_loss(
     kl: Array,
     penalty: LagrangePenalty,
     projection_operator: Callable[[Numeric], Numeric],
+    use_stop_gradient: bool = True,
 ) -> Tuple[Array, Array, Array]:
   """Implements a hard KL constraint.
 
@@ -525,6 +544,7 @@ def kl_constraint_loss(
       constraint.
     projection_operator: Function to project dual variables kl constraint alphas
       into the positive range.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient.
 
   Returns:
     A `tuple` consisting of three arrays: `kl_loss`, `alpha_loss` and
@@ -535,10 +555,13 @@ def kl_constraint_loss(
   chex.assert_type([kl, penalty.alpha, penalty.epsilon], float)
 
   alpha = projection_operator(penalty.alpha)
-  alpha_constant = jax.lax.stop_gradient(penalty.alpha)
+  alpha_constant = jax.lax.select(
+      use_stop_gradient, jax.lax.stop_gradient(penalty.alpha), penalty.alpha)
 
   # First step: Optimize w.r.t. alphas
-  alpha_loss = alpha * (penalty.epsilon - jax.lax.stop_gradient(kl))
+  alpha_loss = alpha * (
+      penalty.epsilon -
+      jax.lax.select(use_stop_gradient, jax.lax.stop_gradient(kl), kl))
 
   # Second step: KL loss.
   kl_loss = alpha_constant * kl

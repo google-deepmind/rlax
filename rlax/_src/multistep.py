@@ -22,6 +22,7 @@ and bootstrapping is used to estimate returns beyond the end of a trajectory.
 """
 from typing import Union
 import chex
+import jax
 import jax.numpy as jnp
 from rlax._src import base
 
@@ -35,6 +36,7 @@ def lambda_returns(
     discount_t: Array,
     v_t: Array,
     lambda_: Numeric = 1.,
+    stop_target_gradients: bool = False,
 ) -> Array:
   """Estimates a multistep truncated lambda return from a trajectory.
 
@@ -89,6 +91,8 @@ def lambda_returns(
     discount_t: sequence of discounts γₜ for timesteps t in [1, T].
     v_t: sequence of state values estimates under π for timesteps t in [1, T].
     lambda_: mixing parameter; a scalar or a vector for timesteps t in [1, T].
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Multistep lambda returns.
@@ -107,7 +111,9 @@ def lambda_returns(
     g = r_t[i] + discount_t[i] * ((1-lambda_[i]) * v_t[i] + lambda_[i] * g)
     returns.insert(0, g)
 
-  return jnp.array(returns)
+  return jax.lax.select(stop_target_gradients,
+                        jax.lax.stop_gradient(jnp.array(returns)),
+                        jnp.array(returns))
 
 
 def n_step_bootstrapped_returns(
@@ -116,6 +122,7 @@ def n_step_bootstrapped_returns(
     v_t: Array,
     n: int,
     lambda_t: Numeric = 1.,
+    stop_target_gradients: bool = False,
 ) -> Array:
   """Computes strided n-step bootstrapped return targets over a sequence.
 
@@ -133,6 +140,8 @@ def n_step_bootstrapped_returns(
     v_t: state or state-action values to bootstrap from at time [1, ...., T].
     n: number of steps over which to accumulate reward before bootstrapping.
     lambda_t: lambdas at times [1, ..., T]. Shape is [], or [T-1].
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     estimated bootstrapped returns at times [0, ...., T-1]
@@ -163,13 +172,15 @@ def n_step_bootstrapped_returns(
     v_ = v_t[i:i + seq_len]
     targets = r_ + discount_ * ((1. - lambda_) * v_ + lambda_ * targets)
 
-  return targets
+  return jax.lax.select(stop_target_gradients,
+                        jax.lax.stop_gradient(targets), targets)
 
 
 def discounted_returns(
     r_t: Array,
     discount_t: Array,
-    v_t: Array
+    v_t: Array,
+    stop_target_gradients: bool = False,
 ) -> Array:
   """Calculates a discounted return from a trajectory.
 
@@ -184,6 +195,8 @@ def discounted_returns(
     r_t: reward sequence at time t.
     discount_t: discount sequence at time t.
     v_t: value sequence or scalar at time t.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Discounted returns.
@@ -193,7 +206,8 @@ def discounted_returns(
 
   # If scalar make into vector.
   bootstrapped_v = jnp.ones_like(discount_t) * v_t
-  return lambda_returns(r_t, discount_t, bootstrapped_v, lambda_=1.)
+  return lambda_returns(r_t, discount_t, bootstrapped_v, lambda_=1.,
+                        stop_target_gradients=stop_target_gradients)
 
 
 def importance_corrected_td_errors(
@@ -202,6 +216,7 @@ def importance_corrected_td_errors(
     rho_tm1: Array,
     lambda_: Array,
     values: Array,
+    stop_target_gradients: bool = False,
 ) -> Array:
   """Computes the multistep td errors with per decision importance sampling.
 
@@ -227,6 +242,8 @@ def importance_corrected_td_errors(
     rho_tm1: sequence of importance ratios for all timesteps t in [0, T-1].
     lambda_: mixing parameter; scalar or have per timestep values in [1, T].
     values: sequence of state values under π for all timesteps t in [0, T].
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Off-policy estimates of the multistep td errors.
@@ -249,7 +266,9 @@ def importance_corrected_td_errors(
     delta = one_step_delta[i] + discount_t[i] * rho_t[i] * lambda_[i] * delta
     errors.insert(0, delta)
 
-  return rho_tm1 * jnp.array(errors)
+  errors = rho_tm1 * jnp.array(errors)
+  return jax.lax.select(stop_target_gradients,
+                        jax.lax.stop_gradient(errors + v_tm1) - v_tm1, errors)
 
 
 def truncated_generalized_advantage_estimation(
@@ -257,6 +276,7 @@ def truncated_generalized_advantage_estimation(
     discount_t: Array,
     lambda_: Union[Array, Scalar],
     values: Array,
+    stop_target_gradients: bool = False,
 ) -> Array:
   """Computes truncated generalized advantage estimates for a sequence length k.
 
@@ -276,6 +296,8 @@ def truncated_generalized_advantage_estimation(
     discount_t: Sequence of discounts at times [1, k]
     lambda_: Mixing parameter; a scalar or sequence of lambda_t at times [1, k]
     values: Sequence of values under π at times [0, k]
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Multistep truncated generalized advantage estimation at times [0, k-1].
@@ -291,7 +313,9 @@ def truncated_generalized_advantage_estimation(
   for t in reversed(range(delta_t.shape[0])):
     advantage_t.insert(0,
                        delta_t[t] + lambda_[t] * discount_t[t] * advantage_t[0])
-  return jnp.array(advantage_t[:-1])
+  return jax.lax.select(stop_target_gradients,
+                        jax.lax.stop_gradient(jnp.array(advantage_t[:-1])),
+                        jnp.array(advantage_t[:-1]))
 
 
 def general_off_policy_returns_from_action_values(
@@ -301,6 +325,7 @@ def general_off_policy_returns_from_action_values(
     discount_t: Array,
     c_t: Array,
     pi_t: Array,
+    stop_target_gradients: bool = False,
 ) -> Array:
   """Calculates targets for various off-policy correction algorithms.
 
@@ -328,6 +353,8 @@ def general_off_policy_returns_from_action_values(
     discount_t: discount at times [1, ..., K - 1].
     c_t: importance weights at times [1, ..., K - 1].
     pi_t: target policy probs at times [1, ..., K - 1].
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Off-policy estimates of the generalized returns from states visited at times
@@ -347,7 +374,7 @@ def general_off_policy_returns_from_action_values(
   c_t = c_t[:-1]
 
   return general_off_policy_returns_from_q_and_v(
-      q_a_t, exp_q_t, r_t, discount_t, c_t)
+      q_a_t, exp_q_t, r_t, discount_t, c_t, stop_target_gradients)
 
 
 def general_off_policy_returns_from_q_and_v(
@@ -356,6 +383,7 @@ def general_off_policy_returns_from_q_and_v(
     r_t: Array,
     discount_t: Array,
     c_t: Array,
+    stop_target_gradients: bool = False,
 ) -> Array:
   """Calculates targets for various off-policy evaluation algorithms.
 
@@ -382,6 +410,8 @@ def general_off_policy_returns_from_q_and_v(
     r_t: rewards at times [1, ..., K].
     discount_t: discounts at times [1, ..., K].
     c_t: weights at times [1, ..., K - 1].
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Off-policy estimates of the generalized returns from states visited at times
@@ -398,4 +428,6 @@ def general_off_policy_returns_from_q_and_v(
     g = r_t[i] + discount_t[i] * (v_t[i] - c_t[i] * q_t[i] + c_t[i] * g)
     returns.insert(0, g)
 
-  return jnp.array(returns)
+  return jax.lax.select(stop_target_gradients,
+                        jax.lax.stop_gradient(jnp.array(returns)),
+                        jnp.array(returns))

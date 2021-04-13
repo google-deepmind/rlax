@@ -38,6 +38,7 @@ def td_learning(
     r_t: Numeric,
     discount_t: Numeric,
     v_t: Numeric,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Calculates the TD-learning temporal difference error.
 
@@ -49,7 +50,8 @@ def td_learning(
     r_t: reward at time t.
     discount_t: discount at time t.
     v_t: state values at time t.
-
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
   Returns:
     TD-learning temporal difference error.
   """
@@ -58,7 +60,9 @@ def td_learning(
   chex.assert_type([v_tm1, r_t, discount_t, v_t], float)
 
   target_tm1 = r_t + discount_t * v_t
-  return jax.lax.stop_gradient(target_tm1) - v_tm1
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
+  return target_tm1 - v_tm1
 
 
 def td_lambda(
@@ -67,6 +71,7 @@ def td_lambda(
     discount_t: Array,
     v_t: Array,
     lambda_: Numeric,
+    stop_target_gradients: bool = True,
 ) -> Array:
   """Calculates the TD(lambda) temporal difference error.
 
@@ -79,7 +84,8 @@ def td_lambda(
     discount_t: sequence of discounts at time t.
     v_t: sequence of state values at time t.
     lambda_: mixing parameter lambda, either a scalar or a sequence.
-
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
   Returns:
     TD(lambda) temporal difference error.
   """
@@ -87,7 +93,9 @@ def td_lambda(
   chex.assert_type([v_tm1, r_t, discount_t, v_t, lambda_], float)
 
   target_tm1 = multistep.lambda_returns(r_t, discount_t, v_t, lambda_)
-  return jax.lax.stop_gradient(target_tm1) - v_tm1
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
+  return target_tm1 - v_tm1
 
 
 def sarsa(
@@ -97,6 +105,7 @@ def sarsa(
     discount_t: Numeric,
     q_t: Array,
     a_t: Numeric,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Calculates the SARSA temporal difference error.
 
@@ -110,7 +119,8 @@ def sarsa(
     discount_t: discount at time t.
     q_t: Q-values at time t.
     a_t: action index at time t.
-
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
   Returns:
     SARSA temporal difference error.
   """
@@ -120,7 +130,9 @@ def sarsa(
                    [float, int, float, float, float, int])
 
   target_tm1 = r_t + discount_t * q_t[a_t]
-  return jax.lax.stop_gradient(target_tm1) - q_tm1[a_tm1]
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
+  return target_tm1 - q_tm1[a_tm1]
 
 
 def expected_sarsa(
@@ -130,6 +142,7 @@ def expected_sarsa(
     discount_t: Numeric,
     q_t: Array,
     probs_a_t: Array,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Calculates the expected SARSA (SARSE) temporal difference error.
 
@@ -144,6 +157,8 @@ def expected_sarsa(
     discount_t: discount at time t.
     q_t: Q-values at time t.
     probs_a_t: action probabilities at time t.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Expected SARSA temporal difference error.
@@ -154,7 +169,9 @@ def expected_sarsa(
                    [float, int, float, float, float, float])
 
   target_tm1 = r_t + discount_t * jnp.dot(q_t, probs_a_t)
-  return jax.lax.stop_gradient(target_tm1) - q_tm1[a_tm1]
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
+  return target_tm1 - q_tm1[a_tm1]
 
 
 def sarsa_lambda(
@@ -194,9 +211,8 @@ def sarsa_lambda(
   qa_tm1 = base.batched_index(q_tm1, a_tm1)
   qa_t = base.batched_index(q_t, a_t)
   target_tm1 = multistep.lambda_returns(r_t, discount_t, qa_t, lambda_)
-
-  if stop_target_gradients:
-    target_tm1 = jax.lax.stop_gradient(target_tm1)
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
   return target_tm1 - qa_tm1
 
 
@@ -206,6 +222,7 @@ def q_learning(
     r_t: Numeric,
     discount_t: Numeric,
     q_t: Array,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Calculates the Q-learning temporal difference error.
 
@@ -218,6 +235,8 @@ def q_learning(
     r_t: reward at time t.
     discount_t: discount at time t.
     q_t: Q-values at time t.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Q-learning temporal difference error.
@@ -227,7 +246,9 @@ def q_learning(
                    [float, int, float, float, float])
 
   target_tm1 = r_t + discount_t * jnp.max(q_t)
-  return jax.lax.stop_gradient(target_tm1) - q_tm1[a_tm1]
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
+  return target_tm1 - q_tm1[a_tm1]
 
 
 def double_q_learning(
@@ -237,6 +258,7 @@ def double_q_learning(
     discount_t: Numeric,
     q_t_value: Array,
     q_t_selector: Array,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Calculates the double Q-learning temporal difference error.
 
@@ -250,6 +272,8 @@ def double_q_learning(
     discount_t: discount at time t.
     q_t_value: Q-values at time t.
     q_t_selector: selector Q-values at time t.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Double Q-learning temporal difference error.
@@ -260,7 +284,9 @@ def double_q_learning(
                    [float, int, float, float, float, float])
 
   target_tm1 = r_t + discount_t * q_t_value[q_t_selector.argmax()]
-  return jax.lax.stop_gradient(target_tm1) - q_tm1[a_tm1]
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
+  return target_tm1 - q_tm1[a_tm1]
 
 
 def persistent_q_learning(
@@ -270,6 +296,7 @@ def persistent_q_learning(
     discount_t: Numeric,
     q_t: Array,
     action_gap_scale: float,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Calculates the persistent Q-learning temporal difference error.
 
@@ -283,6 +310,8 @@ def persistent_q_learning(
     discount_t: discount at time t.
     q_t: Q-values at time t.
     action_gap_scale: coefficient in [0, 1] for scaling the action gap term.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Persistent Q-learning temporal difference error.
@@ -296,7 +325,9 @@ def persistent_q_learning(
       + action_gap_scale * q_t[a_tm1]
   )
   target_tm1 = r_t + discount_t * corrected_q_t
-  return jax.lax.stop_gradient(target_tm1) - q_tm1[a_tm1]
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
+  return target_tm1 - q_tm1[a_tm1]
 
 
 def qv_learning(
@@ -305,6 +336,7 @@ def qv_learning(
     r_t: Numeric,
     discount_t: Numeric,
     v_t: Numeric,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Calculates the QV-learning temporal difference error.
 
@@ -318,6 +350,8 @@ def qv_learning(
     r_t: reward at time t.
     discount_t: discount at time t.
     v_t: state values at time t.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     QV-learning temporal difference error.
@@ -327,7 +361,9 @@ def qv_learning(
                    [float, int, float, float, float])
 
   target_tm1 = r_t + discount_t * v_t
-  return jax.lax.stop_gradient(target_tm1) - q_tm1[a_tm1]
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
+  return target_tm1 - q_tm1[a_tm1]
 
 
 def qv_max(
@@ -335,6 +371,7 @@ def qv_max(
     r_t: Numeric,
     discount_t: Numeric,
     q_t: Array,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Calculates the QVMAX temporal difference error.
 
@@ -347,6 +384,8 @@ def qv_max(
     r_t: reward at time t.
     discount_t: discount at time t.
     q_t: Q-values at time t.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     QVMAX temporal difference error.
@@ -355,7 +394,9 @@ def qv_max(
   chex.assert_type([v_tm1, r_t, discount_t, q_t], float)
 
   target_tm1 = r_t + discount_t * jnp.max(q_t)
-  return jax.lax.stop_gradient(target_tm1) - v_tm1
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
+  return target_tm1 - v_tm1
 
 
 def q_lambda(
@@ -395,8 +436,8 @@ def q_lambda(
   v_t = jnp.max(q_t, axis=-1)
   target_tm1 = multistep.lambda_returns(r_t, discount_t, v_t, lambda_)
 
-  if stop_target_gradients:
-    target_tm1 = jax.lax.stop_gradient(target_tm1)
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
   return target_tm1 - qa_tm1
 
 
@@ -447,8 +488,8 @@ def retrace(
 
   q_a_tm1 = base.batched_index(q_tm1, a_tm1)
 
-  if stop_target_gradients:
-    target_tm1 = jax.lax.stop_gradient(target_tm1)
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
   return target_tm1 - q_a_tm1
 
 
@@ -494,8 +535,8 @@ def retrace_continuous(q_tm1: Array,
   target_tm1 = multistep.general_off_policy_returns_from_q_and_v(
       q_t, v_t, r_t, discount_t, c_t)
 
-  if stop_target_gradients:
-    target_tm1 = jax.lax.stop_gradient(target_tm1)
+  target_tm1 = jax.lax.select(stop_target_gradients,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
   return target_tm1 - q_tm1
 
 
@@ -567,7 +608,8 @@ def categorical_td_learning(
     r_t: Numeric,
     discount_t: Numeric,
     v_atoms_t: Array,
-    v_logits_t: Array
+    v_logits_t: Array,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Implements TD-learning for categorical value distributions.
 
@@ -581,6 +623,8 @@ def categorical_td_learning(
     discount_t: discount at time t.
     v_atoms_t: atoms of V distribution at time t.
     v_logits_t: logits of V distribution at time t.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Categorical Q learning loss (i.e. temporal difference error).
@@ -598,9 +642,10 @@ def categorical_td_learning(
   # Convert logits to distribution.
   v_t_probs = jax.nn.softmax(v_logits_t)
 
-  # Project using the Cramer distance.
-  target = jax.lax.stop_gradient(
-      categorical_l2_project(target_z, v_t_probs, v_atoms_tm1))
+  # Project using the Cramer distance and maybe stop gradient flow to targets.
+  target = categorical_l2_project(target_z, v_t_probs, v_atoms_tm1)
+  target = jax.lax.select(stop_target_gradients, jax.lax.stop_gradient(target),
+                          target)
 
   # Compute loss (i.e. temporal difference error).
   return distributions.categorical_cross_entropy(
@@ -615,6 +660,7 @@ def categorical_q_learning(
     discount_t: Numeric,
     q_atoms_t: Array,
     q_logits_t: Array,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Implements Q-learning for categorical Q distributions.
 
@@ -629,6 +675,8 @@ def categorical_q_learning(
     discount_t: discount at time t.
     q_atoms_t: atoms of Q distribution at time t.
     q_logits_t: logits of Q distribution at time t.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Categorical Q-learning loss (i.e. temporal difference error).
@@ -651,9 +699,10 @@ def categorical_q_learning(
   # Compute distribution for greedy action.
   p_target_z = q_t_probs[pi_t]
 
-  # Project using the Cramer distance.
-  target = jax.lax.stop_gradient(
-      categorical_l2_project(target_z, p_target_z, q_atoms_tm1))
+  # Project using the Cramer distance and maybe stop gradient flow to targets.
+  target = categorical_l2_project(target_z, p_target_z, q_atoms_tm1)
+  target = jax.lax.select(stop_target_gradients, jax.lax.stop_gradient(target),
+                          target)
 
   # Compute loss (i.e. temporal difference error).
   logit_qa_tm1 = q_logits_tm1[a_tm1]
@@ -670,6 +719,7 @@ def categorical_double_q_learning(
     q_atoms_t: Array,
     q_logits_t: Array,
     q_t_selector: Array,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Implements double Q-learning for categorical Q distributions.
 
@@ -687,6 +737,8 @@ def categorical_double_q_learning(
     q_atoms_t: atoms of Q distribution at time t.
     q_logits_t: logits of Q distribution at time t.
     q_t_selector: selector Q-values at time t.
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Categorical double Q-learning loss (i.e. temporal difference error).
@@ -706,9 +758,10 @@ def categorical_double_q_learning(
   # Select logits for greedy action in state s_t and convert to distribution.
   p_target_z = jax.nn.softmax(q_logits_t[q_t_selector.argmax()])
 
-  # Project using the Cramer distance.
-  target = jax.lax.stop_gradient(
-      categorical_l2_project(target_z, p_target_z, q_atoms_tm1))
+  # Project using the Cramer distance and maybe stop gradient flow to targets.
+  target = categorical_l2_project(target_z, p_target_z, q_atoms_tm1)
+  target = jax.lax.select(stop_target_gradients, jax.lax.stop_gradient(target),
+                          target)
 
   # Compute loss (i.e. temporal difference error).
   logit_qa_tm1 = q_logits_tm1[a_tm1]
@@ -720,7 +773,8 @@ def _quantile_regression_loss(
     dist_src: Array,
     tau_src: Array,
     dist_target: Array,
-    huber_param: float = 0.
+    huber_param: float = 0.,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Compute (Huber) QR loss between two discrete quantile-valued distributions.
 
@@ -732,6 +786,8 @@ def _quantile_regression_loss(
     tau_src: source distribution probability thresholds.
     dist_target: target probability distribution.
     huber_param: Huber loss parameter, defaults to 0 (no Huber loss).
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Quantile regression loss.
@@ -742,7 +798,8 @@ def _quantile_regression_loss(
   # Calculate quantile error.
   delta = dist_target[None, :] - dist_src[:, None]
   delta_neg = (delta < 0.).astype(jnp.float32)
-  delta_neg = jax.lax.stop_gradient(delta_neg)
+  delta_neg = jax.lax.select(stop_target_gradients,
+                             jax.lax.stop_gradient(delta_neg), delta_neg)
   weight = jnp.abs(tau_src[:, None] - delta_neg)
 
   # Calculate Huber loss.
@@ -764,7 +821,8 @@ def quantile_q_learning(
     discount_t: Numeric,
     dist_q_t_selector: Array,
     dist_q_t: Array,
-    huber_param: float = 0.
+    huber_param: float = 0.,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Implements Q-learning for quantile-valued Q distributions.
 
@@ -782,6 +840,8 @@ def quantile_q_learning(
       can be computed with the target network and a separate set of samples.
     dist_q_t: target Q distribution at time t.
     huber_param: Huber loss parameter, defaults to 0 (no Huber loss).
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Quantile regression Q learning loss.
@@ -804,6 +864,8 @@ def quantile_q_learning(
   # Compute target, do not backpropagate into it.
   dist_target = r_t + discount_t * dist_qa_t
   dist_target = jax.lax.stop_gradient(dist_target)
+  dist_target = jax.lax.select(stop_target_gradients,
+                               jax.lax.stop_gradient(dist_target), dist_target)
 
   return _quantile_regression_loss(
       dist_qa_tm1, tau_q_tm1, dist_target, huber_param)
@@ -817,7 +879,8 @@ def quantile_expected_sarsa(
     discount_t: Numeric,
     dist_q_t: Array,
     probs_a_t: Array,
-    huber_param: float = 0.
+    huber_param: float = 0.,
+    stop_target_gradients: bool = True,
 ) -> Numeric:
   """Implements Expected SARSA for quantile-valued Q distributions.
 
@@ -830,6 +893,8 @@ def quantile_expected_sarsa(
     dist_q_t: target Q distribution at time t.
     probs_a_t: action probabilities at time t.
     huber_param: Huber loss parameter, defaults to 0 (no Huber loss).
+    stop_target_gradients: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     Quantile regression Expected SARSA learning loss.
@@ -848,7 +913,8 @@ def quantile_expected_sarsa(
 
   # Compute target, do not backpropagate into it.
   dist_target = r_t + discount_t * dist_qa_t
-  dist_target = jax.lax.stop_gradient(dist_target)
+  dist_target = jax.lax.select(stop_target_gradients,
+                               jax.lax.stop_gradient(dist_target), dist_target)
 
   return _quantile_regression_loss(
       dist_qa_tm1, tau_q_tm1, dist_target, huber_param)

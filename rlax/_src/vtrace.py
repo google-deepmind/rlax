@@ -84,17 +84,11 @@ def vtrace(
     err = td_errors[i] + discount_t[i] * c_t[i] * err
     errors.insert(0, err)
 
-  # Return errors.
-  if not stop_target_gradients:
-    return jnp.array(errors)
-  # In TD-like algorithms, we want gradients to only flow in the predictions,
-  # and not in the values used to bootstrap. In this case, add the value of the
-  # initial state value to get the implied estimates of the returns, stop
-  # gradient around such target and then subtract again the initial state value.
-  else:
-    target_tm1 = jnp.array(errors) + v_tm1
-    target_tm1 = jax.lax.stop_gradient(target_tm1)
-  return target_tm1 - v_tm1
+  # Return errors, maybe disabling gradient flow through bootstrap targets.
+  return jax.lax.select(
+      stop_target_gradients,
+      jax.lax.stop_gradient(jnp.array(errors) + v_tm1) - v_tm1,
+      jnp.array(errors))
 
 
 def leaky_vtrace(
@@ -151,16 +145,11 @@ def leaky_vtrace(
     err = td_errors[i] + discount_t[i] * c_t[i] * err
     errors.insert(0, err)
 
-  # Return errors.
-  if not stop_target_gradients:
-    return jnp.array(errors)
-  # In TD-like algorithms, we want gradients to only flow in the predictions,
-  # and not in the values used to bootstrap. In this case, add the value of the
-  # initial state value to get the implied estimates of the returns, stop
-  # gradient around such target and then subtract again the initial state value.
-  else:
-    target_tm1 = jnp.array(errors) + v_tm1
-    return jax.lax.stop_gradient(target_tm1) - v_tm1
+  # Return errors, maybe disabling gradient flow through bootstrap targets.
+  return jax.lax.select(
+      stop_target_gradients,
+      jax.lax.stop_gradient(jnp.array(errors) + v_tm1) - v_tm1,
+      jnp.array(errors))
 
 
 def vtrace_td_error_and_advantage(

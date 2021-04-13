@@ -28,7 +28,6 @@ import collections
 import functools
 
 import chex
-import jax
 import jax.numpy as jnp
 from rlax._src import base
 from rlax._src import multistep
@@ -110,10 +109,7 @@ def transformed_q_lambda(
   qa_tm1 = base.batched_index(q_tm1, a_tm1)
   v_t = jnp.max(q_t, axis=-1)
   target_tm1 = transformed_lambda_returns(
-      tx_pair, r_t, discount_t, v_t, lambda_)
-  if stop_target_gradients:
-    target_tm1 = jax.lax.stop_gradient(target_tm1)
-
+      tx_pair, r_t, discount_t, v_t, lambda_, stop_target_gradients)
   return target_tm1 - qa_tm1
 
 
@@ -162,10 +158,7 @@ def transformed_retrace(
   pi_a_t = base.batched_index(pi_t, a_t)
   c_t = jnp.minimum(1.0, pi_a_t / (mu_t + eps)) * lambda_
   target_tm1 = transformed_general_off_policy_returns_from_action_values(
-      tx_pair, q_t, a_t, r_t, discount_t, c_t, pi_t)
-  if stop_target_gradients:
-    target_tm1 = jax.lax.stop_gradient(target_tm1)
-
+      tx_pair, q_t, a_t, r_t, discount_t, c_t, pi_t, stop_target_gradients)
   q_a_tm1 = base.batched_index(q_tm1, a_tm1)
   return target_tm1 - q_a_tm1
 
@@ -209,8 +202,8 @@ def transformed_n_step_q_learning(
                    [float, float, int, int, float, float])
 
   v_t = base.batched_index(target_q_t, a_t)
-  target_tm1 = transformed_n_step_returns(tx_pair, r_t, discount_t, v_t, n)
-  if stop_target_gradients:
-    target_tm1 = jax.lax.stop_gradient(target_tm1)
+  target_tm1 = transformed_n_step_returns(
+      tx_pair, r_t, discount_t, v_t, n,
+      stop_target_gradients=stop_target_gradients)
   q_a_tm1 = base.batched_index(q_tm1, a_tm1)
   return target_tm1 - q_a_tm1

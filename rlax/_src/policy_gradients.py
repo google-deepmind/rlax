@@ -41,7 +41,8 @@ def _clip_by_l2_norm(x: Array, max_norm: float) -> Array:
 def dpg_loss(
     a_t: Array,
     dqda_t: Array,
-    dqda_clipping: Optional[Scalar] = None
+    dqda_clipping: Optional[Scalar] = None,
+    use_stop_gradient: bool = True,
 ) -> Array:
   """Calculates the deterministic policy gradient (DPG) loss.
 
@@ -52,6 +53,8 @@ def dpg_loss(
     a_t: continuous-valued action at time t.
     dqda_t: gradient of Q(s,a) wrt. a, evaluated at time t.
     dqda_clipping: clips the gradient to have norm <= `dqda_clipping`.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient
+      to targets.
 
   Returns:
     DPG loss.
@@ -62,7 +65,9 @@ def dpg_loss(
   if dqda_clipping is not None:
     dqda_t = _clip_by_l2_norm(dqda_t, dqda_clipping)
   target_tm1 = dqda_t + a_t
-  return losses.l2_loss(jax.lax.stop_gradient(target_tm1) - a_t)
+  target_tm1 = jax.lax.select(use_stop_gradient,
+                              jax.lax.stop_gradient(target_tm1), target_tm1)
+  return losses.l2_loss(target_tm1 - a_t)
 
 
 def policy_gradient_loss(
@@ -70,6 +75,7 @@ def policy_gradient_loss(
     a_t: Array,
     adv_t: Array,
     w_t: Array,
+    use_stop_gradient: bool = True,
 ) -> Array:
   """Calculates the policy gradient loss.
 
@@ -81,6 +87,8 @@ def policy_gradient_loss(
     a_t: a sequence of actions sampled from the preferences `logits_t`.
     adv_t: the observed or estimated advantages from executing actions `a_t`.
     w_t: a per timestep weighting for the loss.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient to
+      advantages.
 
   Returns:
     Loss whose gradient corresponds to a policy gradient update.
@@ -89,7 +97,7 @@ def policy_gradient_loss(
   chex.assert_type([logits_t, a_t, adv_t, w_t], [float, int, float, float])
 
   log_pi_a_t = distributions.softmax().logprob(a_t, logits_t)
-  adv_t = jax.lax.stop_gradient(adv_t)
+  adv_t = jax.lax.select(use_stop_gradient, jax.lax.stop_gradient(adv_t), adv_t)
   loss_per_timestep = -log_pi_a_t * adv_t
   return jnp.mean(loss_per_timestep * w_t)
 
@@ -124,8 +132,7 @@ def _compute_advantages(logits_t: Array,
   policy_t = jax.nn.softmax(logits_t, axis=1)
 
   # Avoid computing gradients for action_values.
-  if use_stop_gradient:
-    q_t = jax.lax.stop_gradient(q_t)
+  q_t = jax.lax.select(use_stop_gradient, jax.lax.stop_gradient(q_t), q_t)
   baseline_t = jnp.sum(policy_t * q_t, axis=1)
 
   adv_t = q_t - jnp.expand_dims(baseline_t, 1)
@@ -135,6 +142,7 @@ def _compute_advantages(logits_t: Array,
 def qpg_loss(
     logits_t: Array,
     q_t: Array,
+    use_stop_gradient: bool = True,
 ) -> Array:
   """Computes the QPG (Q-based Policy Gradient) loss.
 
@@ -146,7 +154,8 @@ def qpg_loss(
     logits_t: a sequence of unnormalized action preferences.
     q_t: the observed or estimated action value from executing actions `a_t` at
       time t.
-      regularization.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient to
+      advantages.
 
   Returns:
     QPG Loss.
@@ -155,7 +164,9 @@ def qpg_loss(
   chex.assert_type([logits_t, q_t], float)
 
   policy_t, advantage_t = _compute_advantages(logits_t, q_t)
-  policy_advantages = -policy_t * jax.lax.stop_gradient(advantage_t)
+  advantage_t = jax.lax.select(use_stop_gradient,
+                               jax.lax.stop_gradient(advantage_t), advantage_t)
+  policy_advantages = -policy_t * advantage_t
   loss = jnp.mean(jnp.sum(policy_advantages, axis=1), axis=0)
   return loss
 
@@ -163,6 +174,7 @@ def qpg_loss(
 def rm_loss(
     logits_t: Array,
     q_t: Array,
+    use_stop_gradient: bool = True,
 ) -> Array:
   """Computes the RMPG (Regret Matching Policy Gradient) loss.
 
@@ -177,6 +189,8 @@ def rm_loss(
     logits_t: a sequence of unnormalized action preferences.
     q_t: the observed or estimated action value from executing actions `a_t` at
       time t.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient to
+      advantages.
 
   Returns:
     RM Loss.
@@ -186,7 +200,10 @@ def rm_loss(
 
   policy_t, advantage_t = _compute_advantages(logits_t, q_t)
   action_regret_t = jax.nn.relu(advantage_t)
-  policy_regret = -policy_t * jax.lax.stop_gradient(action_regret_t)
+  action_regret_t = jax.lax.select(use_stop_gradient,
+                                   jax.lax.stop_gradient(action_regret_t),
+                                   action_regret_t)
+  policy_regret = -policy_t * action_regret_t
   loss = jnp.mean(jnp.sum(policy_regret, axis=1), axis=0)
   return loss
 
@@ -194,6 +211,7 @@ def rm_loss(
 def rpg_loss(
     logits_t: Array,
     q_t: Array,
+    use_stop_gradient: bool = True,
 ) -> Array:
   """Computes the RPG (Regret Policy Gradient) loss.
 
@@ -208,6 +226,8 @@ def rpg_loss(
     logits_t: a sequence of unnormalized action preferences.
     q_t: the observed or estimated action value from executing actions `a_t` at
       time t.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient to
+      advantages.
 
   Returns:
     RPG Loss.
@@ -215,7 +235,7 @@ def rpg_loss(
   chex.assert_rank([logits_t, q_t], 2)
   chex.assert_type([logits_t, q_t], float)
 
-  _, adv_t = _compute_advantages(logits_t, q_t)
+  _, adv_t = _compute_advantages(logits_t, q_t, use_stop_gradient)
   regrets_t = jnp.sum(jax.nn.relu(adv_t), axis=1)
 
   total_regret_t = jnp.mean(regrets_t, axis=0)
@@ -225,7 +245,8 @@ def rpg_loss(
 def clipped_surrogate_pg_loss(
     prob_ratios_t: Array,
     adv_t: Array,
-    epsilon: Scalar) -> Array:
+    epsilon: Scalar,
+    use_stop_gradient=True) -> Array:
   """Computes the clipped surrogate policy gradient loss.
 
   L_clipₜ(θ) = - min(rₜ(θ)Âₜ, clip(rₜ(θ), 1-ε, 1+ε)Âₜ)
@@ -240,6 +261,8 @@ def clipped_surrogate_pg_loss(
         rₜ(θ) = π_θ(aₜ| sₜ) / π_θ_old(aₜ| sₜ)
     adv_t: the observed or estimated advantages from executing actions a_t.
     epsilon: Scalar value corresponding to how much to clip the objecctive.
+    use_stop_gradient: bool indicating whether or not to apply stop gradient to
+      advantages.
 
   Returns:
     Loss whose gradient corresponds to a clipped surrogate policy gradient
@@ -248,6 +271,7 @@ def clipped_surrogate_pg_loss(
   chex.assert_rank([prob_ratios_t, adv_t], [1, 1])
   chex.assert_type([prob_ratios_t, adv_t], [float, float])
 
+  adv_t = jax.lax.select(use_stop_gradient, jax.lax.stop_gradient(adv_t), adv_t)
   clipped_ratios_t = jnp.clip(prob_ratios_t, 1. - epsilon, 1. + epsilon)
   clipped_objective = jnp.fmin(prob_ratios_t * adv_t, clipped_ratios_t * adv_t)
   return -jnp.mean(clipped_objective)

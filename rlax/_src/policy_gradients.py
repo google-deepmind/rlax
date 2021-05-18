@@ -34,8 +34,24 @@ Scalar = chex.Scalar
 
 def _clip_by_l2_norm(x: Array, max_norm: float) -> Array:
   """Clip gradients to maximum l2 norm `max_norm`."""
-  norm = jnp.sqrt(jnp.sum(jnp.vdot(x, x)))
-  return jnp.where(norm > max_norm, x * (max_norm / norm), x)
+  # Compute the sum of squares and find out where things are zero.
+  sum_sq = jnp.sum(jnp.vdot(x, x))
+  nonzero = sum_sq > 0
+
+  # Compute the norm wherever sum_sq > 0 and leave it <= 0 otherwise. This makes
+  # use of the the "double where" trick; see
+  # https://jax.readthedocs.io/en/latest/faq.html#gradients-contain-nan-where-using-where
+  # for more info. In short this is necessary because although norm ends up
+  # computed correctly where nonzero is true if we ignored this we'd end up with
+  # nans on the off-branches which would leak through when computed gradients in
+  # the backward pass.
+  sum_sq_ones = jnp.where(nonzero, sum_sq, jnp.ones_like(sum_sq))
+  norm = jnp.where(nonzero, jnp.sqrt(sum_sq_ones), sum_sq)
+
+  # Normalize by max_norm. Whenever norm < max_norm we're left with x (this
+  # happens trivially for indices where nonzero is false). Otherwise we're left
+  # with the desired x * max_norm / norm.
+  return (x * max_norm) / jnp.maximum(norm, max_norm)
 
 
 def dpg_loss(

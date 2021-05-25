@@ -273,8 +273,8 @@ def gaussian_diagonal(sigma=None):
         jnp.sum(v) + jnp.sum(mu**2) - jnp.sum(jnp.ones_like(mu)) -
         jnp.sum(jnp.log(v)))
 
-  def kl_fn(mu_1: Array, sigma_1: Numeric, mu_0: Array,
-            sigma_0: Numeric):
+  def kl_fn(mu_0: Array, sigma_0: Numeric, mu_1: Array,
+            sigma_1: Numeric):
     return multivariate_normal_kl_divergence(mu_0, sigma_0, mu_1, sigma_1)
 
   return ContinuousDistribution(sample_fn, prob_fn, logprob_fn, entropy_fn,
@@ -374,7 +374,7 @@ def squashed_gaussian(sigma_min=-4, sigma_max=0.):
       kl = jnp.sum(kl, axis=-1)
     return kl
 
-  def kl_fn(mu_1: Array, sigma_1: Numeric, mu_0: Array, sigma_0: Numeric):
+  def kl_fn(mu_0: Array, sigma_0: Numeric, mu_1: Array, sigma_1: Numeric):
     sigma_0 = sigma_activation(sigma_0)
     mu_0 = mu_activation(mu_0)
     sigma_1 = sigma_activation(sigma_1)

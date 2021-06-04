@@ -17,8 +17,6 @@
 from typing import Any
 import chex
 import jax
-import jax.numpy as jnp
-
 
 Numeric = chex.Numeric
 
@@ -34,11 +32,8 @@ def periodic_update(
     new_tensors: Any, old_tensors: Any,
     steps: chex.Array, update_period: int):
   """Periodically switch all elements from a nested struct with new elements."""
-  return jax.lax.cond(
-      jnp.mod(steps, update_period) == 0,
-      lambda _: new_tensors,
-      lambda _: old_tensors,
-      None)
+  return conditional_update(
+      new_tensors, old_tensors, is_time=steps % update_period == 0)
 
 
 def incremental_update(new_tensors, old_tensors, tau: Numeric):

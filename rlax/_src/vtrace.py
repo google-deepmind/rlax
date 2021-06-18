@@ -216,12 +216,17 @@ def leaky_vtrace_td_error_and_advantage(
     clip_pg_rho_threshold: float = 1.0,
     stop_target_gradients: bool = True,
 ) -> VTraceOutput:
-  """Calculates V-Trace errors and PG advantage from importance weights.
+  """Calculates Leaky V-Trace errors and PG advantage from importance weights.
 
-  This functions computes the TD-errors and policy gradient Advantage terms
-  as used by the IMPALA distributed actor-critic agent.
+  This functions computes the Leaky V-Trace TD-errors and policy gradient
+  Advantage terms as used by the IMPALA distributed actor-critic agent.
 
-  See "IMPALA: Scalable Distributed Deep-RL with Importance Weighted Actor
+  Leaky-Vtrace is a combination of Importance sampling and V-trace, where the
+  degree of mixing is controlled by a scalar `alpha` (that may be meta-learnt).
+
+  See "Self-Tuning Deep Reinforcement Learning"
+  by Zahavy et al. (https://arxiv.org/abs/2002.12928) and
+  "IMPALA: Scalable Distributed Deep-RL with Importance Weighted Actor
   Learner Architectures" by Espeholt et al. (https://arxiv.org/abs/1802.01561)
 
   Args:

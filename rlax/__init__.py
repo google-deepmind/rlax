@@ -118,6 +118,7 @@ from rlax._src.value_learning import sarsa_lambda
 from rlax._src.value_learning import td_lambda
 from rlax._src.value_learning import td_learning
 from rlax._src.vtrace import leaky_vtrace
+from rlax._src.vtrace import leaky_vtrace_td_error_and_advantage
 from rlax._src.vtrace import vtrace
 from rlax._src.vtrace import vtrace_td_error_and_advantage
 
@@ -165,6 +166,7 @@ __all__ = (
     "LagrangePenalty",
     "lambda_returns",
     "leaky_vtrace",
+    "leaky_vtrace_td_error_and_advantage",
     "lhs_broadcast",
     "likelihood",
     "logit",

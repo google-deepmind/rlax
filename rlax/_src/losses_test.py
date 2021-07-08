@@ -27,7 +27,7 @@ from rlax._src import losses
 class L2LossTest(parameterized.TestCase):
 
   def setUp(self):
-    super(L2LossTest, self).setUp()
+    super().setUp()
     self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
     self.ys = jnp.array([2., 0.5, 0.125, 0, 0.125, 0.5, 2.])
     self.dys = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
@@ -64,7 +64,7 @@ class L2LossTest(parameterized.TestCase):
 class LogLossTest(parameterized.TestCase):
 
   def setUp(self):
-    super(LogLossTest, self).setUp()
+    super().setUp()
     self.preds = jnp.array([1., 1., 0., 0., 0.5, 0.5])
     self.targets = jnp.array([1., 0., 0., 1., 1., 0])
     self.expected = jnp.array([0., np.inf, 0., np.inf, 0.6931472, 0.6931472])
@@ -91,7 +91,7 @@ class PixelControlLossTest(parameterized.TestCase):
 
   def setUp(self):
     """Defines example data and expected result for the op."""
-    super(PixelControlLossTest, self).setUp()
+    super().setUp()
 
     # Observation shape is (2,2,3) (i.e., height 2, width 2, and 3 channels).
     # We will use no cropping, and a cell size of 1. We have num_actions = 3,

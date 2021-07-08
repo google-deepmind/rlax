@@ -53,7 +53,7 @@ def tree_map_zipped(fn: Callable[..., Any], nests: Sequence[Any]):
   if not nests:
     return nests
   tree_def = tree_structure(nests[0])
-  if any([tree_structure(x) != tree_def for x in nests[1:]]):
+  if any(tree_structure(x) != tree_def for x in nests[1:]):
     raise ValueError('All elements must share the same tree structure.')
   return jax.tree_unflatten(
       tree_def, [fn(*d) for d in zip(*[jax.tree_leaves(x) for x in nests])])

@@ -77,7 +77,7 @@ class AllSum:
   """Helper for summing over elements in an array and over devices."""
 
   def __init__(self, axis_name: Optional[str] = None):
-    """Callable which sums locally and then over devices with the axis name provided."""
+    """Sums locally and then over devices with the axis name provided."""
     self._axis_name = axis_name
 
   def __call__(

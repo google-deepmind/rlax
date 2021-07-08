@@ -25,7 +25,7 @@ from rlax._src import exploration
 class GaussianTest(parameterized.TestCase):
 
   def setUp(self):
-    super(GaussianTest, self).setUp()
+    super().setUp()
     self._num_actions = 3
     self._rng_key = jax.random.PRNGKey(42)
 
@@ -45,7 +45,7 @@ class GaussianTest(parameterized.TestCase):
 class OrnsteinUhlenbeckTest(parameterized.TestCase):
 
   def setUp(self):
-    super(OrnsteinUhlenbeckTest, self).setUp()
+    super().setUp()
     self._num_actions = 3
     self._rng_key = jax.random.PRNGKey(42)
 
@@ -67,7 +67,7 @@ class OrnsteinUhlenbeckTest(parameterized.TestCase):
 class DirichletNoiseTest(parameterized.TestCase):
 
   def setUp(self):
-    super(DirichletNoiseTest, self).setUp()
+    super().setUp()
     self._batch_size = 5
     self._num_actions = 10
     self._rng_key = jax.random.PRNGKey(42)
@@ -91,13 +91,13 @@ class DirichletNoiseTest(parameterized.TestCase):
 class EMIntrinsicRewardTest(parameterized.TestCase):
 
   def setUp(self):
-    super(EMIntrinsicRewardTest, self).setUp()
+    super().setUp()
     self.num_neighbors = 2
     self.reward_scale = 1.
 
   @chex.all_variants()
   def test_novelty_reward(self):
-    """Check reward is higher for novel embeddings than those identical to memory."""
+    """Check reward is higher for novel embed than those identical to memory."""
 
     @self.variant
     def episodic_memory_intrinsic_rewards(embeddings, reward_scale):

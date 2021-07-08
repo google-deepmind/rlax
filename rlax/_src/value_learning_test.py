@@ -28,7 +28,7 @@ from rlax._src import value_learning
 class TDLearningTest(parameterized.TestCase):
 
   def setUp(self):
-    super(TDLearningTest, self).setUp()
+    super().setUp()
 
     self.v_tm1 = np.array(
         [1, 1, 1, 1, 1, 1, 1, 1, 1], dtype=np.float32)
@@ -55,7 +55,7 @@ class TDLearningTest(parameterized.TestCase):
 class TDLambdaTest(parameterized.TestCase):
 
   def setUp(self):
-    super(TDLambdaTest, self).setUp()
+    super().setUp()
     self.lambda_ = 0.75
 
     self.v_tm1 = np.array(
@@ -86,7 +86,7 @@ class TDLambdaTest(parameterized.TestCase):
 class SarsaTest(parameterized.TestCase):
 
   def setUp(self):
-    super(SarsaTest, self).setUp()
+    super().setUp()
 
     self.q_tm1 = np.array([[1, 1, 0], [1, 1, 0]], dtype=np.float32)
     self.a_tm1 = np.array([0, 1], dtype=np.int32)
@@ -110,7 +110,7 @@ class SarsaTest(parameterized.TestCase):
 class ExpectedSarsaTest(parameterized.TestCase):
 
   def setUp(self):
-    super(ExpectedSarsaTest, self).setUp()
+    super().setUp()
 
     self.q_tm1 = np.array(
         [[1, 1, 0.5], [1, 1, 3]], dtype=np.float32)
@@ -141,7 +141,7 @@ class ExpectedSarsaTest(parameterized.TestCase):
 class SarsaLambdaTest(parameterized.TestCase):
 
   def setUp(self):
-    super(SarsaLambdaTest, self).setUp()
+    super().setUp()
     self.lambda_ = 0.75
 
     self.q_tm1 = np.array(
@@ -187,7 +187,7 @@ class SarsaLambdaTest(parameterized.TestCase):
 class QLearningTest(parameterized.TestCase):
 
   def setUp(self):
-    super(QLearningTest, self).setUp()
+    super().setUp()
 
     self.q_tm1 = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.a_tm1 = np.array([0, 1], dtype=np.int32)
@@ -210,7 +210,7 @@ class QLearningTest(parameterized.TestCase):
 class DoubleQLearningTest(parameterized.TestCase):
 
   def setUp(self):
-    super(DoubleQLearningTest, self).setUp()
+    super().setUp()
 
     self.q_tm1 = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.a_tm1 = np.array([0, 1], dtype=np.int32)
@@ -235,7 +235,7 @@ class DoubleQLearningTest(parameterized.TestCase):
 class PersistentQLearningTest(parameterized.TestCase):
 
   def setUp(self):
-    super(PersistentQLearningTest, self).setUp()
+    super().setUp()
     self.action_gap_scale = 0.25
 
     self.q_tm1 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
@@ -262,7 +262,7 @@ class PersistentQLearningTest(parameterized.TestCase):
 class QVLearningTest(parameterized.TestCase):
 
   def setUp(self):
-    super(QVLearningTest, self).setUp()
+    super().setUp()
 
     self.q_tm1 = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.a_tm1 = np.array([0, 1], dtype=np.int32)
@@ -285,7 +285,7 @@ class QVLearningTest(parameterized.TestCase):
 class QVMaxTest(parameterized.TestCase):
 
   def setUp(self):
-    super(QVMaxTest, self).setUp()
+    super().setUp()
 
     self.v_tm1 = np.array(
         [1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -317,7 +317,7 @@ class QVMaxTest(parameterized.TestCase):
 class QLambdaTest(parameterized.TestCase):
 
   def setUp(self):
-    super(QLambdaTest, self).setUp()
+    super().setUp()
     self.lambda_ = 0.75
 
     self.q_tm1 = np.array(
@@ -360,7 +360,7 @@ class QLambdaTest(parameterized.TestCase):
 class RetraceTest(parameterized.TestCase):
 
   def setUp(self):
-    super(RetraceTest, self).setUp()
+    super().setUp()
     self._lambda = 0.9
 
     self._qs = np.array(
@@ -430,7 +430,7 @@ def _generate_weights(size):
 class RetraceContinuousTest(parameterized.TestCase):
 
   def setUp(self):
-    super(RetraceContinuousTest, self).setUp()
+    super().setUp()
     self._lambda = 0.9 * np.ones((2, 2), dtype=np.float32)
 
     self._qs = np.array([[1.1, 1.1, 3.1, -1.2], [3.1, 9.5, -2.1, 7.4]],
@@ -489,7 +489,7 @@ class RetraceContinuousTest(parameterized.TestCase):
 class L2ProjectTest(parameterized.TestCase):
 
   def setUp(self):
-    super(L2ProjectTest, self).setUp()
+    super().setUp()
 
     old_supports = np.arange(-1, 1., 0.25)
     self.old_supports = np.stack([old_supports, old_supports + 1.])
@@ -517,7 +517,7 @@ class L2ProjectTest(parameterized.TestCase):
 class CategoricalTDLearningTest(parameterized.TestCase):
 
   def setUp(self):
-    super(CategoricalTDLearningTest, self).setUp()
+    super().setUp()
     self.atoms = np.array([.5, 1., 1.5], dtype=np.float32)
 
     self.logits_tm1 = np.array(
@@ -559,7 +559,7 @@ class CategoricalTDLearningTest(parameterized.TestCase):
 class CategoricalQLearningTest(parameterized.TestCase):
 
   def setUp(self):
-    super(CategoricalQLearningTest, self).setUp()
+    super().setUp()
     self.atoms = np.array([.5, 1., 1.5], dtype=np.float32)
 
     self.q_logits_tm1 = np.array(
@@ -615,7 +615,7 @@ class CategoricalQLearningTest(parameterized.TestCase):
 class CategoricalDoubleQLearningTest(parameterized.TestCase):
 
   def setUp(self):
-    super(CategoricalDoubleQLearningTest, self).setUp()
+    super().setUp()
     self.atoms = np.array([.5, 1., 1.5], dtype=np.float32)
 
     self.q_logits_tm1 = np.array(
@@ -720,7 +720,7 @@ class CategoricalDoubleQLearningTest(parameterized.TestCase):
 class QuantileRegressionLossTest(parameterized.TestCase):
 
   def setUp(self):
-    super(QuantileRegressionLossTest, self).setUp()
+    super().setUp()
     self.dist_src = np.array([[-1., 3.], [-1., 3.]])
     self.tau_src = np.array([[0.2, 0.7], [0., 0.4]])
     self.dist_target = np.array([[-3., 4., 2.], [-3., 4., 2.]])
@@ -760,7 +760,7 @@ class QuantileRegressionLossTest(parameterized.TestCase):
 class QuantileLearningTest(parameterized.TestCase):
 
   def setUp(self):
-    super(QuantileLearningTest, self).setUp()
+    super().setUp()
 
     self.dist_q_tm1 = np.array(  # n_batch = 3, n_taus = 2, n_actions = 4
         [[[0, 1, -5, 6], [-1, 3, 0, -2]],

@@ -56,7 +56,7 @@ def knn_query(
     num_neighbors: int,
     metric: Callable[[Array, Array], Scalar] = _sqeuclidian
 ) -> KNNQueryResult:
-  """Finds closest neighbors in data to the query points and their neg distances.
+  """Finds closest neighbors in data to the query points & their neg distances.
 
   NOTE: For this function to be jittable, static_argnums=[2,] must be passed, as
   the internal jax.lax.top_k(neg_distances, num_neighbors) computation cannot be

@@ -42,7 +42,7 @@ TWO_HOT_PROBABILITIES = [
 class TransformsTest(parameterized.TestCase):
 
   def setUp(self):
-    super(TransformsTest, self).setUp()
+    super().setUp()
     self.x = 0.5
     self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
 

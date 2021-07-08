@@ -24,7 +24,7 @@ from rlax._src import embedding
 class EmbeddingTest(parameterized.TestCase):
 
   def setUp(self):
-    super(EmbeddingTest, self).setUp()
+    super().setUp()
     self._features = np.array([[1., 2.], [3., 2.]])
     self._num_actions = 3
     self._actions = np.array([1, 2])

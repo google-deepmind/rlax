@@ -26,7 +26,7 @@ from rlax._src import nested_updates
 class NestedUpdatesTest(parameterized.TestCase):
 
   def setUp(self):
-    super(NestedUpdatesTest, self).setUp()
+    super().setUp()
     old = jnp.zeros((3,), dtype=jnp.float32)
     new = jnp.ones((3,), dtype=jnp.float32)
     self._old_struct = ((old, old), old)

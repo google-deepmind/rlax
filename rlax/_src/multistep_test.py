@@ -27,7 +27,7 @@ from rlax._src import multistep
 class LambdaReturnsTest(parameterized.TestCase):
 
   def setUp(self):
-    super(LambdaReturnsTest, self).setUp()
+    super().setUp()
     self.lambda_ = 0.75
 
     self.r_t = np.array(
@@ -56,7 +56,7 @@ class LambdaReturnsTest(parameterized.TestCase):
 class DiscountedReturnsTest(parameterized.TestCase):
 
   def setUp(self):
-    super(DiscountedReturnsTest, self).setUp()
+    super().setUp()
 
     self.r_t = np.array(
         [[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0, 2.1]])
@@ -87,7 +87,7 @@ class DiscountedReturnsTest(parameterized.TestCase):
 class NStepBootstrappedReturnsTest(parameterized.TestCase):
 
   def setUp(self):
-    super(NStepBootstrappedReturnsTest, self).setUp()
+    super().setUp()
     self.r_t = np.array(
         [[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0, 2.1]])
     self.discount_t = np.array(
@@ -134,7 +134,7 @@ class NStepBootstrappedReturnsTest(parameterized.TestCase):
 class TDErrorTest(parameterized.TestCase):
 
   def setUp(self):
-    super(TDErrorTest, self).setUp()
+    super().setUp()
 
     self.r_t = np.array(
         [[1.0, 0.0, -1.0, 0.0, 1.0], [0.5, 0.8, -0.7, 0.0, 2.1]])
@@ -166,7 +166,7 @@ class TDErrorTest(parameterized.TestCase):
 class TruncatedGeneralizedAdvantageEstimationTest(parameterized.TestCase):
 
   def setUp(self):
-    super(TruncatedGeneralizedAdvantageEstimationTest, self).setUp()
+    super().setUp()
 
     self.r_t = jnp.array([[0., 0., 1., 0., -0.5],
                           [0., 0., 0., 0., 1.]])
@@ -225,11 +225,18 @@ class TruncatedGeneralizedAdvantageEstimationTest(parameterized.TestCase):
 
   @chex.all_variants()
   @parameterized.named_parameters(
-      ('lambda1', 1.0),
-      ('lambda0.7', 0.7),
-      ('lambda0.4', 0.4))
+      ('lambda_1', 1.0),
+      ('lambda_0.7', 0.7),
+      ('lambda_0.4', 0.4))
   def test_gae_as_special_case_of_importance_corrected_td_errors(self, lambda_):
-    """Tests that truncated GAE yields same output as importance corrected td errors with dummy ratios."""
+    """Tests truncated GAE.
+
+    Tests that truncated GAE yields same output as importance corrected
+    td errors with dummy ratios.
+
+    Args:
+      lambda_: a lambda to use in GAE.
+    """
     batched_gae_fn_variant = self.variant(jax.vmap(
         multistep.truncated_generalized_advantage_estimation,
         in_axes=(0, 0, None, 0), out_axes=0))

@@ -1,1 +1,2 @@
-# Placeholder
+dm-haiku>=0.0.4
+optax>=0.0.9

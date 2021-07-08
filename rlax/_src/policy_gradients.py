@@ -163,8 +163,7 @@ def qpg_loss(
   """Computes the QPG (Q-based Policy Gradient) loss.
 
   See "Actor-Critic Policy Optimization in Partially Observable Multiagent
-  Environments" by Srinivasan, Lanctot.
-  (https://papers.nips.cc/paper/7602-actor-critic-policy-optimization-in-partially-observable-multiagent-environments.pdf)
+  Environments" by Srinivasan, Lanctot (https://arxiv.org/abs/1810.09026).
 
   Args:
     logits_t: a sequence of unnormalized action preferences.
@@ -198,8 +197,7 @@ def rm_loss(
   standard PG update with thresholded regret.
 
   See "Actor-Critic Policy Optimization in Partially Observable Multiagent
-  Environments" by Srinivasan, Lanctot.
-  (https://papers.nips.cc/paper/7602-actor-critic-policy-optimization-in-partially-observable-multiagent-environments.pdf)
+  Environments" by Srinivasan, Lanctot (https://arxiv.org/abs/1810.09026).
 
   Args:
     logits_t: a sequence of unnormalized action preferences.
@@ -235,8 +233,7 @@ def rpg_loss(
   standard PG update with regret.
 
   See "Actor-Critic Policy Optimization in Partially Observable Multiagent
-  Environments" by Srinivasan, Lanctot.
-  (https://papers.nips.cc/paper/7602-actor-critic-policy-optimization-in-partially-observable-multiagent-environments.pdf)
+  Environments" by Srinivasan, Lanctot (https://arxiv.org/abs/1810.09026).
 
   Args:
     logits_t: a sequence of unnormalized action preferences.

@@ -457,7 +457,7 @@ def decoupled_multivariate_normal_kl_divergence(
     mu_0: Array, sigma_0: Numeric, mu_1: Array, sigma_1: Numeric,
     per_dimension: bool = False
 ) -> Tuple[Array, Array]:
-  """Compute the KL between diagonal Gaussians decomposed into mean and covariance.
+  """Compute the KL between diagonal Gaussians decomposed into mean and covar-e.
 
   Args:
     mu_0: array like of mean values for policy 0
@@ -490,7 +490,7 @@ def decoupled_multivariate_normal_kl_divergence(
 def multivariate_normal_kl_divergence(
     mu_0: Array, sigma_0: Numeric, mu_1: Array, sigma_1: Numeric,
 ) -> Array:
-  """Compute the KL between two gaussian distribution with diagonal covariance matrices.
+  """Compute the KL between 2 gaussian distrs with diagonal covariance matrices.
 
   Args:
     mu_0: array like of mean values for policy 0

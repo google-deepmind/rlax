@@ -49,7 +49,7 @@ class CategoricalSampleTest(parameterized.TestCase):
 class SoftmaxTest(parameterized.TestCase):
 
   def setUp(self):
-    super(SoftmaxTest, self).setUp()
+    super().setUp()
 
     self.logits = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.samples = np.array([0, 1], dtype=np.int32)
@@ -132,7 +132,7 @@ class SoftmaxTest(parameterized.TestCase):
 class EpsilonSoftmaxTest(parameterized.TestCase):
 
   def setUp(self):
-    super(EpsilonSoftmaxTest, self).setUp()
+    super().setUp()
 
     self.logits = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.samples = np.array([0, 1], dtype=np.int32)
@@ -186,7 +186,7 @@ class EpsilonSoftmaxTest(parameterized.TestCase):
 class GreedyTest(parameterized.TestCase):
 
   def setUp(self):
-    super(GreedyTest, self).setUp()
+    super().setUp()
 
     self.preferences = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.samples = np.array([0, 1], dtype=np.int32)
@@ -263,7 +263,7 @@ class GreedyTest(parameterized.TestCase):
 class EpsilonGreedyTest(parameterized.TestCase):
 
   def setUp(self):
-    super(EpsilonGreedyTest, self).setUp()
+    super().setUp()
     self.epsilon = 0.2
 
     self.preferences = np.array([[1, 1, 0, 0], [1, 2, 0, 0]], dtype=np.float32)
@@ -362,7 +362,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
 class GaussianDiagonalTest(parameterized.TestCase):
 
   def setUp(self):
-    super(GaussianDiagonalTest, self).setUp()
+    super().setUp()
 
     self.mu = np.array([[1., -1], [0.1, -0.1]], dtype=np.float32)
     self.sigma = np.array([[0.1, 0.1], [0.2, 0.3]], dtype=np.float32)
@@ -444,7 +444,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
 class ImportanceSamplingTest(parameterized.TestCase):
 
   def setUp(self):
-    super(ImportanceSamplingTest, self).setUp()
+    super().setUp()
 
     self.pi_logits = np.array([[0.2, 0.8], [0.6, 0.4]], dtype=np.float32)
     self.mu_logits = np.array([[0.8, 0.2], [0.6, 0.4]], dtype=np.float32)
@@ -468,7 +468,7 @@ class ImportanceSamplingTest(parameterized.TestCase):
 class CategoricalKLTest(parameterized.TestCase):
 
   def setUp(self):
-    super(CategoricalKLTest, self).setUp()
+    super().setUp()
     self.p_logits = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     p_probs = np.array([[0.42231882, 0.42231882, 0.15536241],
                         [0.24472848, 0.66524094, 0.09003057]],
@@ -494,7 +494,7 @@ class CategoricalKLTest(parameterized.TestCase):
 class CategoricalCrossEntropyTest(parameterized.TestCase):
 
   def setUp(self):
-    super(CategoricalCrossEntropyTest, self).setUp()
+    super().setUp()
 
     self.labels = np.array([[0., 1., 0.], [1., 0., 0.]], dtype=np.float32)
     self.logits = np.array([[10., 1., -2.], [1., 4., 0.2]], dtype=np.float32)

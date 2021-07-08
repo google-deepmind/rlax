@@ -1,5 +1,7 @@
 # RLax
 
+![CI status](https://github.com/deepmind/rlax/workflows/ci/badge.svg)
+
 RLax (pronounced "relax") is a library built on top of JAX that exposes
 useful building blocks for implementing reinforcement learning agents.
 

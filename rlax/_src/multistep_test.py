@@ -96,7 +96,7 @@ class NStepBootstrappedReturnsTest(parameterized.TestCase):
         [[3.0, 1.0, 5.0, -5.0, 3.0], [-1.7, 1.2, 2.3, 2.2, 2.7]])
 
     # Different expected results for different values of n.
-    self.expected = dict()
+    self.expected = {}
     self.expected[3] = np.array(
         [[2.8, -3.15, 0.7, 1.7, 3.4], [1.2155, 0.714, 0.2576, 3.192, 3.99]],
         dtype=np.float32)
@@ -180,7 +180,7 @@ class TruncatedGeneralizedAdvantageEstimationTest(parameterized.TestCase):
                                    [0.9, 0.9, 0.9, 0.9, 0.9]])
 
     # Different expected results for different values of lambda.
-    self.expected = dict()
+    self.expected = {}
     self.expected[1.] = np.array(
         [[-1.45118, -4.4557, 2.5396, 0.5249, -0.49],
          [3., 2., 1., 0., -4.9]],

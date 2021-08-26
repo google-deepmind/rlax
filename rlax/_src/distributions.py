@@ -98,7 +98,7 @@ def clipped_entropy_softmax(temperature=1., entropy_clip=1.):
     probs = jax.nn.softmax(logits / temperature)
     logprobs = jax.nn.log_softmax(logits / temperature)
     entropy = -jnp.sum(probs * logprobs, axis=-1)
-    return -jnp.minimum(entropy, entropy_clip * e_max)
+    return jnp.minimum(entropy, entropy_clip * e_max)
 
   def kl_fn(p_logits: Array, q_logits: Array):
     return categorical_kl_divergence(p_logits, q_logits, temperature)

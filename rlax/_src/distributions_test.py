@@ -66,11 +66,15 @@ class SoftmaxTest(parameterized.TestCase):
     self.expected_logprobs = np.array(
         [logprobs[0][self.samples[0]], logprobs[1][self.samples[1]]])
     self.expected_entropy = -np.sum(probs * logprobs, axis=-1)
+    self.expected_clipped_entropy = {0.5: 0.549306, 0.9: 0.988751}
 
   @chex.all_variants()
-  def test_softmax_probs(self):
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_probs(self, softmax_dist):
     """Tests for a single element."""
-    distrib = distributions.softmax(temperature=10.)
+    distrib = softmax_dist(temperature=10.)
     softmax = self.variant(distrib.probs)
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_probs):
@@ -79,18 +83,24 @@ class SoftmaxTest(parameterized.TestCase):
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
   @chex.all_variants()
-  def test_softmax_probs_batch(self):
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_probs_batch(self, softmax_dist):
     """Tests for a full batch."""
-    distrib = distributions.softmax(temperature=10.)
+    distrib = softmax_dist(temperature=10.)
     softmax = self.variant(distrib.probs)
     # Test softmax output in batch.
     actual = softmax(self.logits)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
   @chex.all_variants()
-  def test_softmax_logprob(self):
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_logprob(self, softmax_dist):
     """Tests for a single element."""
-    distrib = distributions.softmax()
+    distrib = softmax_dist()
     logprob_fn = self.variant(distrib.logprob)
     # For each element in the batch.
     for logits, samples, expected in zip(
@@ -100,18 +110,24 @@ class SoftmaxTest(parameterized.TestCase):
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
   @chex.all_variants()
-  def test_softmax_logprob_batch(self):
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_logprob_batch(self, softmax_dist):
     """Tests for a full batch."""
-    distrib = distributions.softmax()
+    distrib = softmax_dist()
     logprob_fn = self.variant(distrib.logprob)
     # Test softmax output in batch.
     actual = logprob_fn(self.samples, self.logits)
     np.testing.assert_allclose(self.expected_logprobs, actual, atol=1e-4)
 
   @chex.all_variants()
-  def test_softmax_entropy(self):
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_entropy(self, softmax_dist):
     """Tests for a single element."""
-    distrib = distributions.softmax()
+    distrib = softmax_dist()
     entropy_fn = self.variant(distrib.entropy)
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_entropy):
@@ -120,9 +136,23 @@ class SoftmaxTest(parameterized.TestCase):
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
   @chex.all_variants()
-  def test_softmax_entropy_batch(self):
+  @parameterized.parameters((0.9, [0.988751, 0.832396]),
+                            (0.5, [0.549306, 0.549306]))
+  def test_softmax_clipped_entropy_batch(self, entropy_clip, expected_clipped):
+    """Tests for a single element."""
+    distrib = distributions.clipped_entropy_softmax(entropy_clip=entropy_clip)
+    entropy_fn = self.variant(distrib.entropy)
+    # Test softmax output in batch.
+    actual = entropy_fn(self.logits)
+    np.testing.assert_allclose(expected_clipped, actual, atol=1e-4)
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_entropy_batch(self, softmax_dist):
     """Tests for a full batch."""
-    distrib = distributions.softmax()
+    distrib = softmax_dist()
     entropy_fn = self.variant(distrib.entropy)
     # Test softmax output in batch.
     actual = entropy_fn(self.logits)

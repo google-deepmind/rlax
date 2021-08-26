@@ -397,6 +397,8 @@ class GaussianDiagonalTest(parameterized.TestCase):
     self.mu = np.array([[1., -1], [0.1, -0.1]], dtype=np.float32)
     self.sigma = np.array([[0.1, 0.1], [0.2, 0.3]], dtype=np.float32)
     self.sample = np.array([[1.2, -1.1], [-0.1, 0.]], dtype=np.float32)
+    self.other_mu = np.array([[1., -10.], [0.3, -0.2]], dtype=np.float32)
+    self.other_sigma = np.array([[0.1, 0.1], [0.8, 0.3]], dtype=np.float32)
 
     # Expected values for the distribution's function were computed using
     # tfd.MultivariateNormalDiag (from the tensorflow_probability package).
@@ -406,6 +408,10 @@ class GaussianDiagonalTest(parameterized.TestCase):
         [0.26729202, 0.41997814], dtype=np.float32)
     self.expected_entropy = np.array(
         [-1.7672932, 0.02446628], dtype=np.float32)
+    self.expected_kl = np.array(
+        [4050.00, 1.00435], dtype=np.float32)
+    self.expected_kl_to_std_normal = np.array(
+        4.6151705 + 1.8884108, dtype=np.float32)
 
   @chex.all_variants()
   def test_gaussian_prob(self):
@@ -469,6 +475,25 @@ class GaussianDiagonalTest(parameterized.TestCase):
     # Test greedy output in batch.
     actual = entropy_fn(self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
+
+  @chex.all_variants()
+  def test_gaussian_kl_batch(self):
+    """Tests for a full batch."""
+    distrib = distributions.gaussian_diagonal()
+    kl_fn = self.variant(distrib.kl)
+    # Test greedy output in batch.
+    actual = kl_fn(self.other_mu, self.other_sigma, self.mu, self.sigma)
+    np.testing.assert_allclose(self.expected_kl, actual, atol=1e-3, rtol=1e-6)
+
+  @chex.all_variants()
+  def test_gaussian_kl_to_std_normal_batch(self):
+    """Tests for a full batch."""
+    distrib = distributions.gaussian_diagonal()
+    kl_fn = self.variant(distrib.kl_to_standard_normal)
+    # Test greedy output in batch.
+    actual = kl_fn(self.mu, self.sigma)
+    np.testing.assert_allclose(self.expected_kl_to_std_normal, actual,
+                               atol=1e-4)
 
 
 class ImportanceSamplingTest(parameterized.TestCase):
@@ -539,6 +564,25 @@ class CategoricalCrossEntropyTest(parameterized.TestCase):
     # Test outputs.
     actual = cross_entropy(self.labels, self.logits)
     np.testing.assert_allclose(self.expected, actual, atol=1e-4)
+
+
+class MultivariateNormalKLTest(parameterized.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    # Test numbers taken from tfd.MultivariateNormalDiag
+    self.mu0 = np.array([[5., -1], [0.1, -0.1]], dtype=np.float32)
+    self.sigma0 = np.array([[0.3, 0.1], [0.2, 0.3]], dtype=np.float32)
+    self.mu1 = np.array([[0.005, -11.], [-0.25, -0.2]], dtype=np.float32)
+    self.sigma1 = np.array([[0.1, 0.1], [0.6, 0.3]], dtype=np.float32)
+    self.expected_kl = np.array([6.2504023e+03, 8.7986231e-01],
+                                dtype=np.float32)
+
+  @chex.all_variants()
+  def test_multivariate_normal_kl_divergence_batch(self):
+    kl_fn = self.variant(distributions.multivariate_normal_kl_divergence)
+    actual = kl_fn(self.mu0, self.sigma0, self.mu1, self.sigma1)
+    np.testing.assert_allclose(self.expected_kl, actual, atol=1e-3, rtol=1e-6)
 
 
 if __name__ == '__main__':

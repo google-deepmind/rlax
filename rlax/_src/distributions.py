@@ -212,26 +212,32 @@ def gaussian_diagonal(sigma=None):
   """A gaussian distribution with diagonal covariance matrix."""
 
   def sample_fn(key: Array, mu: Array, sigma: Array = sigma):
-    return distrax.MultivariateNormalDiag(mu, sigma).sample(seed=key)
+    return distrax.MultivariateNormalDiag(
+        mu, jnp.ones_like(mu) * sigma).sample(seed=key)
 
   def prob_fn(sample: Array, mu: Array, sigma: Array = sigma):
-    return distrax.MultivariateNormalDiag(mu, sigma).prob(sample)
+    return distrax.MultivariateNormalDiag(
+        mu, jnp.ones_like(mu) * sigma).prob(sample)
 
   def logprob_fn(sample: Array, mu: Array, sigma: Array = sigma):
-    return distrax.MultivariateNormalDiag(mu, sigma).log_prob(sample)
+    return distrax.MultivariateNormalDiag(
+        mu, jnp.ones_like(mu) * sigma).log_prob(sample)
 
   def entropy_fn(mu: Array, sigma: Array = sigma):
-    return distrax.MultivariateNormalDiag(mu, sigma).entropy()
+    return distrax.MultivariateNormalDiag(
+        mu, jnp.ones_like(mu) * sigma).entropy()
 
   def kl_to_standard_normal_fn(mu: Array, sigma: Array = sigma):
-    kl_mean, kl_cov = distrax.MultivariateNormalDiag(mu, sigma).kl_divergence(
-        distrax.MultivariateNormalDiag(
-            jnp.zeros_like(mu), jnp.ones_like(sigma)))
+    kl_mean, kl_cov = distrax.MultivariateNormalDiag(
+        mu, jnp.ones_like(mu) * sigma).kl_divergence(
+            distrax.MultivariateNormalDiag(
+                jnp.zeros_like(mu), jnp.ones_like(mu)))
     return kl_mean + kl_cov
 
   def kl_fn(mu_1: Array, sigma_1: Numeric, mu_0: Array, sigma_0: Numeric):
-    return distrax.MultivariateNormalDiag(mu_0, sigma_0).kl_divergence(
-        distrax.MultivariateNormalDiag(mu_1, sigma_1))
+    return distrax.MultivariateNormalDiag(
+        mu_0, jnp.ones_like(mu_0) * sigma_0).kl_divergence(
+            distrax.MultivariateNormalDiag(mu_1, jnp.ones_like(mu_1) * sigma_1))
 
   return ContinuousDistribution(sample_fn, prob_fn, logprob_fn, entropy_fn,
                                 kl_to_standard_normal_fn, kl_fn)

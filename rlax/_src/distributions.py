@@ -228,11 +228,10 @@ def gaussian_diagonal(sigma=None):
         mu, jnp.ones_like(mu) * sigma).entropy()
 
   def kl_to_standard_normal_fn(mu: Array, sigma: Array = sigma):
-    kl_mean, kl_cov = distrax.MultivariateNormalDiag(
+    return distrax.MultivariateNormalDiag(
         mu, jnp.ones_like(mu) * sigma).kl_divergence(
             distrax.MultivariateNormalDiag(
                 jnp.zeros_like(mu), jnp.ones_like(mu)))
-    return kl_mean + kl_cov
 
   def kl_fn(mu_1: Array, sigma_1: Numeric, mu_0: Array, sigma_0: Numeric):
     return distrax.MultivariateNormalDiag(

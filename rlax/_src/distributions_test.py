@@ -411,7 +411,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
     self.expected_kl = np.array(
         [4050.00, 1.00435], dtype=np.float32)
     self.expected_kl_to_std_normal = np.array(
-        4.6151705 + 1.8884108, dtype=np.float32)
+        [4.6151705, 1.8884108], dtype=np.float32)
 
   @chex.all_variants()
   def test_gaussian_prob(self):

@@ -578,7 +578,7 @@ def kl_constraint_loss(
 def kl_alpha_loss(
     restarting_weights: Array,
     kl_constraints: Sequence[Tuple[Array, LagrangePenalty]] = (),
-    axis_name: str = None):
+    axis_name: Optional[str] = None):
   """Calculates the losses for multiple KL constraints.
 
   Args:

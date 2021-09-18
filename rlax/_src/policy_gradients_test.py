@@ -28,7 +28,7 @@ from rlax._src import policy_gradients
 class DpgLossTest(parameterized.TestCase):
 
   def setUp(self):
-    super(DpgLossTest, self).setUp()
+    super().setUp()
 
     self.s_t = np.array([[0, 1, 0], [1, 1, 2]], dtype=np.float32)  # [B, T]
     self.w_s = np.ones([3, 2], dtype=np.float32)
@@ -59,7 +59,7 @@ class DpgLossTest(parameterized.TestCase):
 class PolicyGradientLossTest(parameterized.TestCase):
 
   def setUp(self):
-    super(PolicyGradientLossTest, self).setUp()
+    super().setUp()
 
     logits = np.array(
         [[1., 1., 1.], [2., 0., 0.], [-1., -2., -3.]], dtype=np.float32)
@@ -87,7 +87,7 @@ class PolicyGradientLossTest(parameterized.TestCase):
 class EntropyLossTest(parameterized.TestCase):
 
   def setUp(self):
-    super(EntropyLossTest, self).setUp()
+    super().setUp()
 
     logits = np.array(
         [[1., 1., 1.], [2., 0., 0.], [-1., -2., -3.]], dtype=np.float32)
@@ -109,7 +109,7 @@ class EntropyLossTest(parameterized.TestCase):
 class QPGLossTest(parameterized.TestCase):
 
   def setUp(self):
-    super(QPGLossTest, self).setUp()
+    super().setUp()
 
     self.q_values = jnp.array([[0., -1., 1.], [1., -1., 0]])
     self.policy_logits = jnp.array([[1., 1., 1.], [1., 1., 4.]])
@@ -140,7 +140,7 @@ class QPGLossTest(parameterized.TestCase):
 class RMLossTest(parameterized.TestCase):
 
   def setUp(self):
-    super(RMLossTest, self).setUp()
+    super().setUp()
     self.q_values = jnp.array([[0., -1., 1.], [1., -1., 0]])
     self.policy_logits = jnp.array([[1., 1., 1.], [1., 1., 4.]])
 
@@ -170,7 +170,7 @@ class RMLossTest(parameterized.TestCase):
 class RPGLossTest(parameterized.TestCase):
 
   def setUp(self):
-    super(RPGLossTest, self).setUp()
+    super().setUp()
 
     self.q_values = jnp.array([[0., -1., 1.], [1., -1., 0]])
     self.policy_logits = jnp.array([[1., 1., 1.], [1., 1., 4.]])
@@ -201,7 +201,7 @@ class RPGLossTest(parameterized.TestCase):
 class ClippedSurrogatePGLossTest(parameterized.TestCase):
 
   def setUp(self):
-    super(ClippedSurrogatePGLossTest, self).setUp()
+    super().setUp()
 
     logits = np.array(
         [[1., 1., 1.], [2., 0., 0.], [-1., -2., -3.]], dtype=np.float32)

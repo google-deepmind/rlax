@@ -14,8 +14,11 @@
 # ==============================================================================
 """Install script for setuptools."""
 
+import os
 from setuptools import find_namespace_packages
 from setuptools import setup
+
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def _get_version():
@@ -28,6 +31,16 @@ def _get_version():
     raise ValueError('`__version__` not defined in `rlax/__init__.py`')
 
 
+def _parse_requirements(path):
+
+  with open(os.path.join(_CURRENT_DIR, path)) as f:
+    return [
+        line.rstrip()
+        for line in f
+        if not (line.isspace() or line.startswith('#'))
+    ]
+
+
 setup(
     name='rlax',
     version=_get_version(),
@@ -35,22 +48,19 @@ setup(
     license='Apache 2.0',
     author='DeepMind',
     description=('A library of reinforcement learning building blocks in JAX.'),
-    long_description=open('README.md').read(),
+    long_description=open(os.path.join(_CURRENT_DIR, 'README.md')).read(),
     long_description_content_type='text/markdown',
     author_email='rlax-dev@google.com',
     keywords='reinforcement-learning python machine learning',
     packages=find_namespace_packages(exclude=['*_test.py']),
-    install_requires=[
-        'absl-py>=0.9.0',
-        'chex>=0.0.4',
-        'jax>=0.1.55',
-        'jaxlib>=0.1.37',
-        'dm-env>=1.2',
-        'numpy>=1.18.0',
-    ],
+    install_requires=_parse_requirements(
+        os.path.join(_CURRENT_DIR, 'requirements', 'requirements.txt')),
+    tests_require=_parse_requirements(
+        os.path.join(_CURRENT_DIR, 'requirements', 'requirements-test.txt')),
+    zip_safe=False,  # Required for full installation.
     python_requires='>=3.6',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',

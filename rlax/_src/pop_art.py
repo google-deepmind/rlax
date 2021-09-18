@@ -60,8 +60,8 @@ def _cross_replica_scatter_add(source: Array, indices: Array, updates: Array,
   total_updates = jnp.sum(updates_at_idxs, axis=0)
   if axis_name is not None:
     axis_names = (axis_name,) if isinstance(axis_name, str) else axis_name
-    for axis_name in axis_names:
-      total_updates = jax.lax.psum(total_updates, axis_name=axis_name)
+    for a_name in axis_names:
+      total_updates = jax.lax.psum(total_updates, axis_name=a_name)
   return source + total_updates
 
 

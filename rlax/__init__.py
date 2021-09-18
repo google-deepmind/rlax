@@ -118,10 +118,11 @@ from rlax._src.value_learning import sarsa_lambda
 from rlax._src.value_learning import td_lambda
 from rlax._src.value_learning import td_learning
 from rlax._src.vtrace import leaky_vtrace
+from rlax._src.vtrace import leaky_vtrace_td_error_and_advantage
 from rlax._src.vtrace import vtrace
 from rlax._src.vtrace import vtrace_td_error_and_advantage
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 __all__ = (
     "add_gaussian_noise",
@@ -165,6 +166,7 @@ __all__ = (
     "LagrangePenalty",
     "lambda_returns",
     "leaky_vtrace",
+    "leaky_vtrace_td_error_and_advantage",
     "lhs_broadcast",
     "likelihood",
     "logit",
@@ -238,7 +240,3 @@ __all__ = (
 #                 ||----w |
 #                 ||     ||
 #
-try:
-  del _src  # pylint: disable=undefined-variable
-except NameError:
-  pass

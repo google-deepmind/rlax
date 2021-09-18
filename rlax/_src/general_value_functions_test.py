@@ -26,7 +26,7 @@ from rlax._src import general_value_functions
 class PixelControlTest(parameterized.TestCase):
 
   def setUp(self):
-    super(PixelControlTest, self).setUp()
+    super().setUp()
     self.cell_size = 2
     time, self.batch_size = 3, 2
     height, width, channels = 4, 4, 3
@@ -70,7 +70,7 @@ class PixelControlTest(parameterized.TestCase):
 class FeatureControlTest(parameterized.TestCase):
 
   def setUp(self):
-    super(FeatureControlTest, self).setUp()
+    super().setUp()
     self.potential_discount = .99
 
     self.features = np.array([

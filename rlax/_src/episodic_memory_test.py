@@ -25,7 +25,7 @@ from rlax._src import episodic_memory
 class KNNQueryTest(parameterized.TestCase):
 
   def setUp(self):
-    super(KNNQueryTest, self).setUp()
+    super().setUp()
     self.data = np.array([[0., 0.], [7.5, 1.], [40., 40.]])
     self.query_points = np.array([[2.0, 1.3], [7.5, 0.0]])
 

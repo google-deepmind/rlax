@@ -153,7 +153,7 @@ def get_common_loss_fn_inputs(params, key, target_name):
 
 
 def get_decoupled_kl_constraints(out, params, per_dimension):
-  # Factorize KL for Gaussian.
+  """Factorises KL for Gaussian."""
   kl_mean, kl_covariance = (
       distributions.decoupled_multivariate_normal_kl_divergence(
           out['target_pi_params']['mean'], out['target_pi_params']['stddev'],

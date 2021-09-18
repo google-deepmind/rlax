@@ -27,7 +27,7 @@ from rlax._src import vtrace
 class VTraceTest(parameterized.TestCase):
 
   def setUp(self):
-    super(VTraceTest, self).setUp()
+    super().setUp()
 
     behavior_policy_logits = np.array(
         [[[8.9, 0.7], [5.0, 1.0], [0.6, 0.1], [-0.9, -0.1]],

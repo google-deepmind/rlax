@@ -27,7 +27,7 @@ from rlax._src import clipping
 class HuberLossTest(parameterized.TestCase):
 
   def setUp(self):
-    super(HuberLossTest, self).setUp()
+    super().setUp()
     self.delta = 1.
 
     self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
@@ -65,7 +65,7 @@ class HuberLossTest(parameterized.TestCase):
 class ClipGradientsTest(parameterized.TestCase):
 
   def setUp(self):
-    super(ClipGradientsTest, self).setUp()
+    super().setUp()
     self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
 
   @chex.all_variants()
@@ -88,7 +88,7 @@ class ClipGradientsTest(parameterized.TestCase):
 class EquivalenceTest(parameterized.TestCase):
 
   def setUp(self):
-    super(EquivalenceTest, self).setUp()
+    super().setUp()
     self.large_delta = 5.
     self.xs = jnp.array([-2, -1, -0.5, 0, 0.5, 1, 2])
 

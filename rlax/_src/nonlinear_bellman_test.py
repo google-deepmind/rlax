@@ -26,7 +26,7 @@ from rlax._src import nonlinear_bellman
 class IdentityTest(parameterized.TestCase):
 
   def setUp(self):
-    super(IdentityTest, self).setUp()
+    super().setUp()
     self.q_t = np.array(
         [[[1.2, 2.2], [-1.2, 0.2], [2.2, -1.2]],
          [[4.2, 2.2], [1.2, 1.2], [-1.2, -2.2]]],
@@ -46,7 +46,7 @@ class IdentityTest(parameterized.TestCase):
 class TransformedQLambdaTest(parameterized.TestCase):
 
   def setUp(self):
-    super(TransformedQLambdaTest, self).setUp()
+    super().setUp()
     self.lambda_ = 0.75
 
     self.q_tm1 = np.array(
@@ -98,7 +98,7 @@ class TransformedQLambdaTest(parameterized.TestCase):
 class TransformedNStepQLearningTest(parameterized.TestCase):
 
   def setUp(self):
-    super(TransformedNStepQLearningTest, self).setUp()
+    super().setUp()
     self.n = 2
 
     self.q_tm1 = np.array(
@@ -157,7 +157,7 @@ class TransformedNStepQLearningTest(parameterized.TestCase):
 class TransformedRetraceTest(parameterized.TestCase):
 
   def setUp(self):
-    super(TransformedRetraceTest, self).setUp()
+    super().setUp()
     self._lambda = 0.9
 
     self._qs = np.array(

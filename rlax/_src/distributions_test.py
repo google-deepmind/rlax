@@ -49,7 +49,7 @@ class CategoricalSampleTest(parameterized.TestCase):
 class SoftmaxTest(parameterized.TestCase):
 
   def setUp(self):
-    super(SoftmaxTest, self).setUp()
+    super().setUp()
 
     self.logits = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.samples = np.array([0, 1], dtype=np.int32)
@@ -66,11 +66,15 @@ class SoftmaxTest(parameterized.TestCase):
     self.expected_logprobs = np.array(
         [logprobs[0][self.samples[0]], logprobs[1][self.samples[1]]])
     self.expected_entropy = -np.sum(probs * logprobs, axis=-1)
+    self.expected_clipped_entropy = {0.5: 0.549306, 0.9: 0.988751}
 
   @chex.all_variants()
-  def test_softmax_probs(self):
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_probs(self, softmax_dist):
     """Tests for a single element."""
-    distrib = distributions.softmax(temperature=10.)
+    distrib = softmax_dist(temperature=10.)
     softmax = self.variant(distrib.probs)
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_probs):
@@ -79,18 +83,24 @@ class SoftmaxTest(parameterized.TestCase):
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
   @chex.all_variants()
-  def test_softmax_probs_batch(self):
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_probs_batch(self, softmax_dist):
     """Tests for a full batch."""
-    distrib = distributions.softmax(temperature=10.)
+    distrib = softmax_dist(temperature=10.)
     softmax = self.variant(distrib.probs)
     # Test softmax output in batch.
     actual = softmax(self.logits)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
 
   @chex.all_variants()
-  def test_softmax_logprob(self):
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_logprob(self, softmax_dist):
     """Tests for a single element."""
-    distrib = distributions.softmax()
+    distrib = softmax_dist()
     logprob_fn = self.variant(distrib.logprob)
     # For each element in the batch.
     for logits, samples, expected in zip(
@@ -100,18 +110,24 @@ class SoftmaxTest(parameterized.TestCase):
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
   @chex.all_variants()
-  def test_softmax_logprob_batch(self):
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_logprob_batch(self, softmax_dist):
     """Tests for a full batch."""
-    distrib = distributions.softmax()
+    distrib = softmax_dist()
     logprob_fn = self.variant(distrib.logprob)
     # Test softmax output in batch.
     actual = logprob_fn(self.samples, self.logits)
     np.testing.assert_allclose(self.expected_logprobs, actual, atol=1e-4)
 
   @chex.all_variants()
-  def test_softmax_entropy(self):
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_entropy(self, softmax_dist):
     """Tests for a single element."""
-    distrib = distributions.softmax()
+    distrib = softmax_dist()
     entropy_fn = self.variant(distrib.entropy)
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_entropy):
@@ -120,9 +136,23 @@ class SoftmaxTest(parameterized.TestCase):
       np.testing.assert_allclose(expected, actual, atol=1e-4)
 
   @chex.all_variants()
-  def test_softmax_entropy_batch(self):
+  @parameterized.parameters((0.9, [0.988751, 0.832396]),
+                            (0.5, [0.549306, 0.549306]))
+  def test_softmax_clipped_entropy_batch(self, entropy_clip, expected_clipped):
+    """Tests for a single element."""
+    distrib = distributions.clipped_entropy_softmax(entropy_clip=entropy_clip)
+    entropy_fn = self.variant(distrib.entropy)
+    # Test softmax output in batch.
+    actual = entropy_fn(self.logits)
+    np.testing.assert_allclose(expected_clipped, actual, atol=1e-4)
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('softmax', distributions.softmax),
+      ('clipped_entropy_softmax', distributions.clipped_entropy_softmax))
+  def test_softmax_entropy_batch(self, softmax_dist):
     """Tests for a full batch."""
-    distrib = distributions.softmax()
+    distrib = softmax_dist()
     entropy_fn = self.variant(distrib.entropy)
     # Test softmax output in batch.
     actual = entropy_fn(self.logits)
@@ -132,7 +162,7 @@ class SoftmaxTest(parameterized.TestCase):
 class EpsilonSoftmaxTest(parameterized.TestCase):
 
   def setUp(self):
-    super(EpsilonSoftmaxTest, self).setUp()
+    super().setUp()
 
     self.logits = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.samples = np.array([0, 1], dtype=np.int32)
@@ -186,7 +216,7 @@ class EpsilonSoftmaxTest(parameterized.TestCase):
 class GreedyTest(parameterized.TestCase):
 
   def setUp(self):
-    super(GreedyTest, self).setUp()
+    super().setUp()
 
     self.preferences = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     self.samples = np.array([0, 1], dtype=np.int32)
@@ -263,7 +293,7 @@ class GreedyTest(parameterized.TestCase):
 class EpsilonGreedyTest(parameterized.TestCase):
 
   def setUp(self):
-    super(EpsilonGreedyTest, self).setUp()
+    super().setUp()
     self.epsilon = 0.2
 
     self.preferences = np.array([[1, 1, 0, 0], [1, 2, 0, 0]], dtype=np.float32)
@@ -362,11 +392,13 @@ class EpsilonGreedyTest(parameterized.TestCase):
 class GaussianDiagonalTest(parameterized.TestCase):
 
   def setUp(self):
-    super(GaussianDiagonalTest, self).setUp()
+    super().setUp()
 
     self.mu = np.array([[1., -1], [0.1, -0.1]], dtype=np.float32)
     self.sigma = np.array([[0.1, 0.1], [0.2, 0.3]], dtype=np.float32)
     self.sample = np.array([[1.2, -1.1], [-0.1, 0.]], dtype=np.float32)
+    self.other_mu = np.array([[1., -10.], [0.3, -0.2]], dtype=np.float32)
+    self.other_sigma = np.array([[0.1, 0.1], [0.8, 0.3]], dtype=np.float32)
 
     # Expected values for the distribution's function were computed using
     # tfd.MultivariateNormalDiag (from the tensorflow_probability package).
@@ -376,6 +408,10 @@ class GaussianDiagonalTest(parameterized.TestCase):
         [0.26729202, 0.41997814], dtype=np.float32)
     self.expected_entropy = np.array(
         [-1.7672932, 0.02446628], dtype=np.float32)
+    self.expected_kl = np.array(
+        [4050.00, 1.00435], dtype=np.float32)
+    self.expected_kl_to_std_normal = np.array(
+        [4.6151705, 1.8884108], dtype=np.float32)
 
   @chex.all_variants()
   def test_gaussian_prob(self):
@@ -440,11 +476,30 @@ class GaussianDiagonalTest(parameterized.TestCase):
     actual = entropy_fn(self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
 
+  @chex.all_variants()
+  def test_gaussian_kl_batch(self):
+    """Tests for a full batch."""
+    distrib = distributions.gaussian_diagonal()
+    kl_fn = self.variant(distrib.kl)
+    # Test greedy output in batch.
+    actual = kl_fn(self.mu, self.sigma, self.other_mu, self.other_sigma)
+    np.testing.assert_allclose(self.expected_kl, actual, atol=1e-3, rtol=1e-6)
+
+  @chex.all_variants()
+  def test_gaussian_kl_to_std_normal_batch(self):
+    """Tests for a full batch."""
+    distrib = distributions.gaussian_diagonal()
+    kl_fn = self.variant(distrib.kl_to_standard_normal)
+    # Test greedy output in batch.
+    actual = kl_fn(self.mu, self.sigma)
+    np.testing.assert_allclose(self.expected_kl_to_std_normal, actual,
+                               atol=1e-4)
+
 
 class ImportanceSamplingTest(parameterized.TestCase):
 
   def setUp(self):
-    super(ImportanceSamplingTest, self).setUp()
+    super().setUp()
 
     self.pi_logits = np.array([[0.2, 0.8], [0.6, 0.4]], dtype=np.float32)
     self.mu_logits = np.array([[0.8, 0.2], [0.6, 0.4]], dtype=np.float32)
@@ -468,7 +523,7 @@ class ImportanceSamplingTest(parameterized.TestCase):
 class CategoricalKLTest(parameterized.TestCase):
 
   def setUp(self):
-    super(CategoricalKLTest, self).setUp()
+    super().setUp()
     self.p_logits = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
     p_probs = np.array([[0.42231882, 0.42231882, 0.15536241],
                         [0.24472848, 0.66524094, 0.09003057]],
@@ -494,7 +549,7 @@ class CategoricalKLTest(parameterized.TestCase):
 class CategoricalCrossEntropyTest(parameterized.TestCase):
 
   def setUp(self):
-    super(CategoricalCrossEntropyTest, self).setUp()
+    super().setUp()
 
     self.labels = np.array([[0., 1., 0.], [1., 0., 0.]], dtype=np.float32)
     self.logits = np.array([[10., 1., -2.], [1., 4., 0.2]], dtype=np.float32)
@@ -509,6 +564,25 @@ class CategoricalCrossEntropyTest(parameterized.TestCase):
     # Test outputs.
     actual = cross_entropy(self.labels, self.logits)
     np.testing.assert_allclose(self.expected, actual, atol=1e-4)
+
+
+class MultivariateNormalKLTest(parameterized.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    # Test numbers taken from tfd.MultivariateNormalDiag
+    self.mu0 = np.array([[5., -1], [0.1, -0.1]], dtype=np.float32)
+    self.sigma0 = np.array([[0.3, 0.1], [0.2, 0.3]], dtype=np.float32)
+    self.mu1 = np.array([[0.005, -11.], [-0.25, -0.2]], dtype=np.float32)
+    self.sigma1 = np.array([[0.1, 0.1], [0.6, 0.3]], dtype=np.float32)
+    self.expected_kl = np.array([6.2504023e+03, 8.7986231e-01],
+                                dtype=np.float32)
+
+  @chex.all_variants()
+  def test_multivariate_normal_kl_divergence_batch(self):
+    kl_fn = self.variant(distributions.multivariate_normal_kl_divergence)
+    actual = kl_fn(self.mu0, self.sigma0, self.mu1, self.sigma1)
+    np.testing.assert_allclose(self.expected_kl, actual, atol=1e-3, rtol=1e-6)
 
 
 if __name__ == '__main__':

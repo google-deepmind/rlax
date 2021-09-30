@@ -69,8 +69,8 @@ def lhs_broadcast(source, target):
     broadcast_shape = source.shape + (1,) * (target.ndim - source.ndim)
     return jnp.reshape(source, broadcast_shape)
   raise ValueError(
-      "source shape {} is not compatible with target shape {}".format(
-          source.shape, target.shape))
+      f"source shape {source.shape} is not compatible with target"
+      f"shape {target.shape}")
 
 
 class AllSum:

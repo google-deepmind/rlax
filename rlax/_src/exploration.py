@@ -237,9 +237,7 @@ def episodic_memory_intrinsic_rewards(
         memory=jnp.inf * jnp.ones(shape=(max_memory_size,
                                          embeddings.shape[-1])))
     # Pad the first num_neighbors entries with zeros.
-    intrinsic_reward_state.memory = jax.ops.index_update(
-        intrinsic_reward_state.memory,
-        jax.ops.index[:num_neighbors, :],
+    intrinsic_reward_state.memory = intrinsic_reward_state.memory.at[:num_neighbors, :].set(
         jnp.zeros((num_neighbors, embeddings.shape[-1])))
   else:
     chex.assert_shape(intrinsic_reward_state.memory,
@@ -255,7 +253,7 @@ def episodic_memory_intrinsic_rewards(
   memory = intrinsic_reward_state.memory
   start_index = intrinsic_reward_state.next_memory_index % memory.shape[0]
   indices = (jnp.arange(embeddings.shape[0]) + start_index) % memory.shape[0]
-  memory = jax.ops.index_update(memory, indices, embeddings)
+  memory = jnp.asarray(memory).at[indices].set(embeddings)
 
   nn_distances_sq = knn_query_result.neighbor_neg_distances
 

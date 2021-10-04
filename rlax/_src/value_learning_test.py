@@ -754,7 +754,8 @@ class QuantileRegressionLossTest(parameterized.TestCase):
     # Compute quantile regression loss.
     actual = loss_fn(self.dist_src, self.tau_src, self.dist_target)
     # Test outputs in batch.
-    np.testing.assert_allclose(actual, self.expected_loss[huber_param])
+    np.testing.assert_allclose(actual, self.expected_loss[huber_param],
+                               rtol=3e-7)
 
 
 class QuantileLearningTest(parameterized.TestCase):

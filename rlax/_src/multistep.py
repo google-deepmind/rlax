@@ -107,7 +107,7 @@ def lambda_returns(
   # Work backwards to compute `G_{T-1}`, ..., `G_0`.
   returns = []
   g = v_t[-1]
-  for i in jnp.arange(v_t.shape[0] - 1, -1, -1):
+  for i in reversed(range(v_t.shape[0])):
     g = r_t[i] + discount_t[i] * ((1-lambda_[i]) * v_t[i] + lambda_[i] * g)
     returns.insert(0, g)
 
@@ -262,7 +262,7 @@ def importance_corrected_td_errors(
 
   # Work backwards to compute `delta_{T-1}`, ..., `delta_0`.
   delta, errors = 0.0, []
-  for i in jnp.arange(one_step_delta.shape[0] - 1, -1, -1):
+  for i in reversed(range(one_step_delta.shape[0])):
     delta = one_step_delta[i] + discount_t[i] * rho_t[i] * lambda_[i] * delta
     errors.insert(0, delta)
 
@@ -424,7 +424,7 @@ def general_off_policy_returns_from_q_and_v(
   # Work backwards to compute `G_K-1`, ..., `G_1`, `G_0`.
   g = r_t[-1] + discount_t[-1] * v_t[-1]  # G_K-1.
   returns = [g]
-  for i in jnp.arange(q_t.shape[0] - 1, -1, -1):  # [K - 2, ..., 0]
+  for i in reversed(range(q_t.shape[0])):  # [K - 2, ..., 0]
     g = r_t[i] + discount_t[i] * (v_t[i] - c_t[i] * q_t[i] + c_t[i] * g)
     returns.insert(0, g)
 

@@ -80,7 +80,7 @@ def vtrace(
   # Work backwards computing the td-errors.
   err = 0.0
   errors = []
-  for i in jnp.arange(v_t.shape[0] - 1, -1, -1):
+  for i in reversed(range(v_t.shape[0])):
     err = td_errors[i] + discount_t[i] * c_t[i] * err
     errors.insert(0, err)
 
@@ -141,7 +141,7 @@ def leaky_vtrace(
   # Work backwards computing the td-errors.
   err = 0.0
   errors = []
-  for i in jnp.arange(v_t.shape[0] - 1, -1, -1):
+  for i in reversed(range(v_t.shape[0])):
     err = td_errors[i] + discount_t[i] * c_t[i] * err
     errors.insert(0, err)
 

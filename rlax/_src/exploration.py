@@ -237,8 +237,9 @@ def episodic_memory_intrinsic_rewards(
         memory=jnp.inf * jnp.ones(shape=(max_memory_size,
                                          embeddings.shape[-1])))
     # Pad the first num_neighbors entries with zeros.
-    intrinsic_reward_state.memory = intrinsic_reward_state.memory.at[:num_neighbors, :].set(
-        jnp.zeros((num_neighbors, embeddings.shape[-1])))
+    padding = jnp.zeros((num_neighbors, embeddings.shape[-1]))
+    intrinsic_reward_state.memory = (
+        intrinsic_reward_state.memory.at[:num_neighbors, :].set(padding))
   else:
     chex.assert_shape(intrinsic_reward_state.memory,
                       (max_memory_size, embeddings.shape[-1]))

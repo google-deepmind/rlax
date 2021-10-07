@@ -147,9 +147,9 @@ def pixel_control_loss(
   if height_width != height_width_q:
     raise ValueError(
         "Pixel Control values are not compatible with the shape of the"
-        "pseudo-rewards derived from the observation. Pseudo-rewards have shape"
-        "{}, while Pixel Control values have shape {}".format(
-            height_width, height_width_q))
+        "pseudo-rewards derived from the observation. Pseudo-rewards have "
+        f"shape {height_width}, while Pixel Control values have "
+        f"shape {height_width_q}")
   # We now have Q(s,a) and rewards, so can calculate the n-step loss. The
   # QLambda loss op expects inputs of shape [T,N] and [T], but our tensors
   # are in a variety of incompatible shapes. The state-action values have
@@ -176,8 +176,7 @@ def pixel_control_loss(
   else:
     raise ValueError(
         "The discount_factor must be a scalar or a tensor of rank 1. "
-        "instead is a tensor of shape {}".format(
-            discount_factor.shape))
+        f"instead is a tensor of shape {discount_factor.shape}")
   # Compute a QLambda loss of shape [T,HW]
   batched_q_lambda = jax.vmap(
       functools.partial(

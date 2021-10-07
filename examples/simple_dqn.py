@@ -23,6 +23,7 @@ import haiku as hk
 from haiku import nets
 import jax
 import jax.numpy as jnp
+import numpy as np
 import optax
 import rlax
 from rlax.examples import experiment
@@ -84,8 +85,8 @@ class ReplayBuffer(object):
   def sample(self, batch_size):
     obs_tm1, a_tm1, r_t, discount_t, obs_t = zip(
         *random.sample(self.buffer, batch_size))
-    return (jnp.stack(obs_tm1), jnp.asarray(a_tm1), jnp.asarray(r_t),
-            jnp.asarray(discount_t) * FLAGS.discount_factor, jnp.stack(obs_t))
+    return (np.stack(obs_tm1), np.asarray(a_tm1), np.asarray(r_t),
+            np.asarray(discount_t) * FLAGS.discount_factor, np.stack(obs_t))
 
   def is_ready(self, batch_size):
     return batch_size <= len(self.buffer)

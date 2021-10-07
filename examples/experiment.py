@@ -43,10 +43,11 @@ def run_loop(
           params, timestep, actor_state, next(rng), evaluation=False)
 
       # Agent-environment interaction.
-      timestep = environment.step(int(actor_output.actions))
+      action = int(actor_output.actions)
+      timestep = environment.step(action)
 
       # Accumulate experience.
-      accumulator.push(timestep, actor_output.actions)
+      accumulator.push(timestep, action)
 
       # Learning.
       if accumulator.is_ready(batch_size):

@@ -233,7 +233,7 @@ def gaussian_diagonal(sigma=None):
             distrax.MultivariateNormalDiag(
                 jnp.zeros_like(mu), jnp.ones_like(mu)))
 
-  def kl_fn(mu_1: Array, sigma_1: Numeric, mu_0: Array, sigma_0: Numeric):
+  def kl_fn(mu_0: Array, sigma_0: Numeric, mu_1: Array, sigma_1: Numeric):
     return distrax.MultivariateNormalDiag(
         mu_0, jnp.ones_like(mu_0) * sigma_0).kl_divergence(
             distrax.MultivariateNormalDiag(mu_1, jnp.ones_like(mu_1) * sigma_1))
@@ -335,7 +335,7 @@ def squashed_gaussian(sigma_min=-4, sigma_max=0.):
       kl = jnp.sum(kl, axis=-1)
     return kl
 
-  def kl_fn(mu_1: Array, sigma_1: Numeric, mu_0: Array, sigma_0: Numeric):
+  def kl_fn(mu_0: Array, sigma_0: Numeric, mu_1: Array, sigma_1: Numeric):
     sigma_0 = sigma_activation(sigma_0)
     mu_0 = mu_activation(mu_0)
     sigma_1 = sigma_activation(sigma_1)

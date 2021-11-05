@@ -482,7 +482,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
     distrib = distributions.gaussian_diagonal()
     kl_fn = self.variant(distrib.kl)
     # Test greedy output in batch.
-    actual = kl_fn(self.other_mu, self.other_sigma, self.mu, self.sigma)
+    actual = kl_fn(self.mu, self.sigma, self.other_mu, self.other_sigma)
     np.testing.assert_allclose(self.expected_kl, actual, atol=1e-3, rtol=1e-6)
 
   @chex.all_variants()

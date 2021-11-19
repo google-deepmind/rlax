@@ -57,7 +57,7 @@ def vtrace(
     v_t: values at time t.
     r_t: reward at time t.
     discount_t: discount at time t.
-    rho_tm1: importance sampling ratios.
+    rho_tm1: importance sampling ratios at time t-1.
     lambda_: scalar mixing parameter lambda.
     clip_rho_threshold: clip threshold for importance weights.
     stop_target_gradients: whether or not to apply stop gradient to targets.
@@ -71,17 +71,17 @@ def vtrace(
   chex.assert_equal_shape([v_tm1, v_t, r_t, discount_t, rho_tm1])
 
   # Clip importance sampling ratios.
-  c_t = jnp.minimum(1.0, rho_tm1) * lambda_
-  clipped_rhos = jnp.minimum(clip_rho_threshold, rho_tm1)
+  c_tm1 = jnp.minimum(1.0, rho_tm1) * lambda_
+  clipped_rhos_tm1 = jnp.minimum(clip_rho_threshold, rho_tm1)
 
   # Compute the temporal difference errors.
-  td_errors = clipped_rhos * (r_t + discount_t * v_t - v_tm1)
+  td_errors = clipped_rhos_tm1 * (r_t + discount_t * v_t - v_tm1)
 
   # Work backwards computing the td-errors.
   err = 0.0
   errors = []
   for i in reversed(range(v_t.shape[0])):
-    err = td_errors[i] + discount_t[i] * c_t[i] * err
+    err = td_errors[i] + discount_t[i] * c_tm1[i] * err
     errors.insert(0, err)
 
   # Return errors, maybe disabling gradient flow through bootstrap targets.
@@ -114,7 +114,7 @@ def leaky_vtrace(
     v_t: values at time t.
     r_t: reward at time t.
     discount_t: discount at time t.
-    rho_tm1: importance weights at time t.
+    rho_tm1: importance weights at time t-1.
     alpha_: mixing parameter for Importance Sampling and V-trace.
     lambda_: scalar mixing parameter lambda.
     clip_rho_threshold: clip threshold for importance weights.
@@ -129,20 +129,20 @@ def leaky_vtrace(
   chex.assert_equal_shape([v_tm1, v_t, r_t, discount_t, rho_tm1])
 
   # Mix clipped and unclipped importance sampling ratios.
-  c_t = (
+  c_tm1 = (
       (1 - alpha_) * rho_tm1 + alpha_ * jnp.minimum(1.0, rho_tm1)) * lambda_
-  clipped_rhos = (
+  clipped_rhos_tm1 = (
       (1 - alpha_) * rho_tm1 + alpha_ * jnp.minimum(clip_rho_threshold, rho_tm1)
   )
 
   # Compute the temporal difference errors.
-  td_errors = clipped_rhos * (r_t + discount_t * v_t - v_tm1)
+  td_errors = clipped_rhos_tm1 * (r_t + discount_t * v_t - v_tm1)
 
   # Work backwards computing the td-errors.
   err = 0.0
   errors = []
   for i in reversed(range(v_t.shape[0])):
-    err = td_errors[i] + discount_t[i] * c_t[i] * err
+    err = td_errors[i] + discount_t[i] * c_tm1[i] * err
     errors.insert(0, err)
 
   # Return errors, maybe disabling gradient flow through bootstrap targets.
@@ -176,7 +176,7 @@ def vtrace_td_error_and_advantage(
     v_t: values at time t.
     r_t: reward at time t.
     discount_t: discount at time t.
-    rho_tm1: importance weights at time t.
+    rho_tm1: importance weights at time t-1.
     lambda_: scalar mixing parameter lambda.
     clip_rho_threshold: clip threshold for importance ratios.
     clip_pg_rho_threshold: clip threshold for policy gradient importance ratios.
@@ -234,7 +234,7 @@ def leaky_vtrace_td_error_and_advantage(
     v_t: values at time t.
     r_t: reward at time t.
     discount_t: discount at time t.
-    rho_tm1: importance weights at time t.
+    rho_tm1: importance weights at time t-1.
     alpha: mixing the clipped importance sampling weights with unclipped ones.
     lambda_: scalar mixing parameter lambda.
     clip_rho_threshold: clip threshold for importance ratios.

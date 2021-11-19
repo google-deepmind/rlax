@@ -510,6 +510,9 @@ def vmpo_compute_weights_and_temperature_loss(
   num_samples = all_sum(top_k_restarting_weights) + _EPSILON
 
   normalized_weights = unnormalized_weights / sum_weights
+  normalized_weights = jax.lax.select(use_stop_gradient,
+                                      jax.lax.stop_gradient(normalized_weights),
+                                      normalized_weights)
 
   # Calculate the temperature loss.
   log_mean_weights = (jnp.log(sum_weights) + max_scaled_advantage

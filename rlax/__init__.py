@@ -122,7 +122,7 @@ from rlax._src.vtrace import leaky_vtrace_td_error_and_advantage
 from rlax._src.vtrace import vtrace
 from rlax._src.vtrace import vtrace_td_error_and_advantage
 
-__version__ = "0.1.0"
+__version__ = "0.1.01"
 
 __all__ = (
     "add_gaussian_noise",

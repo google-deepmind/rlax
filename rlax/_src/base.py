@@ -52,7 +52,7 @@ def one_hot(indices, num_classes, dtype=jnp.float32):
 
   Returns:
     The one-hot tensor. If indices' shape is [A, B, ...], shape is
-      [A, B, ..., num_classes].
+    [A, B, ..., num_classes].
   """
   labels = jnp.arange(num_classes)
   for _ in range(indices.ndim):

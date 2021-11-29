@@ -614,7 +614,7 @@ def categorical_td_learning(
   """Implements TD-learning for categorical value distributions.
 
   See "A Distributional Perspective on Reinforcement Learning", by
-    Bellemere, Dabney and Munos (https://arxiv.org/pdf/1707.06887.pdf).
+  Bellemere, Dabney and Munos (https://arxiv.org/pdf/1707.06887.pdf).
 
   Args:
     v_atoms_tm1: atoms of V distribution at time t-1.
@@ -665,7 +665,7 @@ def categorical_q_learning(
   """Implements Q-learning for categorical Q distributions.
 
   See "A Distributional Perspective on Reinforcement Learning", by
-    Bellemere, Dabney and Munos (https://arxiv.org/pdf/1707.06887.pdf).
+  Bellemere, Dabney and Munos (https://arxiv.org/pdf/1707.06887.pdf).
 
   Args:
     q_atoms_tm1: atoms of Q distribution at time t-1.
@@ -724,7 +724,7 @@ def categorical_double_q_learning(
   """Implements double Q-learning for categorical Q distributions.
 
   See "A Distributional Perspective on Reinforcement Learning", by
-    Bellemere, Dabney and Munos (https://arxiv.org/pdf/1707.06887.pdf)
+  Bellemere, Dabney and Munos (https://arxiv.org/pdf/1707.06887.pdf)
   and "Double Q-learning" by van Hasselt.
   (https://papers.nips.cc/paper/3964-double-q-learning.pdf).
 

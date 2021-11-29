@@ -1,9 +1,13 @@
 # RLax
 
 ![CI status](https://github.com/deepmind/rlax/workflows/ci/badge.svg)
+![docs](https://readthedocs.org/projects/rlax/badge/?version=latest)
+![pypi](https://img.shields.io/pypi/v/rlax)
 
 RLax (pronounced "relax") is a library built on top of JAX that exposes
-useful building blocks for implementing reinforcement learning agents.
+useful building blocks for implementing reinforcement learning agents. Full
+documentation can be found at
+ [rlax.readthedocs.io](https://rlax.readthedocs.io/en/latest/index.html).
 
 ## Installation
 

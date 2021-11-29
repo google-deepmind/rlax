@@ -207,7 +207,7 @@ def popart(num_outputs: int,
     A tuple of:
       initial_state: A function returning the initial PopArt state.
       popart_update: A function updating the PopArt state and parameters
-        of the preceding linear.
+      of the preceding linear.
   """
 
   def initial_state():

@@ -50,7 +50,7 @@ on BSuite's version of the Catch environment (a common unit-test for
 agent development in the reinforcement learning literature):
 
 Other examples of JAX reinforcement learning agents using `rlax` can be found in
-`bsuite <https://github.com/deepmind/bsuite/tree/master/bsuite/baselines>`_.
+`bsuite baselines <https://github.com/deepmind/bsuite/tree/master/bsuite/baselines>`_.
 
 
 Background

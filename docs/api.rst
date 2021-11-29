@@ -174,7 +174,7 @@ TD Lambda
 .. autofunction:: td_lambda
 
 TD Learning
-~~~~~~~~~
+~~~~~~~~~~~
 
 .. autofunction:: td_learning
 
@@ -204,8 +204,8 @@ Transformed Q Lambda
 .. autofunction:: transformed_q_lambda
 
 
- Transformed Retrace
-~~~~~~~~~~~~~~~~~~~~
+Transformed Retrace
+~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: transformed_retrace
 
@@ -230,7 +230,6 @@ Policy Optimization
     clipped_surrogate_pg_loss
     dpg_loss
     entropy_loss
-    LagrangePenalty
     mpo_loss
     mpo_compute_weights_and_temperature_loss
     policy_gradient_loss
@@ -259,12 +258,6 @@ Entropy Loss
 ~~~~~~~~~~~~
 
 .. autofunction:: entropy_loss
-
-Lagrange Penalty
-~~~~~~~~~~~~~~~~
-
-.. autoclass:: LagrangePenalty
-    :members:
 
 
 MPO Compute Weights and Temperature Loss
@@ -319,7 +312,6 @@ Exploration
     add_gaussian_noise
     add_ornstein_uhlenbeck_noise
     episodic_memory_intrinsic_rewards
-    knn_query
 
 
 Add Dirichlet Noise
@@ -341,11 +333,6 @@ Episodic Memory Intrinsic Rewards
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: episodic_memory_intrinsic_rewards
-
-KNN Query
-~~~~~~~~~
-
-.. autofunction:: knn_query
 
 
 Utilities
@@ -393,7 +380,7 @@ LHS Broadcast
 .. autofunction:: lhs_broadcast
 
 One Hot
-~~~~~~
+~~~~~~~
 
 .. autofunction:: one_hot
 
@@ -433,7 +420,7 @@ Incremental Update
 .. autofunction:: incremental_update
 
 Periodic Update
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. autofunction:: periodic_update
 
@@ -474,7 +461,6 @@ Pop Art
     normalize
     pop
     popart
-    PopArtState
     unnormalize
     unnormalize_linear
 
@@ -497,12 +483,6 @@ PopArt
 ~~~~~~
 
 .. autofunction:: popart
-
-PopArtState
-~~~~~~~~~~~
-
-.. autoclass:: PopArtState
-    :members:
 
 Unnormalize
 ~~~~~~~~~~~
@@ -566,7 +546,7 @@ Sigmoid
 
 
 Signed Exponential
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: signed_expm1
 
@@ -595,7 +575,7 @@ Transform from 2 Hot
 .. autofunction:: transform_from_2hot
 
 Transform to 2 Hot
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: transform_to_2hot
 

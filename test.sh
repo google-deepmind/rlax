@@ -56,6 +56,12 @@ pytest -n "$(grep -c ^processor /proc/cpuinfo)" --pyargs rlax -k "not pop_art_te
 
 # Isolate tests that use `chex.set_n_cpu_device()`.
 pytest -n "$(grep -c ^processor /proc/cpuinfo)" --pyargs rlax -k "pop_art_test"
+cd ..
+
+# Build Sphinx docs.
+pip install -r requirements/requirements-docs.txt
+cd docs && make html
+cd ..
 
 set +u
 deactivate

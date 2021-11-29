@@ -183,23 +183,14 @@ def episodic_memory_intrinsic_rewards(
       feature dim D.
     num_neighbors: int for K neighbors used in kNN query
     reward_scale: The β term used in the Agent57 paper to scale the reward.
-    intrinsic_reward_state: An IntrinsicRewardState namedtuple, containing:
-        - memory: Array; an array of previous memories within an episode padded
-              with zeros up to max_memory_size.
-        - next_memory_index: The index in the static memory array to add next
-              embeddings at. Is updated in a ring buffer fashion.
-        - distance_sum: Scalar, Optional; running sum of total negative squared
-          distances computed by consecutive kNN queries used to compute mean
-          distance.
-        - distance_count: Scalar, Optional; running count of total negative
-          squared distances computed by consecutive kNN queries used to compute
-          mean distance.
-        NOTE- On (only) the first call to episodic_memory_intrinsic_rewards, the
-        intrinsic_reward_state is optional, if None is given, an
-        IntrinsicRewardState will be initialized with default parameters,
-        specifically, the memory will be initialized to an array of jnp.inf of
-        shape [max_memory_size x feature dim D], and default values of 0 will be
-        provided for next_memory_index, distance_sum, and distance_count.
+    intrinsic_reward_state: An IntrinsicRewardState namedtuple, containing
+      memory, next_memory_index, distance_sum, and distance_count.
+      NOTE- On (only) the first call to episodic_memory_intrinsic_rewards, the
+      intrinsic_reward_state is optional, if None is given, an
+      IntrinsicRewardState will be initialized with default parameters,
+      specifically, the memory will be initialized to an array of jnp.inf of
+      shape [max_memory_size x feature dim D], and default values of 0 will be
+      provided for next_memory_index, distance_sum, and distance_count.
     constant: float; small constant used for numerical stability used during
       normalizing distances.
     epsilon: float; small constant used for numerical stability when computing
@@ -215,20 +206,8 @@ def episodic_memory_intrinsic_rewards(
       episodic_memory_intrinsic_reward).
 
   Returns:
-    reward: Array, shaped [M, 1]; Intrinsic reward for each embedding computed
-        by using similarity measure to memories.
-
-    intrinsic_reward_state: An IntrinsicRewardState namedtuple, containing:
-        - memory: Array; an array of previous memories within an episode padded
-              with zeros up to max_memory_size.
-        - next_memory_index: The index in the static memory array to add next
-              embeddings at. Is updated in a ring buffer fashion.
-        - distance_sum: Scalar, Optional; running sum of total negative squared
-          distances computed by consecutive kNN queries used to compute mean
-          distance.
-        - distance_count: Scalar, Optional; running count of total negative
-          squared distances computed by consecutive kNN queries used to compute
-          mean distance.
+    Intrinsic reward for each embedding computed by using similarity measure to
+    memories and next IntrinsicRewardState.
   """
 
   # Initialize IntrinsicRewardState if not provided to default values.

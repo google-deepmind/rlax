@@ -280,16 +280,16 @@ def truncated_generalized_advantage_estimation(
 ) -> Array:
   """Computes truncated generalized advantage estimates for a sequence length k.
 
-   The advantages are computed in a backwards fashion according to the equation:
-   Âₜ = δₜ + (γλ) * δₜ₊₁ + ... + ... + (γλ)ᵏ⁻ᵗ⁺¹ * δₖ₋₁
-   where δₜ = rₜ₊₁ + γₜ₊₁ * v(sₜ₊₁) - v(sₜ).
+  The advantages are computed in a backwards fashion according to the equation:
+  Âₜ = δₜ + (γλ) * δₜ₊₁ + ... + ... + (γλ)ᵏ⁻ᵗ⁺¹ * δₖ₋₁
+  where δₜ = rₜ₊₁ + γₜ₊₁ * v(sₜ₊₁) - v(sₜ).
 
-   See Proximal Policy Optimization Algorithms, Schulman et al.:
-   https://arxiv.org/abs/1707.06347
+  See Proximal Policy Optimization Algorithms, Schulman et al.:
+  https://arxiv.org/abs/1707.06347
 
-   * Note: This paper uses a different notation than the RLax standard
-   convention that follows Sutton & Barto. We use rₜ₊₁ to denote the reward
-   received after acting in state sₜ, while the PPO paper uses rₜ.
+  Note: This paper uses a different notation than the RLax standard
+  convention that follows Sutton & Barto. We use rₜ₊₁ to denote the reward
+  received after acting in state sₜ, while the PPO paper uses rₜ.
 
   Args:
     r_t: Sequence of rewards at times [1, k]

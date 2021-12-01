@@ -60,7 +60,7 @@ def build_network(num_actions: int) -> hk.Transformed:
          nets.MLP([FLAGS.hidden_units, num_actions])])
     return network(obs)
 
-  return hk.without_apply_rng(hk.transform(q, apply_rng=True))
+  return hk.without_apply_rng(hk.transform(q))
 
 
 class ReplayBuffer(object):

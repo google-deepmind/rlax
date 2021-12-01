@@ -75,7 +75,7 @@ def _hk_mock_policy_params(s_tm1):
 
 
 def _init_params(key):
-  init_fn, _ = hk.transform(_hk_mock_policy_params, apply_rng=True)
+  init_fn, _ = hk.transform(_hk_mock_policy_params)
   key_seq = hk.PRNGSequence(key)
   s_tm1 = jax.random.normal(
       next(key_seq), (TIME_DIM, BATCH_DIM, ACTION_DIM), jnp.float32)
@@ -92,7 +92,7 @@ def _init_params(key):
 
 def _mock_outputs(online_params, target_params, key, target_name):
   """Returns mock network outputs."""
-  _, policy_params_fn = hk.transform(_hk_mock_policy_params, apply_rng=True)
+  _, policy_params_fn = hk.transform(_hk_mock_policy_params)
   key_seq = hk.PRNGSequence(key)
 
   state_size = ACTION_DIM

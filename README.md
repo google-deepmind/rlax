@@ -121,20 +121,9 @@ performing batch operations using `jax.vmap`.
 
 ## Citing RLax
 
-To cite this repository:
+RLax is part of the [DeepMind JAX Ecosystem], to cite RLax please use
+the [DeepMind JAX Ecosystem citation].
 
-```
-@software{rlax2020github,
-  author = {David Budden and Matteo Hessel and John Quan and Steven Kapturowski
-            and Kate Baumli and Surya Bhupatiraju and Aurelia Guy and Michael
-            King},
-  title = {{RL}ax: {R}einforcement {L}earning in {JAX}},
-  url = {http://github.com/deepmind/rlax},
-  version = {0.0.2},
-  year = {2020},
-}
-```
+[DeepMind JAX Ecosystem]: https://deepmind.com/blog/article/using-jax-to-accelerate-our-research "DeepMind JAX Ecosystem"
+[DeepMind JAX Ecosystem citation]: https://github.com/deepmind/jax/blob/main/deepmind2020jax.txt "Citation"
 
-In this bibtex entry, the version number is intended to be from
-[rlax/\_\_init\_\_.py](https://github.com/deepmind/rlax/blob/master/rlax/__init__.py),
-and the year corresponds to the project's open-source release.

@@ -34,6 +34,7 @@ from rlax._src.distributions import safe_epsilon_softmax
 from rlax._src.distributions import softmax
 from rlax._src.distributions import squashed_gaussian
 from rlax._src.embedding import embed_oar
+from rlax._src.episodic_memory import knn_query
 from rlax._src.exploration import add_dirichlet_noise
 from rlax._src.exploration import add_gaussian_noise
 from rlax._src.exploration import add_ornstein_uhlenbeck_noise
@@ -162,6 +163,7 @@ __all__ = (
     "identity",
     "IDENTITY_PAIR",
     "incremental_update",
+    "knn_query",
     "l2_loss",
     "LagrangePenalty",
     "lambda_returns",

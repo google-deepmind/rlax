@@ -312,6 +312,7 @@ Exploration
     add_gaussian_noise
     add_ornstein_uhlenbeck_noise
     episodic_memory_intrinsic_rewards
+    knn_query
 
 
 Add Dirichlet Noise
@@ -333,6 +334,11 @@ Episodic Memory Intrinsic Rewards
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: episodic_memory_intrinsic_rewards
+
+KNN Query
+~~~~~~~~~
+
+.. autofunction:: knn_query
 
 
 Utilities

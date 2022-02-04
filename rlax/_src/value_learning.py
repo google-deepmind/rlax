@@ -863,7 +863,6 @@ def quantile_q_learning(
 
   # Compute target, do not backpropagate into it.
   dist_target = r_t + discount_t * dist_qa_t
-  dist_target = jax.lax.stop_gradient(dist_target)
   dist_target = jax.lax.select(stop_target_gradients,
                                jax.lax.stop_gradient(dist_target), dist_target)
 

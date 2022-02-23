@@ -22,7 +22,6 @@ to compute statistics such as its entropy.
 """
 
 import collections
-from typing import Tuple
 
 import chex
 import distrax
@@ -400,40 +399,6 @@ def categorical_kl_divergence(
   """
   return distrax.Softmax(p_logits, temperature).kl_divergence(
       distrax.Softmax(q_logits, temperature))
-
-
-def decoupled_multivariate_normal_kl_divergence(
-    mu_0: Array, sigma_0: Numeric, mu_1: Array, sigma_1: Numeric,
-    per_dimension: bool = False
-) -> Tuple[Array, Array]:
-  """Compute the KL between diagonal Gaussians decomposed into mean and covar-e.
-
-  Args:
-    mu_0: array like of mean values for policy 0
-    sigma_0: array like of std values for policy 0
-    mu_1: array like of mean values for policy 1
-    sigma_1: array like of std values for policy 1
-    per_dimension: Whether to return a separate kl divergence for each dimension
-      on the last axis.
-
-  Returns:
-    the kl divergence between the distributions decomposed into mean and
-    covariance.
-  """
-  # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
-  sigma_1 = jnp.ones_like(mu_1) * sigma_1
-  sigma_0 = jnp.ones_like(mu_0) * sigma_0
-  v1 = jnp.clip(sigma_1**2, 1e-6, 1e6)
-  v0 = jnp.clip(sigma_0**2, 1e-6, 1e6)
-  mu_diff = mu_1 - mu_0
-  kl_mean = 0.5 * jnp.divide(mu_diff**2, v1)
-  kl_cov = 0.5 * (jnp.divide(v0, v1) - jnp.ones_like(mu_1) + jnp.log(v1) -
-                  jnp.log(v0))
-  if not per_dimension:
-    kl_mean = jnp.sum(kl_mean, axis=-1)
-    kl_cov = jnp.sum(kl_cov, axis=-1)
-
-  return kl_mean, kl_cov
 
 
 def multivariate_normal_kl_divergence(

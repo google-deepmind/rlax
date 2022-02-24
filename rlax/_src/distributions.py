@@ -27,7 +27,6 @@ import chex
 import distrax
 import jax
 import jax.numpy as jnp
-from rlax._src import base
 
 Array = chex.Array
 Numeric = chex.Numeric
@@ -108,23 +107,24 @@ def epsilon_softmax(epsilon, temperature):
   """An epsilon-softmax distribution."""
 
   def sample_fn(key: Array, logits: Array):
-    probs = jax.nn.softmax(logits / temperature)
-    probs = _mix_with_uniform(probs, epsilon)
-    return categorical_sample(key, probs)
+    probs = distrax.Softmax(logits=logits, temperature=temperature).probs
+    return distrax.Categorical(
+        probs=_mix_with_uniform(probs, epsilon)).sample(seed=key)
 
   def probs_fn(logits: Array):
-    probs = jax.nn.softmax(logits / temperature)
-    return _mix_with_uniform(probs, epsilon)
+    probs = distrax.Softmax(logits=logits, temperature=temperature).probs
+    return distrax.Categorical(
+        probs=_mix_with_uniform(probs, epsilon)).probs
 
   def log_prob_fn(sample: Array, logits: Array):
-    probs = jax.nn.softmax(logits / temperature)
-    probs = _mix_with_uniform(probs, epsilon)
-    return base.batched_index(jnp.log(probs), sample)
+    probs = distrax.Softmax(logits=logits, temperature=temperature).probs
+    return distrax.Categorical(
+        probs=_mix_with_uniform(probs, epsilon)).log_prob(sample)
 
   def entropy_fn(logits: Array):
-    probs = jax.nn.softmax(logits / temperature)
-    probs = _mix_with_uniform(probs, epsilon)
-    return -jnp.nansum(probs * jnp.log(probs), axis=-1)
+    probs = distrax.Softmax(logits=logits, temperature=temperature).probs
+    return distrax.Categorical(
+        probs=_mix_with_uniform(probs, epsilon)).entropy()
 
   def kl_fn(p_logits: Array, q_logits: Array):
     return categorical_kl_divergence(p_logits, q_logits, temperature)

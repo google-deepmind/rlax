@@ -41,10 +41,7 @@ ContinuousDistribution = collections.namedtuple(
 
 def categorical_sample(key, probs):
   """Sample from a set of discrete probabilities."""
-  probs = probs / probs.sum(axis=-1, keepdims=True)
-  is_valid = jnp.logical_and(jnp.all(jnp.isfinite(probs)), jnp.all(probs >= 0))
-  sample = distrax.Categorical(probs=probs).sample(seed=key)
-  return jnp.where(is_valid, sample, -1)
+  return distrax.Categorical(probs=probs).sample(seed=key)
 
 
 def softmax(temperature=1.):

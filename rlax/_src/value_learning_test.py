@@ -553,7 +553,7 @@ class CategoricalTDLearningTest(parameterized.TestCase):
     # Test outputs.
     actual = categorical_td_learning(
         self.logits_tm1, self.r_t, self.discount_t, self.logits_t)
-    np.testing.assert_allclose(self.expected, actual, rtol=1e-5)
+    np.testing.assert_allclose(self.expected, actual, rtol=1e-4)
 
 
 class CategoricalQLearningTest(parameterized.TestCase):
@@ -609,7 +609,7 @@ class CategoricalQLearningTest(parameterized.TestCase):
     categorical_q_learning = self.variant(jax.vmap(fn))
     # Test outputs.
     actual = categorical_q_learning(*self.inputs)
-    np.testing.assert_allclose(self.expected, actual, rtol=1e-5)
+    np.testing.assert_allclose(self.expected, actual, rtol=1e-4)
 
 
 class CategoricalDoubleQLearningTest(parameterized.TestCase):
@@ -669,7 +669,7 @@ class CategoricalDoubleQLearningTest(parameterized.TestCase):
     categorical_double_q_learning = self.variant(jax.vmap(fn))
     # Test outputs.
     actual = categorical_double_q_learning(*self.inputs)
-    np.testing.assert_allclose(self.expected, actual, rtol=1e-5)
+    np.testing.assert_allclose(self.expected, actual, rtol=1e-4)
 
   @chex.all_variants()
   def test_single_double_q_learning_eq_batch(self):

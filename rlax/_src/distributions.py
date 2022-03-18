@@ -366,7 +366,10 @@ def categorical_cross_entropy(
   """Computes the softmax cross entropy between sets of logits and labels.
 
   See "Deep Learning" by Goodfellow et al.
-  (http://www.deeplearningbook.org/contents/prob.html).
+  (http://www.deeplearningbook.org/contents/prob.html). The computation is
+  equivalent to:
+
+                  sum_i (labels_i * log_softmax(logits_i))
 
   Args:
     labels: a valid probability distribution (non-negative, sum to 1).
@@ -375,8 +378,8 @@ def categorical_cross_entropy(
   Returns:
     a scalar loss.
   """
-  chex.assert_rank([logits, labels], 1)
-  return -jnp.sum(labels * jax.nn.log_softmax(logits))
+  return distrax.Categorical(probs=labels).cross_entropy(
+      distrax.Categorical(logits=logits))
 
 
 def categorical_kl_divergence(

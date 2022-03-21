@@ -908,12 +908,16 @@ def quantile_expected_sarsa(
   # Only update the taken actions.
   dist_qa_tm1 = dist_q_tm1[:, a_tm1]
 
-  dist_qa_t = jnp.einsum('qa,a->q', dist_q_t, probs_a_t)
-
   # Compute target, do not backpropagate into it.
-  dist_target = r_t + discount_t * dist_qa_t
+  dist_target = r_t + discount_t * dist_q_t
   dist_target = jax.lax.select(stop_target_gradients,
                                jax.lax.stop_gradient(dist_target), dist_target)
+  probs_a_t = jax.lax.select(stop_target_gradients,
+                             jax.lax.stop_gradient(probs_a_t), probs_a_t)
 
-  return _quantile_regression_loss(
+  per_action_qr = jax.vmap(
+      _quantile_regression_loss, in_axes=(None, None, 1, None))
+  per_action_loss = per_action_qr(
       dist_qa_tm1, tau_q_tm1, dist_target, huber_param)
+
+  return jnp.dot(per_action_loss, probs_a_t)

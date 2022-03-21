@@ -832,24 +832,25 @@ class QuantileLearningTest(parameterized.TestCase):
           dtype=np.float32)
 
     # Scenario 2:
-    # bootstrap targets are nor an argmax, but averaging across actions
+    # bootstrap targets are not an argmax, but averaging across actions
     self.uniform_probs_a_t = np.ones((3, 4), dtype=np.float32) / 4.
-    #                                             [ 2.25, 0.25]
-    # dist_qa_t                              =    [-0.75, 0.25]
-    #                                             [-3.00, 1.00]
-    uniform_dist_target = np.array(
-        [[1.625, 0.625],
-         [-1, -1],
-         [-3, 1]],
+
+    # all_action_targets = r + gamma * dist_q_t  (batch x n_taus x n_actions)
+    dts = np.array(
+        [[[0.5, 3, 1.5, 1.5], [0.5, -1, 1.5, 1.5]],
+         [[-1, -1, -1, -1], [-1, -1, -1, -1]],
+         [[-2, 2, -5, -7], [1, 3, 2, -2]]],
         dtype=np.float32)
 
     self.uniform_expected = {}
     for huber_param in [0.0, 1.0]:
-      self.uniform_expected[huber_param] = np.array(  # loop over batch
+      all_action_losses = [  # loop over actions and batch
           [value_learning._quantile_regression_loss(dqa, tau, dt, huber_param)
-           for (dqa, tau, dt) in zip(dist_qa_tm1, self.tau_q_tm1,
-                                     uniform_dist_target)],
-          dtype=np.float32)
+           for (dqa, tau, dt) in zip(dist_qa_tm1, self.tau_q_tm1, dts[:, :, a])]
+          for a in range(4)]
+      # uniform probabilities means the loss is averaged over actions
+      self.uniform_expected[huber_param] = np.array(
+          all_action_losses, dtype=np.float32).mean(axis=0)
 
   @chex.all_variants()
   @parameterized.named_parameters(

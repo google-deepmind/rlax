@@ -15,6 +15,7 @@
 """Tests for `tree_util.py`."""
 
 from absl.testing import absltest
+from absl.testing import parameterized
 import chex
 import jax
 import jax.numpy as jnp
@@ -24,7 +25,7 @@ from rlax._src import tree_util
 NUM_NESTS = 5
 
 
-class TreeUtilTest(absltest.TestCase):
+class TreeUtilTest(parameterized.TestCase):
 
   def test_tree_split_key(self):
     rng_key = jax.random.PRNGKey(42)
@@ -64,14 +65,22 @@ class TreeUtilTest(absltest.TestCase):
     output = tree_util.tree_select(False, on_true, on_false)
     chex.assert_tree_all_close(output, on_false)
 
-  def test_tree_split_leaves(self):
+  @parameterized.parameters(False, True)
+  def test_tree_split_leaves(self, use_jnp: bool):
+    if use_jnp:
+      np_ver = jnp
+      assert_type = lambda x: self.assertIsInstance(x, jax.xla.DeviceArray)
+    else:
+      np_ver = np
+      assert_type = lambda x: self.assertNotIsInstance(x, jax.xla.DeviceArray)
+
     t = {
-        'a0': np.zeros(3),
+        'a0': np_ver.zeros(3),
         'd': {
-            'a1': np.arange(3),
-            'a2': np.zeros([3, 3]) + 2,
+            'a1': np_ver.arange(3),
+            'a2': np_ver.zeros([3, 3]) + 2,
         },
-        't4': (np.zeros([3, 2]) + 4, np.arange(3)),
+        't4': (np_ver.zeros([3, 2]) + 4, np_ver.arange(3)),
     }
 
     for keepdim in (False, True):
@@ -88,6 +97,7 @@ class TreeUtilTest(absltest.TestCase):
         np.testing.assert_allclose(res_t['d']['a2'], 2)
         np.testing.assert_allclose(res_t['t4'][0], 4)
         np.testing.assert_allclose(res_t['t4'][1], i)
+        jax.tree_map(assert_type, res_t)
 
 
 if __name__ == '__main__':

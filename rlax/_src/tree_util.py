@@ -76,7 +76,8 @@ def tree_split_key(rng_key: Array, tree_like: Any):
 
 def tree_split_leaves(tree_like: Any,
                       axis: int = 0,
-                      keepdim: bool = False):
+                      keepdim: bool = False,
+                      use_jnp_split: bool = False):
   """Splits a tree of arrays into an array of trees avoiding data copying.
 
   Note: `jax.numpy.DeviceArray`'s data gets copied.
@@ -85,6 +86,9 @@ def tree_split_leaves(tree_like: Any,
     tree_like: a nested object with leaves to split.
     axis: an axis for splitting.
     keepdim: a bool indicating whether to keep `axis` dimension.
+    use_jnp_split: whether to use `jax.numpy.split` for splitting arrays. Note
+      that `jax.numpy.split` has smaller memory footprint than `np.split` when
+      executed under JIT.
 
   Returns:
    A tuple of `size(axis)` trees containing results of splitting.
@@ -95,7 +99,8 @@ def tree_split_leaves(tree_like: Any,
     return tree_like
   leaves, treedef = jax.tree_flatten(tree_like)
   axis_size = leaves[0].shape[axis]
-  split_leaves = [np.split(l, axis_size, axis=axis) for l in leaves]
+  split_fn = jax.numpy.split if use_jnp_split else np.split
+  split_leaves = [split_fn(l, axis_size, axis) for l in leaves]
   ind_ = lambda x, i: x[i] if keepdim else x[i][0]
   split_trees = ((ind_(l, i) for l in split_leaves) for i in range(axis_size))
   return tuple(jax.tree_unflatten(treedef, t) for t in split_trees)

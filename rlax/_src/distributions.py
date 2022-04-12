@@ -273,7 +273,7 @@ def squashed_gaussian(sigma_min=-4, sigma_max=0.):
     scale = (max_vals - min_vals) * 0.5
     log_ = jnp.sum(jnp.log(scale))
     # computes sum log (1-tanh(a)**2)
-    log_ += jnp.sum(2. * (jnp.log(2.) - a - jax.nn.softplus(-2. * a)))
+    log_ += jnp.sum(2. * (jnp.log(2.) - a - jax.nn.softplus(-2. * a)), axis=-1)
     return log_
 
   def sample_fn(key: Array,
@@ -290,13 +290,15 @@ def squashed_gaussian(sigma_min=-4, sigma_max=0.):
     # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
     mu = mu_activation(mu)
     sigma = sigma_activation(sigma)
+    min_vals, max_vals = minmaxvals(sample, action_spec)
+    scale = (max_vals - min_vals) * 0.5
     # Compute pdf for multivariate gaussian.
     d = mu.shape[-1]
     det = jnp.prod(sigma**2, axis=-1)
     z = ((2 * jnp.pi)**(0.5 * d)) * (det**0.5)
-    exp = jnp.exp(-0.5 * jnp.sum(
-        ((mu - inv_transform(sample, action_spec)) / sigma)**2, axis=-1))
-    det_jacobian = jnp.prod(jnp.clip(1 - sample**2, 0., 1.) + 1e-6)
+    sample = inv_transform(sample, action_spec)
+    exp = jnp.exp(-0.5 * jnp.sum(((mu - sample) / sigma)**2, axis=-1))
+    det_jacobian = jnp.prod(scale * (1 - jnp.tanh(sample)**2), axis=-1)
     return exp / (z * det_jacobian)
 
   def logprob_fn(sample: Array, mu: Array, sigma: Array, action_spec):
@@ -307,8 +309,8 @@ def squashed_gaussian(sigma_min=-4, sigma_max=0.):
     d = mu.shape[-1]
     half_logdet = jnp.sum(jnp.log(sigma), axis=-1)
     logz = half_logdet + 0.5 * d * jnp.log(2 * jnp.pi)
-    logexp = -0.5 * jnp.sum(
-        ((mu - inv_transform(sample, action_spec)) / sigma)**2, axis=-1)
+    sample = inv_transform(sample, action_spec)
+    logexp = -0.5 * jnp.sum(((mu - sample) / sigma)**2, axis=-1)
     return logexp - logz - log_det_jacobian(sample, action_spec)
 
   def entropy_fn(mu: Array, sigma: Array):

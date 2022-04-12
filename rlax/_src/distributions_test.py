@@ -519,9 +519,9 @@ class SquashedGaussianTest(parameterized.TestCase):
     # Expected values for the distribution's function were computed using
     # tfd.MultivariateNormalDiag (from the tensorflow_probability package).
     self.expected_prob_a = np.array(
-        [0.044073, 0.032965], dtype=np.float32)
+        [0.016403, 0.011328], dtype=np.float32)
     self.expected_logprob_a = np.array(
-        [-4.105841, -4.396246], dtype=np.float32)
+        [-4.110274, -4.480485], dtype=np.float32)
     self.expected_entropy = np.array(
         [5.037213, 5.326565], dtype=np.float32)
     self.expected_kl = np.array(

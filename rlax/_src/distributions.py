@@ -199,11 +199,6 @@ def safe_epsilon_softmax(epsilon, temperature):
                               kl_fn)
 
 
-def _add_gaussian_noise(key, sample, sigma):
-  noise = jax.random.normal(key, shape=sample.shape) * sigma
-  return sample + noise
-
-
 def gaussian_diagonal(sigma=None):
   """A gaussian distribution with diagonal covariance matrix."""
 
@@ -241,14 +236,6 @@ def gaussian_diagonal(sigma=None):
 def squashed_gaussian(sigma_min=-4, sigma_max=0.):
   """A squashed gaussian distribution with diagonal covariance matrix."""
 
-  def minmaxvals(a, action_spec):
-    # broadcasts action spec to action shape
-    min_shape = action_spec.minimum.shape or (1,)
-    max_shape = action_spec.maximum.shape or (1,)
-    min_vals = jnp.broadcast_to(action_spec.minimum, a.shape[:-1] + min_shape)
-    max_vals = jnp.broadcast_to(action_spec.maximum, a.shape[:-1] + max_shape)
-    return min_vals, max_vals
-
   def sigma_activation(sigma, sigma_min=sigma_min, sigma_max=sigma_max):
     return jnp.exp(sigma_min + 0.5 * (sigma_max - sigma_min) *
                    (jnp.tanh(sigma) + 1.))
@@ -256,89 +243,40 @@ def squashed_gaussian(sigma_min=-4, sigma_max=0.):
   def mu_activation(mu):
     return jnp.tanh(mu)
 
-  def transform(a, action_spec):
-    min_vals, max_vals = minmaxvals(a, action_spec)
-    scale = (max_vals - min_vals) * 0.5
-    actions = (jnp.tanh(a) + 1.0) * scale + min_vals
-    return actions
+  def get_squashed_gaussian_dist(mu, sigma, action_spec=None):
+    if action_spec is not None:
+      scale = 0.5 * (action_spec.maximum - action_spec.minimum)
+      shift = action_spec.minimum
+      bijector = distrax.Chain([distrax.ScalarAffine(shift=shift, scale=scale),
+                                distrax.ScalarAffine(shift=1.0),
+                                distrax.Tanh()])
+    else:
+      bijector = distrax.Tanh()
+    return distrax.Transformed(
+        distribution=distrax.MultivariateNormalDiag(
+            loc=mu_activation(mu), scale_diag=sigma_activation(sigma)),
+        bijector=distrax.Block(bijector, ndims=1))
 
-  def inv_transform(a, action_spec):
-    min_vals, max_vals = minmaxvals(a, action_spec)
-    scale = (max_vals - min_vals) * 0.5
-    actions_tanh = (a - min_vals) / scale - 1.
-    return jnp.arctanh(actions_tanh)
-
-  def log_det_jacobian(a, action_spec):
-    min_vals, max_vals = minmaxvals(a, action_spec)
-    scale = (max_vals - min_vals) * 0.5
-    log_ = jnp.sum(jnp.log(scale))
-    # computes sum log (1-tanh(a)**2)
-    log_ += jnp.sum(2. * (jnp.log(2.) - a - jax.nn.softplus(-2. * a)), axis=-1)
-    return log_
-
-  def sample_fn(key: Array,
-                mu: Array,
-                sigma: Array,
-                action_spec,
-                ):
-    mu = mu_activation(mu)
-    sigma = sigma_activation(sigma)
-    action = _add_gaussian_noise(key, mu, sigma)
-    return transform(action, action_spec)
+  def sample_fn(key: Array, mu: Array, sigma: Array, action_spec):
+    return get_squashed_gaussian_dist(mu, sigma, action_spec).sample(seed=key)
 
   def prob_fn(sample: Array, mu: Array, sigma: Array, action_spec):
-    # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
-    mu = mu_activation(mu)
-    sigma = sigma_activation(sigma)
-    min_vals, max_vals = minmaxvals(sample, action_spec)
-    scale = (max_vals - min_vals) * 0.5
-    # Compute pdf for multivariate gaussian.
-    d = mu.shape[-1]
-    det = jnp.prod(sigma**2, axis=-1)
-    z = ((2 * jnp.pi)**(0.5 * d)) * (det**0.5)
-    sample = inv_transform(sample, action_spec)
-    exp = jnp.exp(-0.5 * jnp.sum(((mu - sample) / sigma)**2, axis=-1))
-    det_jacobian = jnp.prod(scale * (1 - jnp.tanh(sample)**2), axis=-1)
-    return exp / (z * det_jacobian)
+    return get_squashed_gaussian_dist(mu, sigma, action_spec).prob(sample)
 
   def logprob_fn(sample: Array, mu: Array, sigma: Array, action_spec):
-    # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
-    mu = mu_activation(mu)
-    sigma = sigma_activation(sigma)
-    # Compute logpdf for multivariate gaussian in a numerically safe way.
-    d = mu.shape[-1]
-    half_logdet = jnp.sum(jnp.log(sigma), axis=-1)
-    logz = half_logdet + 0.5 * d * jnp.log(2 * jnp.pi)
-    sample = inv_transform(sample, action_spec)
-    logexp = -0.5 * jnp.sum(((mu - sample) / sigma)**2, axis=-1)
-    return logexp - logz - log_det_jacobian(sample, action_spec)
+    return get_squashed_gaussian_dist(mu, sigma, action_spec).log_prob(sample)
 
   def entropy_fn(mu: Array, sigma: Array):
-    # Support scalar and vector `sigma`. If vector, mu.shape==sigma.shape.
-    mu = mu_activation(mu)
-    sigma = sigma_activation(sigma)
-    # Compute entropy in a numerically safe way.
-    d = mu.shape[-1]
-    half_logdet = jnp.sum(jnp.log(sigma), axis=-1)
-    return half_logdet + 0.5 * d * (1 + jnp.log(2 * jnp.pi))
+    return get_squashed_gaussian_dist(mu, sigma).distribution.entropy()
 
-  def kl_to_standard_normal_fn(mu: Array,
-                               sigma: Array,
-                               per_dimension: bool = False):
-    mu = mu_activation(mu)
-    sigma = sigma_activation(sigma)
-    v = jnp.clip(sigma**2, 1e-6, 1e6)
-    kl = 0.5 * (v + mu**2 - jnp.ones_like(mu) - jnp.log(v))
-    if not per_dimension:
-      kl = jnp.sum(kl, axis=-1)
-    return kl
+  def kl_to_standard_normal_fn(mu: Array, sigma: Array):
+    return get_squashed_gaussian_dist(mu, sigma).distribution.kl_divergence(
+        distrax.MultivariateNormalDiag(
+            jnp.zeros_like(mu), jnp.ones_like(mu)))
 
   def kl_fn(mu_0: Array, sigma_0: Numeric, mu_1: Array, sigma_1: Numeric):
-    sigma_0 = sigma_activation(sigma_0)
-    mu_0 = mu_activation(mu_0)
-    sigma_1 = sigma_activation(sigma_1)
-    mu_1 = mu_activation(mu_1)
-    return multivariate_normal_kl_divergence(mu_0, sigma_0, mu_1, sigma_1)
+    return get_squashed_gaussian_dist(mu_0, sigma_0).distribution.kl_divergence(
+        get_squashed_gaussian_dist(mu_1, sigma_1).distribution)
 
   return ContinuousDistribution(sample_fn, prob_fn, logprob_fn, entropy_fn,
                                 kl_to_standard_normal_fn, kl_fn)

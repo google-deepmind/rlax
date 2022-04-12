@@ -22,6 +22,12 @@ import numpy as np
 from rlax._src import distributions
 
 
+@chex.dataclass(frozen=True)
+class _MockActionSpec:
+  minimum: chex.Array
+  maximum: chex.Array
+
+
 class CategoricalSampleTest(parameterized.TestCase):
 
   @chex.all_variants()
@@ -494,6 +500,87 @@ class GaussianDiagonalTest(parameterized.TestCase):
     actual = kl_fn(self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_kl_to_std_normal, actual,
                                atol=1e-4)
+
+
+class SquashedGaussianTest(parameterized.TestCase):
+
+  def setUp(self):
+    super().setUp()
+
+    self.mu = np.array([[1., -1], [0.1, -0.1]], dtype=np.float32)
+    self.sigma = np.array([[0.1, 0.1], [0.2, 0.3]], dtype=np.float32)
+    self.sample = np.array([[0.5, -0.6], [-.4, -.2]], dtype=np.float32)
+    self.other_mu = np.array([[1., -10.], [0.3, -0.2]], dtype=np.float32)
+    self.other_sigma = np.array([[0.1, 0.1], [0.8, 0.3]], dtype=np.float32)
+    self.action_spec = _MockActionSpec(minimum=np.array([-1.0]),
+                                       maximum=np.array([2.0]))
+    self.sigma_min = 0.0
+    self.sigma_max = 2.0
+    # Expected values for the distribution's function were computed using
+    # tfd.MultivariateNormalDiag (from the tensorflow_probability package).
+    self.expected_prob_a = np.array(
+        [0.044073, 0.032965], dtype=np.float32)
+    self.expected_logprob_a = np.array(
+        [-4.105841, -4.396246], dtype=np.float32)
+    self.expected_entropy = np.array(
+        [5.037213, 5.326565], dtype=np.float32)
+    self.expected_kl = np.array(
+        [0.003151, 0.164303], dtype=np.float32)
+    self.expected_kl_to_std_normal = np.array(
+        [6.399713, 8.61989], dtype=np.float32)
+
+  @chex.all_variants()
+  def test_squashed_gaussian_prob(self):
+    """Tests for a full batch."""
+    distrib = distributions.squashed_gaussian(sigma_min=self.sigma_min,
+                                              sigma_max=self.sigma_max)
+    prob_fn = self.variant(distrib.prob)
+    # Test greedy output in batch.
+    actual = prob_fn(self.sample, self.mu, self.sigma, self.action_spec)
+    np.testing.assert_allclose(self.expected_prob_a, actual, atol=1e-4)
+
+  @chex.all_variants()
+  def test_squashed_gaussian_logprob(self):
+    """Tests for a full batch."""
+    distrib = distributions.squashed_gaussian(sigma_min=self.sigma_min,
+                                              sigma_max=self.sigma_max)
+    logprob_fn = self.variant(distrib.logprob)
+    # Test greedy output in batch.
+    actual = logprob_fn(self.sample, self.mu, self.sigma, self.action_spec)
+    np.testing.assert_allclose(self.expected_logprob_a, actual, atol=1e-3,
+                               rtol=1e-6)
+
+  @chex.all_variants()
+  def test_squashed_gaussian_entropy(self):
+    """Tests for a full batch."""
+    distrib = distributions.squashed_gaussian(sigma_min=self.sigma_min,
+                                              sigma_max=self.sigma_max)
+    entropy_fn = self.variant(distrib.entropy)
+    # Test greedy output in batch.
+    actual = entropy_fn(self.mu, self.sigma)
+    np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-3,
+                               rtol=1e-6)
+
+  @chex.all_variants()
+  def test_squashed_gaussian_kl(self):
+    """Tests for a full batch."""
+    distrib = distributions.squashed_gaussian(sigma_min=self.sigma_min,
+                                              sigma_max=self.sigma_max)
+    kl_fn = self.variant(distrib.kl)
+    # Test greedy output in batch.
+    actual = kl_fn(self.mu, self.sigma, self.other_mu, self.other_sigma)
+    np.testing.assert_allclose(self.expected_kl, actual, atol=1e-3, rtol=1e-6)
+
+  @chex.all_variants()
+  def test_squashed_gaussian_kl_to_std_normal(self):
+    """Tests for a full batch."""
+    distrib = distributions.squashed_gaussian(sigma_min=self.sigma_min,
+                                              sigma_max=self.sigma_max)
+    kl_fn = self.variant(distrib.kl_to_standard_normal)
+    # Test greedy output in batch.
+    actual = kl_fn(self.mu, self.sigma)
+    np.testing.assert_allclose(self.expected_kl_to_std_normal, actual,
+                               atol=1e-3, rtol=1e-5)
 
 
 class ImportanceSamplingTest(parameterized.TestCase):

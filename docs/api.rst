@@ -510,10 +510,13 @@ Transforms
 
 .. autosummary::
 
+    compose_tx
+    DISCOUNT_TRANSFORM_PAIR
     HYPERBOLIC_SIN_PAIR
     identity
     IDENTITY_PAIR
     logit
+    muzero_pair
     power
     sigmoid
     signed_expm1
@@ -524,6 +527,7 @@ Transforms
     signed_parabolic
     transform_from_2hot
     transform_to_2hot
+    twohot_pair
     TxPair
 
 

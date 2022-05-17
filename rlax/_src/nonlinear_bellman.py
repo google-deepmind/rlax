@@ -48,6 +48,80 @@ SIGNED_HYPERBOLIC_PAIR = TxPair(
     transforms.signed_hyperbolic, transforms.signed_parabolic)
 HYPERBOLIC_SIN_PAIR = TxPair(
     transforms.hyperbolic_arcsin, transforms.hyperbolic_sin)
+DISCOUNT_TRANSFORM_PAIR = TxPair(
+    lambda x: -jnp.log(1 - x),
+    lambda x: 1 - jnp.exp(-x))
+
+
+def twohot_pair(
+    min_value: float,
+    max_value: float,
+    num_bins: int) -> TxPair:
+  """Construct a TxPair matching a 2-hot reparametrisation and its inverse."""
+  apply_fn = functools.partial(
+      transforms.transform_to_2hot,
+      min_value=min_value,
+      max_value=max_value,
+      num_bins=num_bins)
+  apply_inv_fn = functools.partial(
+      transforms.transform_from_2hot,
+      min_value=min_value,
+      max_value=max_value,
+      num_bins=num_bins)
+  return TxPair(apply_fn, apply_inv_fn)
+
+
+def compose_tx(*tx_list):
+  """Utility to compose a sequence of TxPairs.
+
+  The transformations are applied in order during the `apply` method:
+  e.g. [f, g] --> y = g(f(x))
+  and in reverse order during the `apply_inv` method:
+  e.g. [f, g] --> x = g^-1(f^-1(x))
+
+  Args:
+    *tx_list: a sequence of TxPairs as positional arguments.
+
+  Returns:
+    a new TxPair.
+  """
+
+  def apply_fn(x: chex.Array):
+    for tx in tx_list:
+      x = tx.apply(x)
+    return x
+
+  def apply_inv_fn(x: chex.Array):
+    for tx in tx_list[::-1]:
+      x = tx.apply_inv(x)
+    return x
+
+  return TxPair(apply_fn, apply_inv_fn)
+
+
+def muzero_pair(
+    min_value: float,
+    max_value: float,
+    num_bins: int,
+    tx: TxPair) -> TxPair:
+  """Create the transformation pair introduced in MuZero.
+
+  This more complex pair of transformations, combines a monotonic squashing
+  function with a reparametrisation of the value over a fixed support.
+
+  See "Mastering Atari, Go, Chess and Shogi by Planning with a Learned Model"
+  by Schrittwieser et al. (https://arxiv.org/abs/1911.08265).
+
+  Args:
+    min_value: minimum value of the discrete support.
+    max_value: maximum value of the discrete support.
+    num_bins: number of discrete bins used by the fixed support.
+    tx: non-linear transformation to be applied before reparametrisation.
+
+  Returns:
+    a transformation pair.
+  """
+  return compose_tx(tx, twohot_pair(min_value, max_value, num_bins))
 
 
 def transform_values(build_targets, *value_argnums):

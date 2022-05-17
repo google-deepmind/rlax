@@ -60,8 +60,11 @@ from rlax._src.multistep import truncated_generalized_advantage_estimation
 from rlax._src.nested_updates import conditional_update
 from rlax._src.nested_updates import incremental_update
 from rlax._src.nested_updates import periodic_update
+from rlax._src.nonlinear_bellman import compose_tx
+from rlax._src.nonlinear_bellman import DISCOUNT_TRANSFORM_PAIR
 from rlax._src.nonlinear_bellman import HYPERBOLIC_SIN_PAIR
 from rlax._src.nonlinear_bellman import IDENTITY_PAIR
+from rlax._src.nonlinear_bellman import muzero_pair
 from rlax._src.nonlinear_bellman import SIGNED_HYPERBOLIC_PAIR
 from rlax._src.nonlinear_bellman import SIGNED_LOGP1_PAIR
 from rlax._src.nonlinear_bellman import transformed_general_off_policy_returns_from_action_values
@@ -70,6 +73,7 @@ from rlax._src.nonlinear_bellman import transformed_n_step_q_learning
 from rlax._src.nonlinear_bellman import transformed_n_step_returns
 from rlax._src.nonlinear_bellman import transformed_q_lambda
 from rlax._src.nonlinear_bellman import transformed_retrace
+from rlax._src.nonlinear_bellman import twohot_pair
 from rlax._src.nonlinear_bellman import TxPair
 from rlax._src.policy_gradients import clipped_surrogate_pg_loss
 from rlax._src.policy_gradients import dpg_loss
@@ -140,8 +144,10 @@ __all__ = (
     "categorical_td_learning",
     "clip_gradient",
     "clipped_surrogate_pg_loss",
+    "compose_tx",
     "conditional_update",
     "discounted_returns",
+    "DISCOUNT_TRANSFORM_PAIR",
     "double_q_learning",
     "dpg_loss",
     "entropy_loss",
@@ -176,6 +182,7 @@ __all__ = (
     "mpo_compute_weights_and_temperature_loss",
     "mpo_loss",
     "multivariate_normal_kl_divergence",
+    "muzero_pair",
     "normalize",
     "n_step_bootstrapped_returns",
     "one_hot",
@@ -223,6 +230,7 @@ __all__ = (
     "tree_split_key",
     "tree_split_leaves",
     "truncated_generalized_advantage_estimation",
+    "twohot_pair",
     "TxPair",
     "unnormalize",
     "unnormalize_linear",

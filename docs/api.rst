@@ -29,6 +29,7 @@ Value Learning
     q_learning
     quantile_expected_sarsa
     quantile_q_learning
+    quantile_regression_loss
     qv_learning
     qv_max
     retrace

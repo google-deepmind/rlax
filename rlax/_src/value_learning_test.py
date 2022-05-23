@@ -748,7 +748,7 @@ class QuantileRegressionLossTest(parameterized.TestCase):
       ('huber', 2.))
   def test_quantile_regression_loss_batch(self, huber_param):
     """Tests for a full batch."""
-    loss_fn = value_learning._quantile_regression_loss
+    loss_fn = value_learning.quantile_regression_loss
     loss_fn = self.variant(jax.vmap(functools.partial(
         loss_fn, huber_param=huber_param)))
     # Compute quantile regression loss.
@@ -827,7 +827,7 @@ class QuantileLearningTest(parameterized.TestCase):
     self.expected = {}
     for huber_param in [0.0, 1.0]:
       self.expected[huber_param] = np.array(  # loop over batch
-          [value_learning._quantile_regression_loss(dqa, tau, dt, huber_param)
+          [value_learning.quantile_regression_loss(dqa, tau, dt, huber_param)
            for (dqa, tau, dt) in zip(dist_qa_tm1, self.tau_q_tm1, dist_target)],
           dtype=np.float32)
 
@@ -845,7 +845,7 @@ class QuantileLearningTest(parameterized.TestCase):
     self.uniform_expected = {}
     for huber_param in [0.0, 1.0]:
       all_action_losses = [  # loop over actions and batch
-          [value_learning._quantile_regression_loss(dqa, tau, dt, huber_param)
+          [value_learning.quantile_regression_loss(dqa, tau, dt, huber_param)
            for (dqa, tau, dt) in zip(dist_qa_tm1, self.tau_q_tm1, dts[:, :, a])]
           for a in range(4)]
       # uniform probabilities means the loss is averaged over actions

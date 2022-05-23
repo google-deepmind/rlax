@@ -114,6 +114,7 @@ from rlax._src.value_learning import q_lambda
 from rlax._src.value_learning import q_learning
 from rlax._src.value_learning import quantile_expected_sarsa
 from rlax._src.value_learning import quantile_q_learning
+from rlax._src.value_learning import quantile_regression_loss
 from rlax._src.value_learning import qv_learning
 from rlax._src.value_learning import qv_max
 from rlax._src.value_learning import retrace
@@ -197,6 +198,7 @@ __all__ = (
     "qpg_loss",
     "quantile_expected_sarsa",
     "quantile_q_learning",
+    "quantile_regression_loss",
     "qv_learning",
     "qv_max",
     "q_lambda",

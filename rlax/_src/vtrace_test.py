@@ -89,6 +89,40 @@ class VTraceTest(parameterized.TestCase):
         self._expected_pg, vtrace_output.pg_advantage, rtol=1e-3)
 
   @chex.all_variants()
+  @parameterized.named_parameters(
+      ('scalar_lambda',
+       np.array([[0., 1., 1., 0., 0., 1., 1., 1.]], dtype=np.float32),
+       np.array([1.], dtype=np.float32)),
+      ('vector_lambda',
+       np.array([[0., 1., 1., 0., 0., 1., 1., 1.]], dtype=np.float32),
+       np.array([[1., 1., 1., 1., 1., 1., 1., 1.]], dtype=np.float32)),
+      ('vector_lambda_truncation',
+       np.array([[0., 1., 1., 1., 0., 1., 1., 1.]], dtype=np.float32),
+       np.array([[1., 1., 1., 0., 1., 1., 1., 1.]], dtype=np.float32)),
+  )
+  def test_vtrace_lambda_multiple_episodes_per_trace(self, discount_t, lambda_):
+    """Tests for a full batch."""
+    vtrace_ = self.variant(
+        jax.vmap(
+            functools.partial(
+                vtrace.vtrace, clip_rho_threshold=self._clip_rho_threshold)))
+    # Get function arguments.
+    r_t, rho_tm1, v_tm1 = np.random.random((3, 1, 8))
+    bootstrap_value = np.array([10.], dtype=np.float32)
+    v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)
+    # Full trace.
+    vtrace_output = vtrace_(v_tm1, v_t, r_t, discount_t, rho_tm1, lambda_)
+    # First episode trace.
+    vtrace_output_ep1 = vtrace_(v_tm1[:4], v_t[:4], r_t[:4], discount_t[:4],
+                                rho_tm1[:4], lambda_[:4])
+    # Second episode trace.
+    vtrace_output_ep2 = vtrace_(v_tm1[4:], v_t[4:], r_t[4:], discount_t[4:],
+                                rho_tm1[4:], lambda_[4:])
+    # Test output.
+    np.testing.assert_allclose(vtrace_output[:4], vtrace_output_ep1, rtol=1e-3)
+    np.testing.assert_allclose(vtrace_output[4:], vtrace_output_ep2, rtol=1e-3)
+
+  @chex.all_variants()
   def test_lambda_q_estimate(self):
     """Tests for a full batch."""
     lambda_ = 0.8

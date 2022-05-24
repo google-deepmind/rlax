@@ -133,18 +133,18 @@ class DQN:
     return ActorOutput(actions=a, q_values=q), ActorState(actor_state.count + 1)
 
   def learner_step(self, params, data, learner_state, unused_key):
-    target_params = rlax.periodic_update(
-        params.online, params.target, learner_state.count, self._target_period)
+    target_params = optax.periodic_update(params.online, params.target,
+                                          learner_state.count,
+                                          self._target_period)
     dloss_dtheta = jax.grad(self._loss)(params.online, target_params, *data)
-    updates, opt_state = self._optimizer.update(
-        dloss_dtheta, learner_state.opt_state)
+    updates, opt_state = self._optimizer.update(dloss_dtheta,
+                                                learner_state.opt_state)
     online_params = optax.apply_updates(params.online, updates)
-    return (
-        Params(online_params, target_params),
-        LearnerState(learner_state.count + 1, opt_state))
+    return (Params(online_params, target_params),
+            LearnerState(learner_state.count + 1, opt_state))
 
-  def _loss(self, online_params, target_params,
-            obs_tm1, a_tm1, r_t, discount_t, obs_t):
+  def _loss(self, online_params, target_params, obs_tm1, a_tm1, r_t, discount_t,
+            obs_t):
     q_tm1 = self._network.apply(online_params, obs_tm1)
     q_t_val = self._network.apply(target_params, obs_t)
     q_t_select = self._network.apply(online_params, obs_t)

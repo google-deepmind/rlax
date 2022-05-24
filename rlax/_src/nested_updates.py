@@ -15,6 +15,8 @@
 """Utilities for target network switching."""
 
 from typing import Any
+import warnings
+
 import chex
 import jax
 
@@ -23,6 +25,10 @@ Numeric = chex.Numeric
 
 def conditional_update(new_tensors: Any, old_tensors: Any, is_time: Numeric):
   """Checks whether to update the params and returns the correct params."""
+  warnings.warn(
+      "Rlax conditional_update will be deprecated. Please use optax instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   return jax.tree_multimap(
       lambda new, old: jax.lax.select(is_time, new, old),
       new_tensors, old_tensors)
@@ -32,12 +38,20 @@ def periodic_update(
     new_tensors: Any, old_tensors: Any,
     steps: chex.Array, update_period: int):
   """Periodically switch all elements from a nested struct with new elements."""
+  warnings.warn(
+      "Rlax periodic_update will be deprecated. Please use optax instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   return conditional_update(
       new_tensors, old_tensors, is_time=steps % update_period == 0)
 
 
 def incremental_update(new_tensors, old_tensors, tau: Numeric):
   """Incrementally update all elements from a nested struct."""
+  warnings.warn(
+      "Rlax incremental_update will be deprecated. Please use optax instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   return jax.tree_multimap(
       lambda new, old: tau * new + (1.0 - tau) * old,
       new_tensors, old_tensors)

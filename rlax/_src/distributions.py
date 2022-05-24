@@ -22,6 +22,7 @@ to compute statistics such as its entropy.
 """
 
 import collections
+import warnings
 
 import chex
 import distrax
@@ -41,11 +42,21 @@ ContinuousDistribution = collections.namedtuple(
 
 def categorical_sample(key, probs):
   """Sample from a set of discrete probabilities."""
+  warnings.warn(
+      "Rlax categorical_sample will be deprecated. "
+      "Please use distrax.Categorical.sample instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   return distrax.Categorical(probs=probs).sample(seed=key)
 
 
 def softmax(temperature=1.):
   """A softmax distribution."""
+  warnings.warn(
+      "Rlax softmax will be deprecated. "
+      "Please use distrax.Softmax instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
 
   def sample_fn(key: Array, logits: Array):
     return distrax.Softmax(logits, temperature).sample(seed=key)
@@ -69,6 +80,11 @@ def softmax(temperature=1.):
 def clipped_entropy_softmax(temperature=1., entropy_clip=1.):
   """A softmax distribution with clipped entropy (1 is eq to not clipping)."""
 
+  warnings.warn(
+      "Rlax clipped_entropy_softmax will be deprecated. "
+      "Please use distrax.Softmax instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   def sample_fn(key: Array, logits: Array, action_spec=None):
     del action_spec
     return distrax.Softmax(logits, temperature).sample(seed=key)
@@ -102,7 +118,11 @@ def _mix_with_uniform(probs, epsilon):
 
 def epsilon_softmax(epsilon, temperature):
   """An epsilon-softmax distribution."""
-
+  warnings.warn(
+      "Rlax epsilon_softmax will be deprecated. "
+      "Please use distrax.Softmax instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   def sample_fn(key: Array, logits: Array):
     probs = distrax.Softmax(logits=logits, temperature=temperature).probs
     return distrax.Categorical(
@@ -132,7 +152,11 @@ def epsilon_softmax(epsilon, temperature):
 
 def greedy():
   """A greedy distribution."""
-
+  warnings.warn(
+      "Rlax greedy will be deprecated. "
+      "Please use distrax.Greedy instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   def sample_fn(key: Array, preferences: Array):
     return distrax.Greedy(preferences).sample(seed=key)
 
@@ -152,6 +176,11 @@ def greedy():
 def epsilon_greedy(epsilon=None):
   """An epsilon-greedy distribution."""
 
+  warnings.warn(
+      "Rlax epsilon_greedy will be deprecated. "
+      "Please use distrax.EpsilonGreedy instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   def sample_fn(key: Array, preferences: Array, epsilon=epsilon):
     return distrax.EpsilonGreedy(preferences, epsilon).sample(seed=key)
 
@@ -169,6 +198,13 @@ def epsilon_greedy(epsilon=None):
 
 def safe_epsilon_softmax(epsilon, temperature):
   """Tolerantly handles the temperature=0 case."""
+
+  warnings.warn(
+      "Rlax safe_epsilon_softmax will be deprecated. "
+      "Please use distrax instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
+
   egreedy = epsilon_greedy(epsilon)
   unsafe = epsilon_softmax(epsilon, temperature)
 
@@ -201,6 +237,12 @@ def safe_epsilon_softmax(epsilon, temperature):
 
 def gaussian_diagonal(sigma=None):
   """A gaussian distribution with diagonal covariance matrix."""
+
+  warnings.warn(
+      "Rlax gaussian_diagonal will be deprecated. "
+      "Please use distrax MultivariateNormalDiag instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
 
   def sample_fn(key: Array, mu: Array, sigma: Array = sigma):
     return distrax.MultivariateNormalDiag(
@@ -235,6 +277,13 @@ def gaussian_diagonal(sigma=None):
 
 def squashed_gaussian(sigma_min=-4, sigma_max=0.):
   """A squashed gaussian distribution with diagonal covariance matrix."""
+
+  warnings.warn(
+      "Rlax squashed_gaussian will be deprecated. "
+      "Please use distrax Transformed MultivariateNormalDiag distribution "
+      "with chained Tanh/ScalarAffine bijector instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
 
   def sigma_activation(sigma, sigma_min=sigma_min, sigma_max=sigma_max):
     return jnp.exp(sigma_min + 0.5 * (sigma_max - sigma_min) *
@@ -295,6 +344,11 @@ def categorical_importance_sampling_ratios(pi_logits_t: Array,
   Returns:
     importance sampling ratios.
   """
+  warnings.warn(
+      "Rlax categorical_importance_sampling_ratios will be deprecated. "
+      "Please use distrax.importance_sampling_ratios instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   return distrax.importance_sampling_ratios(distrax.Categorical(
       pi_logits_t), distrax.Categorical(mu_logits_t), a_t)
 
@@ -318,6 +372,11 @@ def categorical_cross_entropy(
   Returns:
     a scalar loss.
   """
+  warnings.warn(
+      "Rlax categorical_cross_entropy will be deprecated. "
+      "Please use distrax.Categorical.cross_entropy instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   return distrax.Categorical(probs=labels).cross_entropy(
       distrax.Categorical(logits=logits))
 
@@ -337,6 +396,11 @@ def categorical_kl_divergence(
   Returns:
     the kl divergence between the distributions.
   """
+  warnings.warn(
+      "Rlax categorical_kl_divergence will be deprecated. "
+      "Please use distrax.Softmax.kl_divergence instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   return distrax.Softmax(p_logits, temperature).kl_divergence(
       distrax.Softmax(q_logits, temperature))
 
@@ -355,5 +419,10 @@ def multivariate_normal_kl_divergence(
   Returns:
     the kl divergence between the distributions.
   """
+  warnings.warn(
+      "Rlax multivariate_normal_kl_divergence will be deprecated."
+      "Please use distrax.MultivariateNormalDiag.kl_divergence instead.",
+      PendingDeprecationWarning, stacklevel=2
+  )
   return distrax.MultivariateNormalDiag(mu_0, sigma_0).kl_divergence(
       distrax.MultivariateNormalDiag(mu_1, sigma_1))

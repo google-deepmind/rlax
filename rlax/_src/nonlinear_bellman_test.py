@@ -53,6 +53,17 @@ class IdentityTest(parameterized.TestCase):
     scalar = tx.apply_inv(probs)
     np.testing.assert_allclose(a, scalar, rtol=1e-4, atol=1e-4)
 
+  def test_unbiased_transform_pair_is_consistent(self):
+    a = np.array([1.03, 4.43, -3012.33, 0.0])
+    tx = nonlinear_bellman.unbiased_transform_pair(
+        num_bins=601,
+        min_value=-300,
+        max_value=300,
+        tx=nonlinear_bellman.SIGNED_HYPERBOLIC_PAIR)
+    probs = tx.apply(a)
+    scalar = tx.apply_inv(probs)
+    np.testing.assert_allclose(a, scalar, rtol=1e-4, atol=1e-4)
+
 
 class TransformedQLambdaTest(parameterized.TestCase):
 

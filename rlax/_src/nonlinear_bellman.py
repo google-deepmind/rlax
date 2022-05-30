@@ -77,7 +77,7 @@ def compose_tx(*tx_list):
   The transformations are applied in order during the `apply` method:
   e.g. [f, g] --> y = g(f(x))
   and in reverse order during the `apply_inv` method:
-  e.g. [f, g] --> x = g^-1(f^-1(x))
+  e.g. [f, g] --> x = f^-1(g^-1(x))
 
   Args:
     *tx_list: a sequence of TxPairs as positional arguments.
@@ -122,6 +122,37 @@ def muzero_pair(
     a transformation pair.
   """
   return compose_tx(tx, twohot_pair(min_value, max_value, num_bins))
+
+
+def unbiased_transform_pair(
+    min_value: float,
+    max_value: float,
+    num_bins: int,
+    tx: TxPair) -> TxPair:
+  """Create an unbiased value transformation pair.
+
+  A pair of transformations, similar to 'muzero_pair' but where the
+  non-linearity is applied to the bin locations rather than the scalar value.
+
+  Args:
+    min_value: minimum value of the discrete support in the transformed space.
+    max_value: maximum value of the discrete support in the transformed space.
+    num_bins: number of discrete bins used by the fixed support.
+    tx: non-linear transformation to be applied to the bin locations.
+
+  Returns:
+    a transformation pair.
+  """
+  bins = tx.apply_inv(jnp.linspace(min_value, max_value, num_bins))
+
+  apply_fn = functools.partial(
+      transforms.transform_to_2hot_nonlinear, bins=bins)
+  apply_inv_fn = functools.partial(
+      transforms.transform_from_2hot_nonlinear, bins=bins)
+
+  nonlinear_twohot_pair = TxPair(apply_fn, apply_inv_fn)
+
+  return compose_tx(IDENTITY_PAIR, nonlinear_twohot_pair)
 
 
 def transform_values(build_targets, *value_argnums):

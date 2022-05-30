@@ -530,6 +530,7 @@ Transforms
     transform_to_2hot
     twohot_pair
     TxPair
+    unbiased_transform_pair
 
 
 Identity

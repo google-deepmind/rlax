@@ -75,6 +75,7 @@ from rlax._src.nonlinear_bellman import transformed_q_lambda
 from rlax._src.nonlinear_bellman import transformed_retrace
 from rlax._src.nonlinear_bellman import twohot_pair
 from rlax._src.nonlinear_bellman import TxPair
+from rlax._src.nonlinear_bellman import unbiased_transform_pair
 from rlax._src.policy_gradients import clipped_surrogate_pg_loss
 from rlax._src.policy_gradients import dpg_loss
 from rlax._src.policy_gradients import entropy_loss
@@ -234,6 +235,7 @@ __all__ = (
     "truncated_generalized_advantage_estimation",
     "twohot_pair",
     "TxPair",
+    "unbiased_transform_pair",
     "unnormalize",
     "unnormalize_linear",
     "vmpo_compute_weights_and_temperature_loss",

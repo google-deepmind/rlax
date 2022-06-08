@@ -353,6 +353,7 @@ Utilities
     AllSum
     batched_index
     clip_gradient
+    create_ema
     lhs_broadcast
     one_hot
     embed_oar
@@ -380,6 +381,11 @@ Clip Gradient
 ~~~~~~~~~~~~~
 
 .. autofunction:: clip_gradient
+
+Create Ema
+~~~~~~~~~~~~~
+
+.. autofunction:: create_ema
 
 LHS Broadcast
 ~~~~~~~~~~~~~

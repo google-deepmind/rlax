@@ -45,6 +45,9 @@ from rlax._src.losses import l2_loss
 from rlax._src.losses import likelihood
 from rlax._src.losses import log_loss
 from rlax._src.losses import pixel_control_loss
+from rlax._src.moving_averages import create_ema
+from rlax._src.moving_averages import EmaMoments
+from rlax._src.moving_averages import EmaState
 from rlax._src.mpo_ops import compute_parametric_kl_penalty_and_dual_loss
 from rlax._src.mpo_ops import LagrangePenalty
 from rlax._src.mpo_ops import mpo_compute_weights_and_temperature_loss
@@ -148,10 +151,13 @@ __all__ = (
     "clipped_surrogate_pg_loss",
     "compose_tx",
     "conditional_update",
+    "create_ema",
     "discounted_returns",
     "DISCOUNT_TRANSFORM_PAIR",
     "double_q_learning",
     "dpg_loss",
+    "EmaMoments",
+    "EmaState",
     "entropy_loss",
     "episodic_memory_intrinsic_rewards",
     "epsilon_greedy",

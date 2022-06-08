@@ -25,7 +25,7 @@ python --version
 
 # Install dependencies.
 pip install --upgrade pip setuptools wheel
-pip install flake8 pytest-xdist pytype pylint==2.13.9 pylint-exit
+pip install flake8 pytest-xdist pytype pylint pylint-exit
 pip install -r requirements/requirements.txt
 pip install -r requirements/requirements-test.txt
 

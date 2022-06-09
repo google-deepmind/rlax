@@ -46,6 +46,8 @@ from rlax._src.losses import l2_loss
 from rlax._src.losses import likelihood
 from rlax._src.losses import log_loss
 from rlax._src.losses import pixel_control_loss
+from rlax._src.model_learning import extract_subsequences
+from rlax._src.model_learning import sample_start_indices
 from rlax._src.moving_averages import create_ema
 from rlax._src.moving_averages import EmaMoments
 from rlax._src.moving_averages import EmaState
@@ -166,6 +168,7 @@ __all__ = (
     "epsilon_greedy",
     "epsilon_softmax",
     "expected_sarsa",
+    "extract_subsequences",
     "feature_control_rewards",
     "gaussian_diagonal",
     "HYPERBOLIC_SIN_PAIR",
@@ -218,6 +221,7 @@ __all__ = (
     "retrace_continuous",
     "rm_loss",
     "rpg_loss",
+    "sample_start_indices",
     "sarsa",
     "sarsa_lambda",
     "sigmoid",

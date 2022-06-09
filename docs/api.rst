@@ -464,6 +464,24 @@ Feature Control Rewards
 .. autofunction:: feature_control_rewards
 
 
+Model Learning
+==============
+
+
+.. currentmodule:: rlax
+
+.. autosummary::
+
+    extract_subsequences
+    sample_start_indices
+
+Extract model training data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: extract_subsequences
+
+.. autofunction:: sample_start_indices
+
 
 Pop Art
 ========

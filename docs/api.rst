@@ -357,7 +357,10 @@ Utilities
     lhs_broadcast
     one_hot
     embed_oar
+    replace_masked
+    tree_fn
     tree_map_zipped
+    tree_replace_masked
     tree_select
     tree_split_key
     tree_split_leaves

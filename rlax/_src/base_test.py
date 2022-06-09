@@ -58,6 +58,37 @@ class BroadcastTest(parameterized.TestCase):
     with self.assertRaisesRegex(ValueError, 'source shape'):
       base.lhs_broadcast(source, target)
 
+
+class ReplaceTest(parameterized.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    self.data = jnp.array([
+        [1, 2, 3, 4, 5, 6],
+        [-1, -2, -3, -4, -5, -6]
+    ])
+    self.replacement = self.data * 10
+    self.mask = jnp.array([0, 1])
+
+  def test_replace_masked(self):
+    output = base.replace_masked(self.data, self.replacement, self.mask)
+    expected_output = jnp.array([
+        [1, 2, 3, 4, 5, 6],
+        [-10, -20, -30, -40, -50, -60],
+    ])
+    # Test output.
+    np.testing.assert_allclose(output, expected_output)
+
+  def test_replace_masked_zeros(self):
+    output = base.replace_masked(self.data, None, self.mask)
+    expected_output = jnp.array([
+        [1, 2, 3, 4, 5, 6],
+        [0, 0, 0, 0, 0, 0],
+    ])
+    # Test output.
+    np.testing.assert_allclose(output, expected_output)
+
+
 if __name__ == '__main__':
   jax.config.update('jax_numpy_rank_promotion', 'raise')
   absltest.main()

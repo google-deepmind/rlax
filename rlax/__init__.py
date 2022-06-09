@@ -18,6 +18,7 @@ from rlax._src.base import AllSum
 from rlax._src.base import batched_index
 from rlax._src.base import lhs_broadcast
 from rlax._src.base import one_hot
+from rlax._src.base import replace_masked
 from rlax._src.clipping import clip_gradient
 from rlax._src.clipping import huber_loss
 from rlax._src.distributions import categorical_cross_entropy
@@ -103,7 +104,9 @@ from rlax._src.transforms import signed_logp1
 from rlax._src.transforms import signed_parabolic
 from rlax._src.transforms import transform_from_2hot
 from rlax._src.transforms import transform_to_2hot
+from rlax._src.tree_util import tree_fn
 from rlax._src.tree_util import tree_map_zipped
+from rlax._src.tree_util import tree_replace_masked
 from rlax._src.tree_util import tree_select
 from rlax._src.tree_util import tree_split_key
 from rlax._src.tree_util import tree_split_leaves
@@ -210,6 +213,7 @@ __all__ = (
     "qv_max",
     "q_lambda",
     "q_learning",
+    "replace_masked",
     "retrace",
     "retrace_continuous",
     "rm_loss",
@@ -234,7 +238,9 @@ __all__ = (
     "transformed_retrace",
     "transform_from_2hot",
     "transform_to_2hot",
+    "tree_fn",
     "tree_map_zipped",
+    "tree_replace_masked",
     "tree_select",
     "tree_split_key",
     "tree_split_leaves",

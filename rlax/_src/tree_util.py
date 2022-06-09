@@ -14,10 +14,14 @@
 # ==============================================================================
 """Tree utilities."""
 
+import functools
 from typing import Any, Callable, Sequence
+
 import chex
 import jax
+import jax.numpy as jnp
 import numpy as np
+from rlax._src import base
 
 Array = chex.Array
 tree_structure = jax.tree_util.tree_structure
@@ -99,3 +103,44 @@ def tree_split_leaves(tree_like: Any,
   ind_ = lambda x, i: x[i] if keepdim else x[i][0]
   split_trees = ((ind_(l, i) for l in split_leaves) for i in range(axis_size))
   return tuple(jax.tree_unflatten(treedef, t) for t in split_trees)
+
+
+def tree_replace_masked(tree_data, tree_replacement, mask):
+  """Replace slices of the leaves when mask is 1.
+
+  Args:
+    tree_data: a nested object with leaves to mask.
+    tree_replacement: nested object with the same structure of `tree_data`,
+      that cointains the data to insert according to `mask`. If `None`,
+      then the masked elements in `tree_data` will be replaced with zeros.
+    mask: a mask of 0/1s, whose shape is a prefix of the shape of the leaves
+      in `tree_data` and in `tree_replacement`.
+
+  Returns:
+    the updated tensor.
+  """
+  if tree_replacement is None:
+    tree_replacement = jax.tree_map(jnp.zeros_like, tree_data)
+  return jax.tree_map(
+      lambda data, replacement: base.replace_masked(data, replacement, mask),
+      tree_data, tree_replacement)
+
+
+def tree_fn(fn, **unmapped_kwargs):
+  """Wrap a function to jax.tree_map over its arguments.
+
+  You may set some named arguments via a partial to skip the `tree_map` on those
+  arguments. Usual caveats of `partial` apply (e.g. set named args must be a
+  suffix of the argument list).
+
+  Args:
+    fn: the function to be wrapped.
+    **unmapped_kwargs: the named arguments to be set via a partial.
+
+  Returns:
+    a function
+  """
+  pfn = functools.partial(fn, **unmapped_kwargs)
+  def _wrapped(*args):
+    return jax.tree_map(pfn, *args)
+  return _wrapped

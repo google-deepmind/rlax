@@ -89,6 +89,47 @@ class TreeUtilTest(absltest.TestCase):
         np.testing.assert_allclose(res_t['t4'][0], 4)
         np.testing.assert_allclose(res_t['t4'][1], i)
 
+  def test_tree_fn(self):
+    def add(x, y):
+      return x + y
+    tree_add = tree_util.tree_fn(add)
+    tree_x = [1, 2, 3]
+    tree_y = [1, 10, 100]
+    output = tree_add(tree_x, tree_y)
+    exp_output = [2, 12, 103]
+    # Test output.
+    np.testing.assert_allclose(output, exp_output)
+
+  def test_tree_fn_with_partials(self):
+    def add(x, y):
+      return x + y
+    tree_add = tree_util.tree_fn(add, y=1)
+    tree_x = [1, 2, 3]
+    output = tree_add(tree_x)
+    exp_output = [2, 3, 4]
+    # Test output.
+    np.testing.assert_allclose(output, exp_output)
+
+  def test_tree_replace_masked(self):
+    data = jnp.array([
+        [1, 2, 3, 4, 5, 6],
+        [-1, -2, -3, -4, -5, -6]
+    ])
+    tree_data = {'a': data, 'b': data}
+    replacement = data * 10
+    tree_replacement = {'a': replacement, 'b': replacement}
+    mask = jnp.array([0, 1])
+    tree_output = tree_util.tree_replace_masked(
+        tree_data, tree_replacement, mask)
+    expected_output = jnp.array([
+        [1, 2, 3, 4, 5, 6],
+        [-10, -20, -30, -40, -50, -60],
+    ])
+    expected_tree_output = {'a': expected_output, 'b': expected_output}
+    # Test output.
+    np.testing.assert_allclose(tree_output['a'], expected_tree_output['a'])
+    np.testing.assert_allclose(tree_output['b'], expected_tree_output['b'])
+
 
 if __name__ == '__main__':
   jax.config.update('jax_numpy_rank_promotion', 'raise')

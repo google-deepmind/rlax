@@ -354,6 +354,7 @@ Utilities
     batched_index
     clip_gradient
     create_ema
+    fix_step_type_on_interruptions
     lhs_broadcast
     one_hot
     embed_oar
@@ -405,10 +406,25 @@ Embed OAR
 
 .. autofunction:: embed_oar
 
+Fix Step Type
+~~~~~~~~~~~~~
+
+.. autofunction:: fix_step_type_on_interruptions
+
+Replace Masked
+~~~~~~~~~~~~~~
+
+.. autofunction:: replace_masked
+
 Tree Map Zipped
 ~~~~~~~~~~~~~~~
 
 .. autofunction:: tree_map_zipped
+
+Tree Replace Masked
+~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: tree_replace_masked
 
 Tree Select
 ~~~~~~~~~~~

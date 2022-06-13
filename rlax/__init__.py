@@ -65,7 +65,6 @@ from rlax._src.multistep import lambda_returns
 from rlax._src.multistep import n_step_bootstrapped_returns
 from rlax._src.multistep import truncated_generalized_advantage_estimation
 from rlax._src.nested_updates import conditional_update
-from rlax._src.nested_updates import incremental_update
 from rlax._src.nested_updates import periodic_update
 from rlax._src.nonlinear_bellman import compose_tx
 from rlax._src.nonlinear_bellman import DISCOUNT_TRANSFORM_PAIR
@@ -184,7 +183,6 @@ __all__ = (
     "huber_loss",
     "identity",
     "IDENTITY_PAIR",
-    "incremental_update",
     "knn_query",
     "l2_loss",
     "LagrangePenalty",

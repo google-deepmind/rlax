@@ -366,7 +366,6 @@ Utilities
     tree_split_key
     tree_split_leaves
     conditional_update
-    incremental_update
     periodic_update
 
 
@@ -445,11 +444,6 @@ Conditional Update
 ~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: conditional_update
-
-Incremental Update
-~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: incremental_update
 
 Periodic Update
 ~~~~~~~~~~~~~~~

@@ -54,17 +54,6 @@ class NestedUpdatesTest(parameterized.TestCase):
         jax.tree_leaves(output), jax.tree_leaves(self._old_struct)):
       np.testing.assert_allclose(o, exp)
 
-  @chex.all_variants()
-  def test_incremental_update(self):
-    """Check nested incremental updates."""
-    incremental_update = self.variant(nested_updates.incremental_update)
-
-    tau = jnp.array(0.1)
-    output = incremental_update(self._new_struct, self._old_struct, tau)
-    for o, exp in zip(
-        jax.tree_leaves(output), jax.tree_leaves(self._new_struct)):
-      np.testing.assert_allclose(o, tau * exp)
-
 
 if __name__ == '__main__':
   absltest.main()

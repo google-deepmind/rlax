@@ -44,14 +44,3 @@ def periodic_update(
   )
   return conditional_update(
       new_tensors, old_tensors, is_time=steps % update_period == 0)
-
-
-def incremental_update(new_tensors, old_tensors, tau: Numeric):
-  """Incrementally update all elements from a nested struct."""
-  warnings.warn(
-      "Rlax incremental_update will be deprecated. Please use optax instead.",
-      PendingDeprecationWarning, stacklevel=2
-  )
-  return jax.tree_multimap(
-      lambda new, old: tau * new + (1.0 - tau) * old,
-      new_tensors, old_tensors)

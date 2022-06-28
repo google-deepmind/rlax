@@ -4,4 +4,4 @@ distrax>=0.0.2
 dm_env
 jax>=0.1.55
 jaxlib>=0.1.37
-numpy>=1.18.0
+numpy>=1.18.0,<1.23

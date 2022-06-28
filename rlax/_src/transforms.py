@@ -102,8 +102,10 @@ def transform_to_2hot(
   upper_value = (upper / (num_bins - 1.0)) * (max_value - min_value) + min_value
   p_lower = (upper_value - scalar) / (upper_value - lower_value + 1e-5)
   p_upper = 1 - p_lower
-  lower_one_hot = base.one_hot(lower, num_bins) * jnp.expand_dims(p_lower, -1)
-  upper_one_hot = base.one_hot(upper, num_bins) * jnp.expand_dims(p_upper, -1)
+  lower_one_hot = base.one_hot(
+      lower, num_bins, dtype=scalar.dtype) * jnp.expand_dims(p_lower, -1)
+  upper_one_hot = base.one_hot(
+      upper, num_bins, dtype=scalar.dtype) * jnp.expand_dims(p_upper, -1)
   return lower_one_hot + upper_one_hot
 
 
@@ -113,7 +115,8 @@ def transform_from_2hot(
     max_value: float,
     num_bins: int) -> Array:
   """Transforms from a categorical distribution to a scalar."""
-  support_space = jnp.linspace(min_value, max_value, num_bins)
+  support_space = jnp.linspace(
+      min_value, max_value, num_bins).astype(probs.dtype)
   scalar = jnp.sum(probs * jnp.expand_dims(support_space, 0), -1)
   return scalar
 

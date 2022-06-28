@@ -43,6 +43,7 @@ from rlax._src.exploration import episodic_memory_intrinsic_rewards
 from rlax._src.general_value_functions import feature_control_rewards
 from rlax._src.general_value_functions import pixel_control_rewards
 from rlax._src.interruptions import fix_step_type_on_interruptions
+from rlax._src.losses import expectile_loss
 from rlax._src.losses import l2_loss
 from rlax._src.losses import likelihood
 from rlax._src.losses import log_loss
@@ -168,6 +169,7 @@ __all__ = (
     "epsilon_greedy",
     "epsilon_softmax",
     "expected_sarsa",
+    "expectile_loss",
     "extract_subsequences",
     "feature_control_rewards",
     "fix_step_type_on_interruptions",

@@ -187,3 +187,28 @@ def pixel_control_loss(
   expanded_shape = (sequence_length,) + height_width
   spatial_loss = jnp.reshape(loss, expanded_shape)  # [T,H,W].
   return spatial_loss
+
+
+def expectile_loss(predictions: Array, targets: Array, expectile: float):
+  """Expectile loss that weighs over-/under-estimations of targets differently.
+
+  The formulation is an asymmetric least squares loss which downweights the
+  contributions of predictions that underestimate targets and upweights
+  overestimation of targets.
+  See Implicit Q Learning (https://arxiv.org/pdf/2110.06169.pdf) Sec 4.1 for
+  more details on this loss.
+
+  Args:
+    predictions: Tensor of shape [T, ...] where T is the sequence length.
+    targets: Target values for predictions with identical shape as predictions.
+    expectile: A float value that represents the weights assigned to predictions
+      that over-estimate targets.
+
+  Returns:
+    a vector of same shape as predictions.
+  """
+  chex.assert_equal_shape([predictions, targets])
+  diff = (targets - predictions)
+  is_underestimation = jnp.less(diff, 0)
+  weight = jnp.abs(expectile - is_underestimation)
+  return weight * (diff**2)

@@ -61,6 +61,56 @@ class L2LossTest(parameterized.TestCase):
     np.testing.assert_allclose(actual, self.dys)
 
 
+class ExpectileLossTest(parameterized.TestCase):
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('expectile_0.5', 0.5, [-2., -1., -0.5, 0., 0.5, 1., 2.
+                             ], [2., 0.5, 0.125, 0., 0.125, 0.5, 2.]),
+      ('expectile_0.0', 0.0, [-2., -1., -0.5, 0., 0.5, 1., 2.
+                             ], [0., 0., 0., 0., 0.25, 1.0, 4.0]),
+      ('expectile_1.0', 1.0, [-2., -1., -0.5, 0., 0.5, 1., 2.
+                             ], [4.0, 1.0, 0.25, 0., 0.0, 0.0, 0.0]),
+      ('expectile_0.75', 0.75, [-2., -1., -0.5, 0., 0.5, 1., 2.
+                               ], [3.0, 0.75, 0.1875, 0., 0.0625, 0.25, 1.0]),
+  )
+  def test_expectile_loss_vector(self, expectile, predictions, expected_loss):
+    expectile_loss = self.variant(losses.expectile_loss)
+    predictions = jnp.array(predictions)
+    expected_loss = jnp.array(expected_loss)
+    targets = jnp.zeros_like(predictions)
+    # Test output.
+    np.testing.assert_allclose(
+        expectile_loss(
+            predictions=predictions,
+            targets=targets,
+            expectile=expectile,
+        ),
+        expected_loss,
+        atol=1e-4)
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('expectile_0.5', 0.5, [-2., -1., -0.5, 0., 0.5, 1., 2.
+                             ], [-2., -1., -0.5, 0., 0.5, 1.0, 2.0]),
+      ('expectile_0.0', 0.0, [-2., -1., -0.5, 0., 0.5, 1., 2.
+                             ], [0., 0., 0., 0., 1.0, 2.0, 4.0]),
+      ('expectile_1.0', 1.0, [-2., -1., -0.5, 0., 0.5, 1., 2.
+                             ], [-4.0, -2.0, -1.0, 0.0, 0.0, 0.0, 0.0]),
+      ('expectile_0.75', 0.75, [-2., -1., -0.5, 0., 0.5, 1., 2.
+                               ], [-3.0, -1.5, -0.75, 0., 0.25, 0.50, 1.0]),
+  )
+  def test_gradients(self, expectile, predictions, expected_grads):
+    predictions = jnp.array(predictions)
+    expected_grads = jnp.array(expected_grads)
+    targets = jnp.zeros_like(predictions)
+    expectile_loss_fn = self.variant(
+        functools.partial(losses.expectile_loss, expectile=expectile))
+    batch_grad_fn = jax.vmap(jax.grad(expectile_loss_fn), (0, 0))
+    predicted_grads = batch_grad_fn(predictions, targets)
+    np.testing.assert_allclose(predicted_grads, expected_grads, atol=1e-4)
+
+
 class LogLossTest(parameterized.TestCase):
 
   def setUp(self):

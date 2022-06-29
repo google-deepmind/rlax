@@ -291,8 +291,8 @@ RPG Loss
 
 .. autofunction:: rpg_loss
 
-MPO Compute Weights and Temperature Loss
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+VMPO Compute Weights and Temperature Loss
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: vmpo_compute_weights_and_temperature_loss
 

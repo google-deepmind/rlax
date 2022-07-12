@@ -100,7 +100,7 @@ def tree_split_leaves(tree_like: Any,
   leaves, treedef = jax.tree_flatten(tree_like)
   axis_size = leaves[0].shape[axis]
   split_leaves = [np.split(l, axis_size, axis=axis) for l in leaves]
-  ind_ = lambda x, i: x[i] if keepdim else x[i][0]
+  ind_ = lambda x, i: x[i] if keepdim else np.squeeze(x[i], axis)
   split_trees = ((ind_(l, i) for l in split_leaves) for i in range(axis_size))
   return tuple(jax.tree_unflatten(treedef, t) for t in split_trees)
 

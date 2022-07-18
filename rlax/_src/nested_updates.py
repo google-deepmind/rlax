@@ -29,7 +29,7 @@ def conditional_update(new_tensors: Any, old_tensors: Any, is_time: Numeric):
       "Rlax conditional_update will be deprecated. Please use optax instead.",
       PendingDeprecationWarning, stacklevel=2
   )
-  return jax.tree_multimap(
+  return jax.tree_map(
       lambda new, old: jax.lax.select(is_time, new, old),
       new_tensors, old_tensors)
 

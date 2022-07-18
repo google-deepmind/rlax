@@ -83,7 +83,7 @@ class SequenceAccumulator:
     if len(self._timesteps) != self._timesteps.maxlen:
       raise ValueError("Not enough timesteps for a full sequence.")
 
-    actions, timesteps = jax.tree_multimap(lambda *ts: np.stack(ts),
+    actions, timesteps = jax.tree_map(lambda *ts: np.stack(ts),
                                            *self._timesteps)
     return actions, timesteps
 

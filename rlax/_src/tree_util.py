@@ -40,7 +40,7 @@ def tree_select(pred: Array, on_true: Any, on_false: Any):
   """
   if tree_structure(on_true) != tree_structure(on_false):
     raise ValueError('The two branches must have the same structure.')
-  return jax.tree_util.tree_multimap(lambda x, y: jax.lax.select(pred, x, y),
+  return jax.tree_util.tree_map(lambda x, y: jax.lax.select(pred, x, y),
                                      on_true, on_false)
 
 

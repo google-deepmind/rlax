@@ -23,7 +23,7 @@ the loss function optimized by a suitable gradient descent algorithm.
 import chex
 import jax
 import jax.numpy as jnp
-from jax.tree_util import tree_multimap
+from jax.tree_util import tree_map
 
 Array = chex.Array
 
@@ -79,7 +79,7 @@ def clip_gradient(x, gradient_min: float, gradient_max: float):
   chex.assert_type(x, float)
 
   def _compute_gradient(g):
-    return (tree_multimap(lambda g: jnp.clip(g, gradient_min, gradient_max),
-                          g), 0., 0.)
+    return (tree_map(lambda g: jnp.clip(g, gradient_min, gradient_max),
+                     g), 0., 0.)
 
   return x, _compute_gradient

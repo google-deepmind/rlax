@@ -11,13 +11,17 @@ documentation can be found at
 
 ## Installation
 
-RLax can be installed with pip directly from github, with the following command:
+You can install the latest released version of RLax from PyPI via:
 
-`pip install git+git://github.com/deepmind/rlax.git`.
+```sh
+pip install rlax
+```
 
-or from PyPI:
+or you can install the latest development version from GitHub:
 
-`pip install rlax`
+```sh
+pip install git+https://github.com/deepmind/rlax.git
+```
 
 All RLax code may then be just in time compiled for different hardware
 (e.g. CPU, GPU, TPU) using `jax.jit`.

@@ -37,8 +37,8 @@ def extract_subsequences(
     trajectories: A batch of trajectories, shape `[T, B, ...]`.
     start_indices: Time indices of start points, shape `[B, num_start_indices]`.
     subsequence_len: The length of subsequences extracted from `trajectories`.
-    max_valid_start_idx: The window used to construct the `start_idx`: i.e. the
-      `start_indices` should be from {0, ..., max_valid_start_idx - 1}.
+    max_valid_start_idx: the maximum valid start index, therefore the
+      `start_indices` should be from {0, ..., max_valid_start_idx}.
 
   Returns:
     A batch of subsequences, with
@@ -46,7 +46,7 @@ def extract_subsequences(
     index. Output shape is: `[subsequence_len, B, num_start_indices, ...]`.
   """
   if max_valid_start_idx is not None:
-    min_len = max_valid_start_idx + subsequence_len - 1
+    min_len = max_valid_start_idx + subsequence_len
     traj_len = trajectories.shape[0]
     if traj_len < min_len:
       raise AssertionError(
@@ -85,7 +85,7 @@ def sample_start_indices(
     return jax.random.choice(
         key, entries, shape=(num_start_indices,), replace=False)
 
-  rollout_window = jnp.arange(max_valid_start_idx)
+  rollout_window = jnp.arange(max_valid_start_idx + 1)
   return _vchoose(
       jax.random.split(rng_key, batch_size),
       jnp.tile(rollout_window, (batch_size, 1)))

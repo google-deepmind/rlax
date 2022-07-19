@@ -53,7 +53,7 @@ class ModelLearningTest(absltest.TestCase):
     with self.assertRaisesRegex(AssertionError, 'Expected len >='):
       model_learning.extract_subsequences(
           self.trajectories, self.invalid_start_indices, 1,
-          max_valid_start_idx=26)
+          max_valid_start_idx=24)
 
 
 if __name__ == '__main__':

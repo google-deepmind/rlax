@@ -51,15 +51,13 @@ def extract_subsequences(
     if traj_len < min_len:
       raise AssertionError(
           f'Expected len >= {min_len}, but trajectories length is: {traj_len}.')
+
   batch_size = start_indices.shape[0]
   batch_range = jnp.arange(batch_size)
   num_subs = start_indices.shape[1]
-  slices = []
-  for i in range(num_subs):
-    slices.append(jnp.stack(
-        [trajectories[start_indices[:, i] + k, batch_range]
-         for k in range(subsequence_len)], axis=0))
-  return jnp.stack(slices, axis=2)
+  idx_arr = jnp.arange(subsequence_len)[:, None, None] * jnp.ones(
+      (subsequence_len, batch_size, num_subs), dtype=jnp.int32) + start_indices
+  return trajectories[idx_arr, batch_range[None, :, None], ...]
 
 
 def sample_start_indices(

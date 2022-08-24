@@ -109,7 +109,8 @@ def lambda_returns(
   g = v_t[-1]
   for i in reversed(range(v_t.shape[0])):
     g = r_t[i] + discount_t[i] * ((1-lambda_[i]) * v_t[i] + lambda_[i] * g)
-    returns.insert(0, g)
+    returns.append(g)
+  returns = returns[::-1]
 
   return jax.lax.select(stop_target_gradients,
                         jax.lax.stop_gradient(jnp.array(returns)),
@@ -264,7 +265,8 @@ def importance_corrected_td_errors(
   delta, errors = 0.0, []
   for i in reversed(range(one_step_delta.shape[0])):
     delta = one_step_delta[i] + discount_t[i] * rho_t[i] * lambda_[i] * delta
-    errors.insert(0, delta)
+    errors.append(delta)
+  errors = errors[::-1]
 
   errors = rho_tm1 * jnp.array(errors)
   return jax.lax.select(stop_target_gradients,
@@ -426,7 +428,8 @@ def general_off_policy_returns_from_q_and_v(
   returns = [g]
   for i in reversed(range(q_t.shape[0])):  # [K - 2, ..., 0]
     g = r_t[i] + discount_t[i] * (v_t[i] - c_t[i] * q_t[i] + c_t[i] * g)
-    returns.insert(0, g)
+    returns.append(g)
+  returns = returns[::-1]
 
   return jax.lax.select(stop_target_gradients,
                         jax.lax.stop_gradient(jnp.array(returns)),

@@ -84,7 +84,8 @@ def vtrace(
   errors = []
   for i in reversed(range(v_t.shape[0])):
     err = td_errors[i] + discount_t[i] * c_tm1[i] * err
-    errors.insert(0, err)
+    errors.append(err)
+  errors = errors[::-1]
 
   # Return errors, maybe disabling gradient flow through bootstrap targets.
   return jax.lax.select(
@@ -146,7 +147,8 @@ def leaky_vtrace(
   errors = []
   for i in reversed(range(v_t.shape[0])):
     err = td_errors[i] + discount_t[i] * c_tm1[i] * err
-    errors.insert(0, err)
+    errors.append(err)
+  errors = errors[::-1]
 
   # Return errors, maybe disabling gradient flow through bootstrap targets.
   return jax.lax.select(

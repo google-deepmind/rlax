@@ -80,18 +80,19 @@ def vtrace(
   td_errors = clipped_rhos_tm1 * (r_t + discount_t * v_t - v_tm1)
 
   # Work backwards computing the td-errors.
-  err = 0.0
-  errors = []
-  for i in reversed(range(v_t.shape[0])):
-    err = td_errors[i] + discount_t[i] * c_tm1[i] * err
-    errors.append(err)
-  errors = errors[::-1]
+  def _body(acc, xs):
+    td_error, discount, c = xs
+    acc = td_error + discount * c * acc
+    return acc, acc
+
+  _, errors = jax.lax.scan(
+      _body, 0.0, (td_errors, discount_t, c_tm1), reverse=True)
 
   # Return errors, maybe disabling gradient flow through bootstrap targets.
   return jax.lax.select(
       stop_target_gradients,
-      jax.lax.stop_gradient(jnp.array(errors) + v_tm1) - v_tm1,
-      jnp.array(errors))
+      jax.lax.stop_gradient(errors + v_tm1) - v_tm1,
+      errors)
 
 
 def leaky_vtrace(
@@ -143,18 +144,19 @@ def leaky_vtrace(
   td_errors = clipped_rhos_tm1 * (r_t + discount_t * v_t - v_tm1)
 
   # Work backwards computing the td-errors.
-  err = 0.0
-  errors = []
-  for i in reversed(range(v_t.shape[0])):
-    err = td_errors[i] + discount_t[i] * c_tm1[i] * err
-    errors.append(err)
-  errors = errors[::-1]
+  def _body(acc, xs):
+    td_error, discount, c = xs
+    acc = td_error + discount * c * acc
+    return acc, acc
+
+  _, errors = jax.lax.scan(
+      _body, 0.0, (td_errors, discount_t, c_tm1), reverse=True)
 
   # Return errors, maybe disabling gradient flow through bootstrap targets.
   return jax.lax.select(
       stop_target_gradients,
-      jax.lax.stop_gradient(jnp.array(errors) + v_tm1) - v_tm1,
-      jnp.array(errors))
+      jax.lax.stop_gradient(errors + v_tm1) - v_tm1,
+      errors)
 
 
 def vtrace_td_error_and_advantage(

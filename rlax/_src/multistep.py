@@ -105,16 +105,17 @@ def lambda_returns(
   lambda_ = jnp.ones_like(discount_t) * lambda_
 
   # Work backwards to compute `G_{T-1}`, ..., `G_0`.
-  returns = []
-  g = v_t[-1]
-  for i in reversed(range(v_t.shape[0])):
-    g = r_t[i] + discount_t[i] * ((1-lambda_[i]) * v_t[i] + lambda_[i] * g)
-    returns.append(g)
-  returns = returns[::-1]
+  def _body(acc, xs):
+    returns, discounts, values, lambda_ = xs
+    acc = returns + discounts * ((1-lambda_) * values + lambda_ * acc)
+    return acc, acc
+
+  _, returns = jax.lax.scan(
+      _body, v_t[-1], (r_t, discount_t, v_t, lambda_), reverse=True)
 
   return jax.lax.select(stop_target_gradients,
-                        jax.lax.stop_gradient(jnp.array(returns)),
-                        jnp.array(returns))
+                        jax.lax.stop_gradient(returns),
+                        returns)
 
 
 def n_step_bootstrapped_returns(
@@ -262,13 +263,15 @@ def importance_corrected_td_errors(
   one_step_delta = r_t + discount_t * v_t - v_tm1
 
   # Work backwards to compute `delta_{T-1}`, ..., `delta_0`.
-  delta, errors = 0.0, []
-  for i in reversed(range(one_step_delta.shape[0])):
-    delta = one_step_delta[i] + discount_t[i] * rho_t[i] * lambda_[i] * delta
-    errors.append(delta)
-  errors = errors[::-1]
+  def _body(acc, xs):
+    deltas, discounts, rho_t, lambda_ = xs
+    acc = deltas + discounts * rho_t * lambda_ * acc
+    return acc, acc
 
-  errors = rho_tm1 * jnp.array(errors)
+  _, errors = jax.lax.scan(
+      _body, 0.0, (one_step_delta, discount_t, rho_t, lambda_), reverse=True)
+
+  errors = rho_tm1 * errors
   return jax.lax.select(stop_target_gradients,
                         jax.lax.stop_gradient(errors + v_tm1) - v_tm1, errors)
 
@@ -311,13 +314,17 @@ def truncated_generalized_advantage_estimation(
   delta_t = r_t + discount_t * values[1:] - values[:-1]
 
   # Iterate backwards to calculate advantages.
-  advantage_t = [0.]
-  for t in reversed(range(delta_t.shape[0])):
-    advantage_t.insert(0,
-                       delta_t[t] + lambda_[t] * discount_t[t] * advantage_t[0])
+  def _body(acc, xs):
+    deltas, discounts, lambda_ = xs
+    acc = deltas + discounts * lambda_ * acc
+    return acc, acc
+
+  _, advantage_t = jax.lax.scan(
+      _body, 0.0, (delta_t, discount_t, lambda_), reverse=True)
+
   return jax.lax.select(stop_target_gradients,
-                        jax.lax.stop_gradient(jnp.array(advantage_t[:-1])),
-                        jnp.array(advantage_t[:-1]))
+                        jax.lax.stop_gradient(advantage_t),
+                        advantage_t)
 
 
 def general_off_policy_returns_from_action_values(
@@ -423,14 +430,17 @@ def general_off_policy_returns_from_q_and_v(
   chex.assert_type([q_t, v_t, r_t, discount_t, c_t], float)
   chex.assert_equal_shape([q_t, v_t[:-1], r_t[:-1], discount_t[:-1], c_t])
 
-  # Work backwards to compute `G_K-1`, ..., `G_1`, `G_0`.
   g = r_t[-1] + discount_t[-1] * v_t[-1]  # G_K-1.
-  returns = [g]
-  for i in reversed(range(q_t.shape[0])):  # [K - 2, ..., 0]
-    g = r_t[i] + discount_t[i] * (v_t[i] - c_t[i] * q_t[i] + c_t[i] * g)
-    returns.append(g)
-  returns = returns[::-1]
+
+  def _body(acc, xs):
+    reward, discount, c, v, q = xs
+    acc = reward + discount * (v - c * q + c * acc)
+    return acc, acc
+
+  _, returns = jax.lax.scan(
+      _body, g, (r_t[:-1], discount_t[:-1], c_t, v_t[:-1], q_t), reverse=True)
+  returns = jnp.concatenate([returns, g[jnp.newaxis]], axis=0)
 
   return jax.lax.select(stop_target_gradients,
-                        jax.lax.stop_gradient(jnp.array(returns)),
-                        jnp.array(returns))
+                        jax.lax.stop_gradient(returns),
+                        returns)

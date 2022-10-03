@@ -683,11 +683,9 @@ Distributions
     categorical_sample
     clipped_entropy_softmax
     epsilon_greedy
-    epsilon_softmax
     gaussian_diagonal
     greedy
     multivariate_normal_kl_divergence
-    safe_epsilon_softmax
     softmax
     squashed_gaussian
 
@@ -723,11 +721,6 @@ Epsilon Greedy
 
 .. autofunction:: epsilon_greedy
 
-Epsilon Softmax
-~~~~~~~~~~~~~~~
-
-.. autofunction:: epsilon_softmax
-
 Gaussian Diagonal
 ~~~~~~~~~~~~~~~~~
 
@@ -742,11 +735,6 @@ Multivariate Normal KL Divergence
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: multivariate_normal_kl_divergence
-
-Safe Epsilon Softmax
-~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: safe_epsilon_softmax
 
 Softmax
 ~~~~~~~

@@ -26,7 +26,6 @@ import warnings
 
 import chex
 import distrax
-import jax
 import jax.numpy as jnp
 
 Array = chex.Array
@@ -109,47 +108,6 @@ def clipped_entropy_softmax(temperature=1., entropy_clip=1.):
                               kl_fn)
 
 
-def _mix_with_uniform(probs, epsilon):
-  """Mix an arbitrary categorical distribution with a uniform distribution."""
-  num_actions = probs.shape[-1]
-  uniform_probs = jnp.ones_like(probs) / num_actions
-  return (1 - epsilon) * probs + epsilon * uniform_probs
-
-
-def epsilon_softmax(epsilon, temperature):
-  """An epsilon-softmax distribution."""
-  warnings.warn(
-      "Rlax epsilon_softmax will be deprecated. "
-      "Please use distrax.Softmax instead.",
-      PendingDeprecationWarning, stacklevel=2
-  )
-  def sample_fn(key: Array, logits: Array):
-    probs = distrax.Softmax(logits=logits, temperature=temperature).probs
-    return distrax.Categorical(
-        probs=_mix_with_uniform(probs, epsilon)).sample(seed=key)
-
-  def probs_fn(logits: Array):
-    probs = distrax.Softmax(logits=logits, temperature=temperature).probs
-    return distrax.Categorical(
-        probs=_mix_with_uniform(probs, epsilon)).probs
-
-  def log_prob_fn(sample: Array, logits: Array):
-    probs = distrax.Softmax(logits=logits, temperature=temperature).probs
-    return distrax.Categorical(
-        probs=_mix_with_uniform(probs, epsilon)).log_prob(sample)
-
-  def entropy_fn(logits: Array):
-    probs = distrax.Softmax(logits=logits, temperature=temperature).probs
-    return distrax.Categorical(
-        probs=_mix_with_uniform(probs, epsilon)).entropy()
-
-  def kl_fn(p_logits: Array, q_logits: Array):
-    return categorical_kl_divergence(p_logits, q_logits, temperature)
-
-  return DiscreteDistribution(sample_fn, probs_fn, log_prob_fn, entropy_fn,
-                              kl_fn)
-
-
 def greedy():
   """A greedy distribution."""
   warnings.warn(
@@ -194,45 +152,6 @@ def epsilon_greedy(epsilon=None):
     return distrax.EpsilonGreedy(preferences, epsilon).entropy()
 
   return DiscreteDistribution(sample_fn, probs_fn, logprob_fn, entropy_fn, None)
-
-
-def safe_epsilon_softmax(epsilon, temperature):
-  """Tolerantly handles the temperature=0 case."""
-
-  warnings.warn(
-      "Rlax safe_epsilon_softmax will be deprecated. "
-      "Please use distrax instead.",
-      PendingDeprecationWarning, stacklevel=2
-  )
-
-  egreedy = epsilon_greedy(epsilon)
-  unsafe = epsilon_softmax(epsilon, temperature)
-
-  def sample_fn(key: Array, logits: Array):
-    return jax.lax.cond(temperature > 0,
-                        (key, logits), lambda tup: unsafe.sample(*tup),
-                        (key, logits), lambda tup: egreedy.sample(*tup))
-
-  def probs_fn(logits: Array):
-    return jax.lax.cond(temperature > 0,
-                        logits, unsafe.probs,
-                        logits, egreedy.probs)
-
-  def log_prob_fn(sample: Array, logits: Array):
-    return jax.lax.cond(temperature > 0,
-                        (sample, logits), lambda tup: unsafe.logprob(*tup),
-                        (sample, logits), lambda tup: egreedy.logprob(*tup))
-
-  def entropy_fn(logits: Array):
-    return jax.lax.cond(temperature > 0,
-                        logits, unsafe.entropy,
-                        logits, egreedy.entropy)
-
-  def kl_fn(p_logits: Array, q_logits: Array):
-    return categorical_kl_divergence(p_logits, q_logits, temperature)
-
-  return DiscreteDistribution(sample_fn, probs_fn, log_prob_fn, entropy_fn,
-                              kl_fn)
 
 
 def gaussian_diagonal(sigma=None):

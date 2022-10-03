@@ -27,11 +27,9 @@ from rlax._src.distributions import categorical_kl_divergence
 from rlax._src.distributions import categorical_sample
 from rlax._src.distributions import clipped_entropy_softmax
 from rlax._src.distributions import epsilon_greedy
-from rlax._src.distributions import epsilon_softmax
 from rlax._src.distributions import gaussian_diagonal
 from rlax._src.distributions import greedy
 from rlax._src.distributions import multivariate_normal_kl_divergence
-from rlax._src.distributions import safe_epsilon_softmax
 from rlax._src.distributions import softmax
 from rlax._src.distributions import squashed_gaussian
 from rlax._src.embedding import embed_oar
@@ -167,7 +165,6 @@ __all__ = (
     "entropy_loss",
     "episodic_memory_intrinsic_rewards",
     "epsilon_greedy",
-    "epsilon_softmax",
     "expected_sarsa",
     "expectile_loss",
     "extract_subsequences",

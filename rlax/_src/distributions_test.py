@@ -165,60 +165,6 @@ class SoftmaxTest(parameterized.TestCase):
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
 
 
-class EpsilonSoftmaxTest(parameterized.TestCase):
-
-  def setUp(self):
-    super().setUp()
-
-    self.logits = np.array([[1, 1, 0], [1, 2, 0]], dtype=np.float32)
-    self.samples = np.array([0, 1], dtype=np.int32)
-
-    self.expected_probs = np.array(  # softmax with temperature=10
-        [[0.34316134, 0.34316134, 0.3136773],
-         [0.3323358, 0.36378217, 0.30388197]],
-        dtype=np.float32)
-    probs = np.array(  # softmax with temperature=10
-        [[0.34316134, 0.34316134, 0.3136773],
-         [0.3323358, 0.36378217, 0.30388197]],
-        dtype=np.float32)
-    probs = distributions._mix_with_uniform(probs, epsilon=0.1)
-    logprobs = np.log(probs)
-    self.expected_logprobs = np.array(
-        [logprobs[0][self.samples[0]], logprobs[1][self.samples[1]]])
-    self.expected_entropy = -np.sum(probs * logprobs, axis=-1)
-
-  @chex.all_variants()
-  def test_softmax_probs(self):
-    """Tests for a single element."""
-    distrib = distributions.epsilon_softmax(epsilon=0.1,
-                                            temperature=10.)
-    softmax = self.variant(distrib.probs)
-    # For each element in the batch.
-    for logits, expected in zip(self.logits, self.expected_probs):
-      # Test outputs.
-      actual = softmax(logits)
-      np.testing.assert_allclose(expected, actual, atol=1e-4)
-
-  @chex.all_variants()
-  def test_softmax_probs_batch(self):
-    """Tests for a full batch."""
-    distrib = distributions.epsilon_softmax(epsilon=0.1,
-                                            temperature=10.)
-    softmax = self.variant(distrib.probs)
-    # Test softmax output in batch.
-    actual = softmax(self.logits)
-    np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
-
-  @chex.all_variants()
-  def test_safe_epsilon_softmax_equivalence(self):
-    distrib = distributions.safe_epsilon_softmax(epsilon=0.1,
-                                                 temperature=10.)
-    softmax = self.variant(distrib.probs)
-    # Test softmax output in batch.
-    actual = softmax(self.logits)
-    np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
-
-
 class GreedyTest(parameterized.TestCase):
 
   def setUp(self):
@@ -372,27 +318,6 @@ class EpsilonGreedyTest(parameterized.TestCase):
     # Test greedy output in batch.
     actual = entropy_fn(self.preferences)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
-
-  @chex.all_variants()
-  def test_safe_epsilon_softmax_equivalence(self):
-    distrib = distributions.safe_epsilon_softmax(epsilon=self.epsilon,
-                                                 temperature=0)
-    probs_fn = self.variant(distrib.probs)
-    # Test greedy output in batch.
-    actual = probs_fn(self.preferences)
-    np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
-
-    logprob_fn = self.variant(distrib.logprob)
-    # Test greedy output in batch.
-    actual = logprob_fn(self.samples, self.preferences)
-    np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
-
-    sample_fn = self.variant(distrib.sample)
-    # Optionally convert to device array.
-    key = np.array([1, 2], dtype=np.uint32)
-    actions = sample_fn(key, self.preferences)
-    # test just the shape
-    self.assertEqual(actions.shape, (2,))
 
 
 class GaussianDiagonalTest(parameterized.TestCase):

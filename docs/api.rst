@@ -359,6 +359,8 @@ Utilities
     one_hot
     embed_oar
     replace_masked
+    transpose_first_axis_to_last
+    transpose_last_axis_to_first
     tree_fn
     tree_map_zipped
     tree_replace_masked
@@ -409,6 +411,16 @@ Fix Step Type
 ~~~~~~~~~~~~~
 
 .. autofunction:: fix_step_type_on_interruptions
+
+Transpose First Axis To Last
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: transpose_first_axis_to_last
+
+Transpose Last Axis to First
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: transpose_last_axis_to_first
 
 Replace Masked
 ~~~~~~~~~~~~~~

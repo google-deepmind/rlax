@@ -130,6 +130,31 @@ class TreeUtilTest(absltest.TestCase):
     np.testing.assert_allclose(tree_output['a'], expected_tree_output['a'])
     np.testing.assert_allclose(tree_output['b'], expected_tree_output['b'])
 
+  def test_transpose_last_axis_to_first(self):
+    tree = {'a': jnp.ones((1, 2, 3, 4)), 'b': {'c': jnp.ones((1, 2, 3, 4))}}
+    expected_tree = {
+        'a': jnp.ones((4, 1, 2, 3)),
+        'b': {
+            'c': jnp.ones((4, 1, 2, 3))
+        }
+    }
+    chex.assert_trees_all_equal_shapes(
+        tree_util.transpose_last_axis_to_first(tree['a']), expected_tree['a'])
+    chex.assert_trees_all_equal_shapes(
+        tree_util.transpose_last_axis_to_first(tree), expected_tree)
+
+  def test_transpose_first_axis_to_last(self):
+    tree = {'a': jnp.ones((1, 2, 3, 4)), 'b': {'c': jnp.ones((1, 2, 3, 4))}}
+    expected_tree = {
+        'a': jnp.ones((2, 3, 4, 1)),
+        'b': {
+            'c': jnp.ones((2, 3, 4, 1))
+        }
+    }
+    chex.assert_trees_all_equal_shapes(
+        tree_util.transpose_first_axis_to_last(tree['a']), expected_tree['a'])
+    chex.assert_trees_all_equal_shapes(
+        tree_util.transpose_first_axis_to_last(tree), expected_tree)
 
 if __name__ == '__main__':
   jax.config.update('jax_numpy_rank_promotion', 'raise')

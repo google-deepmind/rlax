@@ -144,3 +144,39 @@ def tree_fn(fn, **unmapped_kwargs):
   def _wrapped(*args):
     return jax.tree_map(pfn, *args)
   return _wrapped
+
+
+def transpose_last_axis_to_first(tree: Array):
+  """Function to transpose the last axis to be first for all leaves in a pytree.
+
+  This function will transpose the last axis to the front for all leaves in a
+  pytree; each leaf with shape [D_1, ..., D_{n-1}, D_n] will have shape
+  [D_n, D_1, ..., D_{n-1}].
+
+  Args:
+    tree: the pytree of Arrays to be transposed.
+
+  Returns:
+    tree: the transposed output tree.
+  """
+  def _transpose(tree):
+    return jnp.transpose(tree, [tree.ndim - 1] + list(range(tree.ndim - 1)))
+  return tree_fn(_transpose)(tree)
+
+
+def transpose_first_axis_to_last(tree: Array):
+  """Function to transpose the first axis to be last for all leaves in a pytree.
+
+  This function will transpose the first axis to the last dim of all leaves in a
+  pytree; each leaf with shape [D_1, D_2, ..., D_n] will have shape
+  [D_2, ..., D_n, D_1].
+
+  Args:
+    tree: the pytree of Arrays to be transposed.
+
+  Returns:
+    tree: the transposed output tree.
+  """
+  def _transpose(tree):
+    return jnp.transpose(tree, list(range(1, tree.ndim)) + [0])
+  return tree_fn(_transpose)(tree)

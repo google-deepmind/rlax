@@ -105,6 +105,8 @@ from rlax._src.transforms import signed_logp1
 from rlax._src.transforms import signed_parabolic
 from rlax._src.transforms import transform_from_2hot
 from rlax._src.transforms import transform_to_2hot
+from rlax._src.tree_util import transpose_first_axis_to_last
+from rlax._src.tree_util import transpose_last_axis_to_first
 from rlax._src.tree_util import tree_fn
 from rlax._src.tree_util import tree_map_zipped
 from rlax._src.tree_util import tree_replace_masked
@@ -241,6 +243,8 @@ __all__ = (
     "transformed_retrace",
     "transform_from_2hot",
     "transform_to_2hot",
+    "transpose_last_axis_to_first",
+    "transpose_first_axis_to_last",
     "tree_fn",
     "tree_map_zipped",
     "tree_replace_masked",

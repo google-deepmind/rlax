@@ -88,6 +88,8 @@ from rlax._src.policy_gradients import policy_gradient_loss
 from rlax._src.policy_gradients import qpg_loss
 from rlax._src.policy_gradients import rm_loss
 from rlax._src.policy_gradients import rpg_loss
+from rlax._src.policy_targets import PolicyTarget
+from rlax._src.policy_targets import sampled_policy_distillation_loss
 from rlax._src.pop_art import art
 from rlax._src.pop_art import normalize
 from rlax._src.pop_art import pop
@@ -204,6 +206,7 @@ __all__ = (
     "periodic_update",
     "persistent_q_learning",
     "pixel_control_rewards",
+    "PolicyTarget",
     "policy_gradient_loss",
     "pop",
     "popart",
@@ -223,6 +226,7 @@ __all__ = (
     "rm_loss",
     "rpg_loss",
     "sample_start_indices",
+    "sampled_policy_distillation_loss",
     "sarsa",
     "sarsa_lambda",
     "sigmoid",

@@ -237,6 +237,7 @@ Policy Optimization
     qpg_loss
     rm_loss
     rpg_loss
+    sampled_policy_distillation_loss
 
 
 Clipped Surrogate PG Loss
@@ -290,6 +291,11 @@ RPG Loss
 ~~~~~~~~
 
 .. autofunction:: rpg_loss
+
+Sampled Policy Distillation Loss
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: sampled_policy_distillation_loss
 
 VMPO Compute Weights and Temperature Loss
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

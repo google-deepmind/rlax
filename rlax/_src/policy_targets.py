@@ -34,6 +34,7 @@ class PolicyTarget:
 def sampled_policy_distillation_loss(
     distribution: distrax.DistributionLike,
     policy_targets: PolicyTarget,
+    stop_target_gradients: bool = True,
 ) -> chex.Numeric:
   """Compute a sampled cross-entropy-like loss.
 
@@ -45,14 +46,20 @@ def sampled_policy_distillation_loss(
   Args:
     distribution: a predicted `distrax` or `tfp` distribution.
     policy_targets: a policy target to learn from.
+    stop_target_gradients: bool indicating whether or not to apply a stop
+      gradient to the policy_targets, default True.
 
   Returns:
     a scalar loss.
   """
-  # Stop gradients from propagating into the targets and into the actions,
-  # the latter is mostly relevant in continuous control.
-  weights = jax.lax.stop_gradient(policy_targets.weights)
-  actions = jax.lax.stop_gradient(policy_targets.actions)
+  # Optionally, stop gradients from propagating into the targets and into
+  # the actions; the latter is mostly relevant in continuous control.
+  weights = jax.lax.select(
+      stop_target_gradients,
+      jax.lax.stop_gradient(policy_targets.weights), policy_targets.weights)
+  actions = jax.lax.select(
+      stop_target_gradients,
+      jax.lax.stop_gradient(policy_targets.actions), policy_targets.actions)
   # Compute log-probabilities.
   log_probs = distribution.log_prob(actions)
   # Assert shapes are compatible.

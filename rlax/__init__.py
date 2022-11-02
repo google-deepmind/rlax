@@ -88,8 +88,10 @@ from rlax._src.policy_gradients import policy_gradient_loss
 from rlax._src.policy_gradients import qpg_loss
 from rlax._src.policy_gradients import rm_loss
 from rlax._src.policy_gradients import rpg_loss
+from rlax._src.policy_targets import constant_policy_targets
 from rlax._src.policy_targets import PolicyTarget
 from rlax._src.policy_targets import sampled_policy_distillation_loss
+from rlax._src.policy_targets import zero_policy_targets
 from rlax._src.pop_art import art
 from rlax._src.pop_art import normalize
 from rlax._src.pop_art import pop
@@ -159,6 +161,7 @@ __all__ = (
     "clipped_surrogate_pg_loss",
     "compose_tx",
     "conditional_update",
+    "constant_policy_targets",
     "create_ema",
     "discounted_returns",
     "DISCOUNT_TRANSFORM_PAIR",
@@ -265,6 +268,7 @@ __all__ = (
     "vmpo_loss",
     "vtrace",
     "vtrace_td_error_and_advantage",
+    "zero_policy_targets",
 )
 
 #  _________________________________________

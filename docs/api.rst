@@ -229,6 +229,7 @@ Policy Optimization
 .. autosummary::
 
     clipped_surrogate_pg_loss
+    constant_policy_targets
     dpg_loss
     entropy_loss
     mpo_loss
@@ -238,7 +239,7 @@ Policy Optimization
     rm_loss
     rpg_loss
     sampled_policy_distillation_loss
-
+    zero_policy_targets
 
 Clipped Surrogate PG Loss
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -291,6 +292,16 @@ RPG Loss
 ~~~~~~~~
 
 .. autofunction:: rpg_loss
+
+Constant Policy Targets
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: constant_policy_targets
+
+Zero Policy Targets
+~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: zero_policy_targets
 
 Sampled Policy Distillation Loss
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

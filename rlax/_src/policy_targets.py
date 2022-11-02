@@ -14,6 +14,8 @@
 # ==============================================================================
 """Utilities to construct and learn from policy targets."""
 
+import functools
+
 import chex
 import distrax
 import jax
@@ -29,6 +31,41 @@ class PolicyTarget:
   # Probabilities for the corresponding actions. They may have been
   # importance weighted. The shape matches log_prob(actions).shape.
   weights: chex.Array
+
+
+def constant_policy_targets(
+    distribution: distrax.DistributionLike,
+    rng_key: chex.PRNGKey,
+    num_samples: int,
+    weights_scale: float = 1.) -> PolicyTarget:
+  """Create policy targets with constant weights.
+
+  The actions will be sampled from `distribution` and will all be associated to
+  a constant `weights_scale`. If `distribution` is a (discrete or continuous)
+  uniform probability distribution, distilling these targets will push the
+  agent's policy towards a uniform distribution. The strength of the penalty
+  associated with a non-uniform policy depends on `weights_scale` (e.g. in the
+  extreme case `weights_scale==0`, distillation loss is 0 for any policy).
+
+  Args:
+    distribution: a `distrax` or `tfp` distribution for sampling actions.
+    rng_key: a JAX pseudo random number generator.
+    num_samples: number of action sampled in the PolicyTarget.
+    weights_scale: constant weight associated with each action.
+
+  Returns:
+    a PolicyTarget to learn from.
+  """
+  random_actions = distribution.sample(
+      seed=rng_key, sample_shape=(num_samples,))
+  return PolicyTarget(
+      actions=random_actions,
+      weights=weights_scale * jnp.ones(
+          (num_samples,) + distribution.batch_shape))
+
+
+zero_policy_targets = functools.partial(
+    constant_policy_targets, weights_scale=0.0)
 
 
 def sampled_policy_distillation_loss(

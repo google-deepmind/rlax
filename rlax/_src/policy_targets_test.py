@@ -16,6 +16,7 @@
 
 from absl.testing import absltest
 import distrax
+import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -35,6 +36,24 @@ class PolicyTargetsTest(absltest.TestCase):
         policy_targets=targets)
     expected_loss = 0.089169
     np.testing.assert_allclose(expected_loss, loss, atol=1e-4)
+
+  def test_constant_policy_targets(self):
+    rng_key = jax.random.PRNGKey(42)
+    num_samples = 4
+    weights_scale = 0.2
+    distribution = distrax.Categorical(
+        probs=jnp.array([0.5, 0.5], dtype=jnp.float32))
+    constant_targets = policy_targets.constant_policy_targets(
+        distribution, rng_key, num_samples, weights_scale)
+    expected_random_actions = distribution.sample(
+        seed=rng_key, sample_shape=(num_samples,))
+    expected_target_weights = weights_scale * jnp.ones((num_samples,))
+    np.testing.assert_allclose(
+        constant_targets.weights,
+        expected_target_weights, atol=1e-4)
+    np.testing.assert_allclose(
+        constant_targets.actions,
+        expected_random_actions, atol=1e-4)
 
 
 if __name__ == '__main__':

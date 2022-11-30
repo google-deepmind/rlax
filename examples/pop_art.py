@@ -150,7 +150,7 @@ class PopArtAgent:
     popped_params = hk.data_structures.to_immutable_dict(mutable_params)
 
     # Normalize target with updated PopArt statistics.
-    norm_target_tm1 = rlax.normalize(pop_art_state, target_tm1, indices)
+    norm_target_tm1 = rlax.normalize(new_pop_art_state, target_tm1, indices)
 
     # Calculate parameter update with normalized target and popped parameters.
     norm_q_t = self._network.apply(popped_params, obs_t)

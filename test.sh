@@ -33,12 +33,18 @@ pip install -r requirements/requirements-test.txt
 flake8 `find rlax -name '*.py' | xargs` --count --select=E9,F63,F7,F82,E225,E251 --show-source --statistics
 
 # Lint with pylint.
+# Download Google OSS config.
+wget -nd -v -t 3 -O .pylintrc https://google.github.io/styleguide/pylintrc
+# Append specific config lines.
+echo "disable=unnecessary-lambda-assignment,no-value-for-parameter,use-dict-literal" >> .pylintrc
 # Fail on errors, warning, conventions and refactoring messages.
 PYLINT_ARGS="-efail -wfail -cfail -rfail"
 # Lint modules and tests separately.
 pylint --rcfile=.pylintrc `find rlax -name '*.py' | grep -v 'test.py' | xargs` || pylint-exit $PYLINT_ARGS $?
 # Disable `protected-access` warnings for tests.
 pylint --rcfile=.pylintrc `find rlax -name '*_test.py' | xargs` -d W0212 || pylint-exit $PYLINT_ARGS $?
+# Cleanup.
+rm .pylintrc
 
 # Build the package.
 python setup.py sdist

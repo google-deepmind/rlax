@@ -208,7 +208,7 @@ def expectile_loss(predictions: Array, targets: Array, expectile: float):
     a vector of same shape as predictions.
   """
   chex.assert_equal_shape([predictions, targets])
-  diff = (targets - predictions)
+  diff = targets - predictions
   is_underestimation = jnp.less(diff, 0)
   weight = jnp.abs(expectile - is_underestimation)
   return weight * (diff**2)

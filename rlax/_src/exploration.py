@@ -258,7 +258,7 @@ def episodic_memory_intrinsic_rewards(
 
   # Compute the similarity for the embedding x:
   # s = √(Σ_{xₖ ∈ Nₖ} K(xₖ, x)) + c
-  similarity = (jnp.sqrt(jnp.sum(kernel_output, axis=-1)) + constant)
+  similarity = jnp.sqrt(jnp.sum(kernel_output, axis=-1)) + constant
 
   # Compute the intrinsic reward:
   # r = 1 / s.

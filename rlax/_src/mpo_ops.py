@@ -40,11 +40,6 @@ import jax
 import jax.numpy as jnp
 from rlax._src import base
 
-# This op is not in the list of officially supported ops because the jax team
-# have not fully tested it, but it works nonetheless so we add and use it.
-# TODO(b/160450576): Remove when this op is officially supported.
-jax.interpreters.pxla.multi_host_supported_collectives.add(jax.lax.pmax_p)
-
 Array = chex.Array
 Numeric = chex.Numeric
 Scalar = chex.Scalar
@@ -619,4 +614,3 @@ def kl_alpha_loss(
     kl_loss = jnp.asarray(0.0)
     alpha_loss = jnp.asarray(0.0)
   return kl_loss, alpha_loss
-

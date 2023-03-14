@@ -19,6 +19,7 @@ import random
 from absl import app
 from absl import flags
 from bsuite.environments import catch
+from examples import experiment
 import haiku as hk
 from haiku import nets
 import jax
@@ -26,7 +27,6 @@ import jax.numpy as jnp
 import numpy as np
 import optax
 import rlax
-from rlax.examples import experiment
 
 Params = collections.namedtuple("Params", "online target")
 ActorState = collections.namedtuple("ActorState", "count")

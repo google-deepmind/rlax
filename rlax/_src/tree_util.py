@@ -40,8 +40,9 @@ def tree_select(pred: Array, on_true: Any, on_false: Any):
   """
   if tree_structure(on_true) != tree_structure(on_false):
     raise ValueError('The two branches must have the same structure.')
-  return jax.tree_util.tree_map(lambda x, y: jax.lax.select(pred, x, y),
-                                     on_true, on_false)
+  return jax.tree_util.tree_map(
+      lambda x, y: jax.lax.select(pred, x, y), on_true, on_false
+  )
 
 
 def tree_map_zipped(fn: Callable[..., Any], nests: Sequence[Any]):
@@ -146,7 +147,7 @@ def tree_fn(fn, **unmapped_kwargs):
   return _wrapped
 
 
-def transpose_last_axis_to_first(tree: Array):
+def transpose_last_axis_to_first(tree: chex.ArrayTree) -> chex.ArrayTree:
   """Function to transpose the last axis to be first for all leaves in a pytree.
 
   This function will transpose the last axis to the front for all leaves in a
@@ -164,7 +165,7 @@ def transpose_last_axis_to_first(tree: Array):
   return tree_fn(_transpose)(tree)
 
 
-def transpose_first_axis_to_last(tree: Array):
+def transpose_first_axis_to_last(tree: chex.ArrayTree) -> chex.ArrayTree:
   """Function to transpose the first axis to be last for all leaves in a pytree.
 
   This function will transpose the first axis to the last dim of all leaves in a

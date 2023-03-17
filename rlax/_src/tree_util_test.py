@@ -55,13 +55,13 @@ class TreeUtilTest(absltest.TestCase):
   def test_select_true(self):
     on_true = ((jnp.zeros(3,),), jnp.zeros(4,))
     on_false = ((jnp.ones(3,),), jnp.ones(4,))
-    output = tree_util.tree_select(True, on_true, on_false)
+    output = tree_util.tree_select(jnp.array(True), on_true, on_false)
     chex.assert_tree_all_close(output, on_true)
 
   def test_select_false(self):
     on_true = ((jnp.zeros(3,),), jnp.zeros(4,))
     on_false = ((jnp.ones(3,),), jnp.ones(4,))
-    output = tree_util.tree_select(False, on_true, on_false)
+    output = tree_util.tree_select(jnp.array(False), on_true, on_false)
     chex.assert_tree_all_close(output, on_false)
 
   def test_tree_split_leaves(self):

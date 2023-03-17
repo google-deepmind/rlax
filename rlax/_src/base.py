@@ -73,14 +73,16 @@ def lhs_broadcast(source, target):
       f"target shape {target.shape}")
 
 
-def replace_masked(data: chex.Array, replacement: chex.Array, mask: chex.Array):
+def replace_masked(
+    data: chex.Array, replacement: Optional[chex.Array], mask: chex.Array
+):
   """Replace slices of an array as indicated by a mask.
 
   Args:
     data: an array whose some elements we want to replace.
-    replacement: an array with the same shape as `data`, containing
-      the data to insert according to `mask`. If `None` is passed,
-      then the masked elements in `data` will be replaced with zeros.
+    replacement: an array with the same shape as `data`, containing the data to
+      insert according to `mask`. If `None` is passed, then the masked elements
+      in `data` will be replaced with zeros.
     mask: a mask of 0/1s, whose shape is a prefix of `data` and `replacements`.
       When the mask is 1, values of data are replaced.
 
@@ -101,7 +103,7 @@ class AllSum:
 
   def __call__(
       self, x: Array, axis: Optional[Union[int, Sequence[int]]] = None
-  ) -> Numeric:
+  ) -> Array:
     s = jnp.sum(x, axis=axis)
     if self._axis_name:
       s = jax.lax.psum(s, axis_name=self._axis_name)

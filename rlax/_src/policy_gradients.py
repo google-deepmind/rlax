@@ -21,7 +21,7 @@ number of utility functions for implementing policy gradient algorithms for
 discrete and continuous policies.
 """
 
-from typing import Optional
+from typing import Optional, Tuple
 import chex
 import jax
 import jax.numpy as jnp
@@ -143,7 +143,7 @@ def entropy_loss(
 
 def _compute_advantages(logits_t: Array,
                         q_t: Array,
-                        use_stop_gradient=True) -> Array:
+                        use_stop_gradient=True) -> Tuple[Array, Array]:
   """Computes summed advantage using logits and action values."""
   policy_t = jax.nn.softmax(logits_t, axis=1)
 

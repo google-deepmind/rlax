@@ -27,7 +27,7 @@ import jax
 import jax.numpy as jnp
 
 Array = chex.Array
-Scalar = chex.Scalar
+MetricFn = Callable[[Array, Array], Array]
 
 
 @chex.dataclass
@@ -37,15 +37,11 @@ class KNNQueryResult():
   neighbor_neg_distances: jnp.ndarray
 
 
-def _sqeuclidian(x: Array, y: Array) -> Scalar:
+def _sqeuclidian(x: Array, y: Array) -> Array:
   return jnp.sum(jnp.square(x - y))
 
 
-def _cdist(
-    a: Array,
-    b: Array,
-    metric: Callable[[Array, Array], Scalar]
-) -> Array:
+def _cdist(a: Array, b: Array, metric: MetricFn) -> Array:
   """Returns the distance between each pair of the two collections of inputs."""
   return jax.vmap(jax.vmap(metric, (None, 0)), (0, None))(a, b)
 
@@ -54,7 +50,7 @@ def knn_query(
     data: Array,
     query_points: Array,
     num_neighbors: int,
-    metric: Callable[[Array, Array], Scalar] = _sqeuclidian
+    metric: MetricFn = _sqeuclidian,
 ) -> KNNQueryResult:
   """Finds closest neighbors in data to the query points & their neg distances.
 

@@ -555,7 +555,7 @@ def kl_constraint_loss(
 
   alpha = projection_operator(penalty.alpha)
   alpha_constant = jax.lax.select(
-      use_stop_gradient, jax.lax.stop_gradient(penalty.alpha), penalty.alpha)
+      use_stop_gradient, jax.lax.stop_gradient(alpha), alpha)
 
   # First step: Optimize w.r.t. alphas
   alpha_loss = alpha * (

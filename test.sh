@@ -25,7 +25,7 @@ python --version
 
 # Install dependencies.
 pip install --upgrade pip setuptools wheel
-pip install flake8 pytest-xdist pytype pylint pylint-exit
+pip install flake8 pytest-xdist pylint pylint-exit
 pip install -r requirements/requirements.txt
 pip install -r requirements/requirements-test.txt
 
@@ -52,7 +52,13 @@ pip wheel --verbose --no-deps --no-clean dist/rlax*.tar.gz
 pip install rlax*.whl
 
 # Check types with pytype.
-pytype `find rlax/_src/ -name "*py" | xargs` -k
+# Note: pytype does not support 3.11 as of 25.06.23
+# See https://github.com/google/pytype/issues/1308
+if [ `python -c 'import sys; print(sys.version_info.minor)'` -lt 11 ];
+then
+  pip install pytype
+  pytype `find rlax/_src/ -name "*py" | xargs` -k
+fi;
 
 # Run tests using pytest.
 # Change directory to avoid importing the package from repo root.

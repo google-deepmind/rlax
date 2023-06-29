@@ -97,7 +97,7 @@ extensions = [
     'sphinxcontrib.bibtex',
     'sphinxcontrib.katex',
     'sphinx_autodoc_typehints',
-    'sphinx_rtd_theme',
+    'sphinx_book_theme',
     'coverage_check',
     'myst_nb',  # This is used for the .ipynb notebooks
 ]
@@ -118,12 +118,16 @@ autodoc_default_options = {
     'exclude-members': '__repr__, __str__, __weakref__',
 }
 
+# -- Options for bibtex ------------------------------------------------------
+
+bibtex_bibfiles = []
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

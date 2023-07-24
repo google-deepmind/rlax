@@ -56,13 +56,13 @@ class TreeUtilTest(absltest.TestCase):
     on_true = ((jnp.zeros(3,),), jnp.zeros(4,))
     on_false = ((jnp.ones(3,),), jnp.ones(4,))
     output = tree_util.tree_select(jnp.array(True), on_true, on_false)
-    chex.assert_tree_all_close(output, on_true)
+    chex.assert_trees_all_close(output, on_true)
 
   def test_select_false(self):
     on_true = ((jnp.zeros(3,),), jnp.zeros(4,))
     on_false = ((jnp.ones(3,),), jnp.ones(4,))
     output = tree_util.tree_select(jnp.array(False), on_true, on_false)
-    chex.assert_tree_all_close(output, on_false)
+    chex.assert_trees_all_close(output, on_false)
 
   def test_tree_split_leaves(self):
     t = {
@@ -81,7 +81,7 @@ class TreeUtilTest(absltest.TestCase):
 
       res_trees = tree_util.tree_split_leaves(t, axis=0, keepdim=keepdim)
       self.assertLen(res_trees, 3)
-      chex.assert_tree_all_equal_shapes(expd_shapes, *res_trees)
+      chex.assert_trees_all_equal_shapes(expd_shapes, *res_trees)
       for i, res_t in enumerate(res_trees):
         np.testing.assert_allclose(res_t['a0'], 0)
         np.testing.assert_allclose(res_t['d']['a1'], i)

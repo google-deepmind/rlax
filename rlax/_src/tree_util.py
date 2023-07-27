@@ -98,7 +98,7 @@ def tree_split_leaves(tree_like: Any,
   # Disable pylint to correctly process `np.ndarray`s.
   if len(tree_like) == 0:  # pylint: disable=g-explicit-length-test
     return tree_like
-  leaves, treedef = jax.tree_flatten(tree_like)
+  leaves, treedef = jax.tree_util.tree_flatten(tree_like)
   axis_size = leaves[0].shape[axis]
   split_leaves = [np.split(l, axis_size, axis=axis) for l in leaves]
   ind_ = lambda x, i: x[i] if keepdim else np.squeeze(x[i], axis)

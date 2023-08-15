@@ -14,6 +14,8 @@
 # ==============================================================================
 """Utilities for creating and managing moving averages."""
 
+from typing import Union
+
 import chex
 import jax
 import jax.numpy as jnp
@@ -36,7 +38,7 @@ class EmaState:
   # The tree of exponential moving averages of the squared values
   nu: chex.ArrayTree
   # The product of the all decays from the start of accumulating.
-  decay_product: float
+  decay_product: Union[float, jax.Array]
 
   def debiased_moments(self):
     """Returns debiased moments as in Adam."""

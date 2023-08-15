@@ -60,7 +60,7 @@ def tree_map_zipped(fn: Callable[..., Any], nests: Sequence[Any]):
   tree_def = tree_structure(nests[0])
   if any(tree_structure(x) != tree_def for x in nests[1:]):
     raise ValueError('All elements must share the same tree structure.')
-  return jax.tree_unflatten(
+  return jax.tree_util.tree_unflatten(
       tree_def, [fn(*d) for d in zip(*[jax.tree_leaves(x) for x in nests])])
 
 
@@ -103,7 +103,7 @@ def tree_split_leaves(tree_like: Any,
   split_leaves = [np.split(l, axis_size, axis=axis) for l in leaves]
   ind_ = lambda x, i: x[i] if keepdim else np.squeeze(x[i], axis)
   split_trees = ((ind_(l, i) for l in split_leaves) for i in range(axis_size))
-  return tuple(jax.tree_unflatten(treedef, t) for t in split_trees)
+  return tuple(jax.tree_util.tree_unflatten(treedef, t) for t in split_trees)
 
 
 def tree_replace_masked(tree_data, tree_replacement, mask):

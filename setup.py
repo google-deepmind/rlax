@@ -15,7 +15,7 @@
 """Install script for setuptools."""
 
 import os
-from setuptools import find_namespace_packages
+from setuptools import find_packages
 from setuptools import setup
 
 _CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -52,7 +52,7 @@ setup(
     long_description_content_type='text/markdown',
     author_email='rlax-dev@google.com',
     keywords='reinforcement-learning python machine learning',
-    packages=find_namespace_packages(exclude=['*_test.py']),
+    packages=find_packages(exclude=['*_test.py', 'examples']),
     install_requires=_parse_requirements(
         os.path.join(_CURRENT_DIR, 'requirements', 'requirements.txt')),
     tests_require=_parse_requirements(

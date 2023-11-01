@@ -2,5 +2,3 @@ include README.md
 include LICENSE
 include requirements/*
 include rlax/py.typed
-
-global-exclude *_test.py

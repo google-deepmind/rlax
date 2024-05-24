@@ -44,10 +44,10 @@ class EmaState:
     """Returns debiased moments as in Adam."""
     tiny = jnp.finfo(self.decay_product).tiny
     debias = 1.0 / jnp.maximum(1 - self.decay_product, tiny)
-    mean = jax.tree_map(lambda m1: m1 * debias, self.mu)
+    mean = jax.tree.map(lambda m1: m1 * debias, self.mu)
     # This computation of the variance may lose some numerical precision, if
     # the mean is not approximately zero.
-    variance = jax.tree_map(
+    variance = jax.tree.map(
         lambda m2, m: jnp.maximum(0.0, m2 * debias - jnp.square(m)),
         self.nu, mean)
     return EmaMoments(mean=mean, variance=variance)
@@ -67,7 +67,7 @@ def create_ema(decay=0.999, pmean_axis_name=None):
   """
 
   def init_state(template_tree):
-    zeros = jax.tree_map(lambda x: jnp.zeros_like(jnp.mean(x)), template_tree)
+    zeros = jax.tree.map(lambda x: jnp.zeros_like(jnp.mean(x)), template_tree)
     scalar_zero = jnp.ones([], dtype=jnp.float32)
     return EmaState(mu=zeros, nu=zeros, decay_product=scalar_zero)
 
@@ -79,9 +79,9 @@ def create_ema(decay=0.999, pmean_axis_name=None):
     return decay * moment + (1 - decay) * mean
 
   def update_moments(tree, state):
-    squared_tree = jax.tree_map(jnp.square, tree)
-    mu = jax.tree_map(_update, state.mu, tree)
-    nu = jax.tree_map(_update, state.nu, squared_tree)
+    squared_tree = jax.tree.map(jnp.square, tree)
+    mu = jax.tree.map(_update, state.mu, tree)
+    nu = jax.tree.map(_update, state.nu, squared_tree)
     state = EmaState(
         mu=mu, nu=nu, decay_product=state.decay_product * decay)
     return state.debiased_moments(), state

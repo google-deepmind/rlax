@@ -61,7 +61,7 @@ def tree_map_zipped(fn: Callable[..., Any], nests: Sequence[Any]):
   if any(tree_structure(x) != tree_def for x in nests[1:]):
     raise ValueError('All elements must share the same tree structure.')
   return jax.tree_util.tree_unflatten(
-      tree_def, [fn(*d) for d in zip(*[jax.tree_leaves(x) for x in nests])])
+      tree_def, [fn(*d) for d in zip(*[jax.tree.leaves(x) for x in nests])])
 
 
 def tree_split_key(rng_key: Array, tree_like: Any):
@@ -121,14 +121,14 @@ def tree_replace_masked(tree_data, tree_replacement, mask):
     the updated tensor.
   """
   if tree_replacement is None:
-    tree_replacement = jax.tree_map(jnp.zeros_like, tree_data)
-  return jax.tree_map(
+    tree_replacement = jax.tree.map(jnp.zeros_like, tree_data)
+  return jax.tree.map(
       lambda data, replacement: base.replace_masked(data, replacement, mask),
       tree_data, tree_replacement)
 
 
 def tree_fn(fn, **unmapped_kwargs):
-  """Wrap a function to jax.tree_map over its arguments.
+  """Wrap a function to jax.tree.map over its arguments.
 
   You may set some named arguments via a partial to skip the `tree_map` on those
   arguments. Usual caveats of `partial` apply (e.g. set named args must be a
@@ -143,7 +143,7 @@ def tree_fn(fn, **unmapped_kwargs):
   """
   pfn = functools.partial(fn, **unmapped_kwargs)
   def _wrapped(*args):
-    return jax.tree_map(pfn, *args)
+    return jax.tree.map(pfn, *args)
   return _wrapped
 
 

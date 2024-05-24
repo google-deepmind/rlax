@@ -130,7 +130,7 @@ class QPGLossTest(parameterized.TestCase):
     qpg_loss = compile_fn(policy_gradients.qpg_loss)
 
     # Optionally convert to device array.
-    policy_logits, q_values = jax.tree_map(place_fn,
+    policy_logits, q_values = jax.tree.map(place_fn,
                                            (self.policy_logits, self.q_values))
     # Test outputs.
     actual = qpg_loss(policy_logits, q_values)
@@ -160,7 +160,7 @@ class RMLossTest(parameterized.TestCase):
     rm_loss = compile_fn(policy_gradients.rm_loss)
 
     # Optionally convert to device array.
-    policy_logits, q_values = jax.tree_map(place_fn,
+    policy_logits, q_values = jax.tree.map(place_fn,
                                            (self.policy_logits, self.q_values))
     # Test outputs.
     actual = rm_loss(policy_logits, q_values)
@@ -191,7 +191,7 @@ class RPGLossTest(parameterized.TestCase):
     rpg_loss = compile_fn(policy_gradients.rpg_loss)
 
     # Optionally convert to device array.
-    policy_logits, q_values = jax.tree_map(place_fn,
+    policy_logits, q_values = jax.tree.map(place_fn,
                                            (self.policy_logits, self.q_values))
     # Test outputs.
     actual = rpg_loss(policy_logits, q_values)

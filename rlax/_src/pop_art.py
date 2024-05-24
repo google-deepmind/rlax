@@ -165,7 +165,7 @@ def art(state: PopArtState,
   state_new = PopArtState(shift_new, scale_new, second_moment_new)
 
   # Prevent gradients propagating back through the state.
-  state_new = jax.tree_map(jax.lax.stop_gradient, state_new)
+  state_new = jax.tree.map(jax.lax.stop_gradient, state_new)
 
   return state_new
 

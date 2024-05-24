@@ -40,7 +40,7 @@ class NestedUpdatesTest(parameterized.TestCase):
     is_time = jnp.array(True)
     output = conditional_update(self._new_struct, self._old_struct, is_time)
     for o, exp in zip(
-        jax.tree_leaves(output), jax.tree_leaves(self._new_struct)):
+        jax.tree.leaves(output), jax.tree.leaves(self._new_struct)):
       np.testing.assert_allclose(o, exp)
 
   @chex.all_variants()
@@ -51,7 +51,7 @@ class NestedUpdatesTest(parameterized.TestCase):
     is_not_time = jnp.array(False)
     output = conditional_update(self._new_struct, self._old_struct, is_not_time)
     for o, exp in zip(
-        jax.tree_leaves(output), jax.tree_leaves(self._old_struct)):
+        jax.tree.leaves(output), jax.tree.leaves(self._old_struct)):
       np.testing.assert_allclose(o, exp)
 
 

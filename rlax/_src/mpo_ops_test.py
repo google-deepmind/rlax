@@ -61,7 +61,7 @@ _MAX_ACTION_ERROR = 0.2
 _MAX_KL_ERROR = 1e-6
 
 _DIAGONAL_GAUSSIAN_DIST = distributions.gaussian_diagonal()
-_PROJECTION_OPERATOR = functools.partial(jnp.clip, a_min=1e-10)
+_PROJECTION_OPERATOR = functools.partial(jnp.clip, min=1e-10)
 
 
 def _hk_mock_policy_params(s_tm1):
@@ -469,7 +469,7 @@ class MPOTest(parameterized.TestCase):
     temperature_loss, _, _ = mpo_ops.vmpo_compute_weights_and_temperature_loss(
         advantages, restarting_weights, np.ones_like(restarting_weights),
         mpo_ops.LagrangePenalty(jnp.array(1.0), _EPSILON_BOUND),
-        functools.partial(np.clip, a_min=1e-8, a_max=None), 1.0)
+        functools.partial(np.clip, min=1e-8, max=None), 1.0)
     self.assertAlmostEqual(
         temperature_loss, expected_temperature_loss, places=4)
 
@@ -517,7 +517,7 @@ class MPOTest(parameterized.TestCase):
     temperature_loss, _, _ = mpo_ops.vmpo_compute_weights_and_temperature_loss(
         advantages, np.ones_like(importance_weights), importance_weights,
         mpo_ops.LagrangePenalty(jnp.array(1.0), _EPSILON_BOUND),
-        functools.partial(np.clip, a_min=1e-8, a_max=None), 1.0)
+        functools.partial(np.clip, min=1e-8, max=None), 1.0)
     self.assertAlmostEqual(
         temperature_loss, expected_temperature_loss, places=4)
 

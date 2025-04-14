@@ -21,6 +21,8 @@ import jax
 import numpy as np
 from rlax._src import distributions
 
+jax.config.update('jax_threefry_partitionable', False)
+
 
 @chex.dataclass(frozen=True)
 class _MockActionSpec:

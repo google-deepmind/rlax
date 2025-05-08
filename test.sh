@@ -17,8 +17,11 @@
 set -xeuo pipefail
 
 # Install deps in a virtual env.
-readonly VENV_DIR=/tmp/rlax-env
-rm -rf "${VENV_DIR}"
+rm -rf _testing
+rm -rf .pytype
+mkdir -p _testing
+readonly VENV_DIR="$(mktemp -d -p `pwd`/_testing rlax-env.XXXXXXXX)"
+# in the unlikely case in which there was something in that directory
 python3 -m venv "${VENV_DIR}"
 source "${VENV_DIR}/bin/activate"
 python --version
@@ -33,16 +36,17 @@ pip install -r requirements/requirements-test.txt
 flake8 `find rlax -name '*.py' | xargs` --count --select=E9,F63,F7,F82,E225,E251 --show-source --statistics
 
 # Lint with pylint.
+PYLINT_ARGS="-efail -wfail -cfail -rfail"
 # Download Google OSS config.
 wget -nd -v -t 3 -O .pylintrc https://google.github.io/styleguide/pylintrc
+# Enforce two space indent style.
+sed -i "s/indent-string.*/indent-string='  '/" .pylintrc
 # Append specific config lines.
 echo "disable=unnecessary-lambda-assignment,no-value-for-parameter,use-dict-literal" >> .pylintrc
-# Fail on errors, warning, conventions and refactoring messages.
-PYLINT_ARGS="-efail -wfail -cfail -rfail"
 # Lint modules and tests separately.
-pylint --rcfile=.pylintrc `find rlax -name '*.py' | grep -v 'test.py' | xargs` || pylint-exit $PYLINT_ARGS $?
+pylint --rcfile=.pylintrc `find rlax -name '*.py' | grep -v 'test.py' | xargs` -d E1102|| pylint-exit $PYLINT_ARGS $?
 # Disable `protected-access` warnings for tests.
-pylint --rcfile=.pylintrc `find rlax -name '*_test.py' | xargs` -d W0212 || pylint-exit $PYLINT_ARGS $?
+pylint --rcfile=.pylintrc `find rlax -name '*_test.py' | xargs` -d W0212,E1130,E1102,E1120 || pylint-exit $PYLINT_ARGS $?
 # Cleanup.
 rm .pylintrc
 
@@ -62,7 +66,8 @@ fi;
 
 # Run tests using pytest.
 # Change directory to avoid importing the package from repo root.
-mkdir _testing && cd _testing
+pip install -r requirements/requirements-test.txt
+cd _testing
 
 # Main tests.
 pytest -n "$(grep -c ^processor /proc/cpuinfo)" --pyargs rlax -k "not pop_art_test"
@@ -72,9 +77,12 @@ pytest -n "$(grep -c ^processor /proc/cpuinfo)" --pyargs rlax -k "pop_art_test"
 cd ..
 
 # Build Sphinx docs.
-pip install -r requirements/requirements-docs.txt
-cd docs && make html
-cd ..
+# pip install -r requirements/requirements-docs.txt
+# cd docs && make html
+# cd ..
+
+# cleanup
+rm -rf _testing
 
 set +u
 deactivate

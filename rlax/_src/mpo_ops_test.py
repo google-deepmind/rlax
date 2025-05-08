@@ -306,12 +306,12 @@ class MPOTest(parameterized.TestCase):
       return params_, opt_state_, stats, next_key
 
     for iter_idx in range(_NUM_ITERATIONS):
-      params, opt_state, extra, key = _update(params, opt_state, key)
+      params, opt_state, _, key = _update(params, opt_state, key)
       if iter_idx % _TARGET_UPDATE_PERIOD == 0:
         params['target'] = params['online']
 
     # Test the bounds are within tolerance.
-    key, new_key = jax.random.split(key)
+    _, new_key = jax.random.split(key)
     _, extra = _loss(params, new_key)
     action_mean = jnp.mean(extra['outputs']['pi_params']['mean'])
     # Check action mean is close to 0.

@@ -52,7 +52,7 @@ setup(
     long_description_content_type='text/markdown',
     author_email='rlax-dev@google.com',
     keywords='reinforcement-learning python machine learning',
-    packages=find_namespace_packages(exclude=['*_test.py']),
+    packages=find_namespace_packages(exclude=['examples*', 'docs*']),
     install_requires=_parse_requirements(
         os.path.join(_CURRENT_DIR, 'requirements', 'requirements.txt')),
     tests_require=_parse_requirements(

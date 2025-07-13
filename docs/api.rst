@@ -229,6 +229,7 @@ Policy Optimization
 .. autosummary::
 
     clipped_surrogate_pg_loss
+    cmpo_policy_targets
     constant_policy_targets
     dpg_loss
     entropy_loss
@@ -238,6 +239,7 @@ Policy Optimization
     qpg_loss
     rm_loss
     rpg_loss
+    sampled_cmpo_policy_targets
     sampled_policy_distillation_loss
     zero_policy_targets
 
@@ -245,6 +247,18 @@ Clipped Surrogate PG Loss
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: clipped_surrogate_pg_loss
+
+
+CMPO Policy Targets
+~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: cmpo_policy_targets
+
+
+Sampled CMPO Policy Targets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: sampled_cmpo_policy_targets
 
 
 Compute Parametric KL Penalty and Dual Loss

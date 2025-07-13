@@ -88,8 +88,10 @@ from rlax._src.policy_gradients import policy_gradient_loss
 from rlax._src.policy_gradients import qpg_loss
 from rlax._src.policy_gradients import rm_loss
 from rlax._src.policy_gradients import rpg_loss
+from rlax._src.policy_targets import cmpo_policy_targets
 from rlax._src.policy_targets import constant_policy_targets
 from rlax._src.policy_targets import PolicyTarget
+from rlax._src.policy_targets import sampled_cmpo_policy_targets
 from rlax._src.policy_targets import sampled_policy_distillation_loss
 from rlax._src.policy_targets import zero_policy_targets
 from rlax._src.pop_art import art
@@ -159,6 +161,7 @@ __all__ = (
     "categorical_td_learning",
     "clip_gradient",
     "clipped_surrogate_pg_loss",
+    "cmpo_policy_targets",
     "compose_tx",
     "conditional_update",
     "constant_policy_targets",
@@ -230,6 +233,7 @@ __all__ = (
     "rpg_loss",
     "sample_start_indices",
     "sampled_policy_distillation_loss",
+    "sampled_cmpo_policy_targets",
     "sarsa",
     "sarsa_lambda",
     "sigmoid",

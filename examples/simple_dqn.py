@@ -26,7 +26,7 @@ import jax.numpy as jnp
 import numpy as np
 import optax
 import rlax
-from rlax.examples import experiment
+import experiment
 
 Params = collections.namedtuple("Params", "online target")
 ActorState = collections.namedtuple("ActorState", "count")

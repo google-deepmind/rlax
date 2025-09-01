@@ -1,4 +1,4 @@
-:github_url: https://github.com/deepmind/rlax/tree/master/docs
+:github_url: https://github.com/google-deepmind/rlax/tree/master/docs
 
 RLax
 -----
@@ -13,7 +13,7 @@ Installation
 
 RLax can be installed with pip directly from github, with the following command:
 
-`pip install git+git://github.com/deepmind/rlax.git`.
+`pip install git+git://github.com/google-deepmind/rlax.git`.
 
 or from PyPI:
 
@@ -24,9 +24,9 @@ All RLax code may then be just in time compiled for different hardware
 
 In order to run the `examples/` you will also need to clone the repo and
 install the additional requirements:
-`optax <https://github.com/deepmind/optax>`_,
-`haiku <https://github.com/deepmind/haiku>`_, and
-`bsuite <https://github.com/deepmind/bsuite>`_.
+`optax <https://github.com/google-deepmind/optax>`_,
+`haiku <https://github.com/google-deepmind/haiku>`_, and
+`bsuite <https://github.com/google-deepmind/bsuite>`_.
 
 
 Content
@@ -50,7 +50,7 @@ on BSuite's version of the Catch environment (a common unit-test for
 agent development in the reinforcement learning literature):
 
 Other examples of JAX reinforcement learning agents using `rlax` can be found in
-`bsuite baselines <https://github.com/deepmind/bsuite/tree/master/bsuite/baselines>`_.
+`bsuite baselines <https://github.com/google-deepmind/bsuite/tree/master/bsuite/baselines>`_.
 
 
 Background
@@ -132,14 +132,14 @@ performing batch operations using `jax.vmap`.
 Contribute
 ----------
 
-- `Issue tracker <https://github.com/deepmind/rlax/issues>`_
-- `Source code <https://github.com/deepmind/rlax/tree/master>`_
+- `Issue tracker <https://github.com/google-deepmind/rlax/issues>`_
+- `Source code <https://github.com/google-deepmind/rlax/tree/main>`_
 
 Support
 -------
 
 If you are having issues, please let us know by filing an issue on our
-`issue tracker <https://github.com/deepmind/rlax/issues>`_.
+`issue tracker <https://github.com/google-deepmind/rlax/issues>`_.
 
 License
 -------

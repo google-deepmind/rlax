@@ -29,7 +29,6 @@
 import inspect
 import os
 import sys
-import typing
 
 
 def _add_annotations_import(path):
@@ -61,17 +60,11 @@ def _recursive_add_annotations_import():
 if 'READTHEDOCS' in os.environ:
   _recursive_add_annotations_import()
 
-# TODO(b/254461517) Remove the annotation filtering when we drop Python 3.8
-# support.
-# We remove `None` type annotations as this breaks Sphinx under Python 3.7 and
-# 3.8 with error `AssertionError: Invalid annotation [...] None is not a class.`
-filter_nones = lambda x: dict((k, v) for k, v in x.items() if v is not None)
-typing.get_type_hints = lambda obj, *unused: filter_nones(obj.__annotations__)
 sys.path.insert(0, os.path.abspath('../'))
 sys.path.append(os.path.abspath('ext'))
 
 import rlax
-import sphinxcontrib.katex as katex
+from sphinxcontrib import katex
 
 # -- Project information -----------------------------------------------------
 
@@ -94,12 +87,8 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.linkcode',
     'sphinx.ext.napoleon',
-    'sphinxcontrib.bibtex',
     'sphinxcontrib.katex',
-    'sphinx_autodoc_typehints',
-    'sphinx_book_theme',
     'coverage_check',
-    'myst_nb',  # This is used for the .ipynb notebooks
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -118,27 +107,24 @@ autodoc_default_options = {
     'exclude-members': '__repr__, __str__, __weakref__',
 }
 
-# -- Options for bibtex ------------------------------------------------------
-
-bibtex_bibfiles = []
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
 html_theme = 'sphinx_book_theme'
+
+html_theme_options = {
+    'show_toc_level': 2,
+    'repository_url': 'https://github.com/google-deepmind/rlax',
+    'use_repository_button': True,     # add a "link to repository" button
+    'navigation_with_keys': False,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
+
 html_static_path = []
-# html_favicon = '_static/favicon.ico'
-
-# -- Options for myst -------------------------------------------------------
-
-jupyter_execute_notebooks = 'force'
-execution_allow_errors = False
 
 # -- Options for katex ------------------------------------------------------
 
@@ -149,7 +135,9 @@ latex_macros = r"""
 
 # Translate LaTeX macros to KaTeX and add to options for HTML builder
 katex_macros = katex.latex_defs_to_katex_macros(latex_macros)
-katex_options = 'macros: {' + katex_macros + '}'
+katex_options = (
+    '{displayMode: true, fleqn: true, macros: {' + katex_macros + '}}'
+)
 
 # Add LaTeX macros for LATEX builder
 latex_elements = {'preamble': latex_macros}
@@ -187,9 +175,14 @@ def linkcode_resolve(domain, info):
     return None
 
   # TODO(slebedev): support tags after we release an initial version.
-  return 'https://github.com/deepmind/rlax/tree/master/rlax/%s#L%d#L%d' % (
-      os.path.relpath(filename, start=os.path.dirname(
-          rlax.__file__)), lineno, lineno + len(source) - 1)
+  return (
+      'https://github.com/google-deepmind/rlax/tree/main/rlax/%s#L%d#L%d'
+      % (
+          os.path.relpath(filename, start=os.path.dirname(rlax.__file__)),
+          lineno,
+          lineno + len(source) - 1,
+      )
+  )
 
 
 # -- Intersphinx configuration -----------------------------------------------

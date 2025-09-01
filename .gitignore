@@ -5,6 +5,14 @@
 build/
 dist/
 venv/
+_testing/
+
+# Building the documentation
+docs/_autosummary
+docs/_build/
+docs/_collections
+docs/modules/generated
+docs/sg_execution_times.rst
 
 # Mac OS
 .DS_Store

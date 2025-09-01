@@ -1,0 +1,125 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "rlax"
+dynamic = ["version"]
+description = "A library of reinforcement learning building blocks in JAX."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+authors = [
+    {name = "Google DeepMind", email = "rlax-dev@google.com"},
+]
+keywords = [
+    "reinforcement-learning",
+    "python",
+    "machine learning"
+]
+classifiers = [
+    "Environment :: Console",
+    "Programming Language :: Python",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Science/Research",
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "absl-py>=2.3.1",
+  "chex>=0.1.90",
+  "distrax>=0.1.7",
+  "dm_env>=1.6",
+  "jax>=0.7.0",
+  "jaxlib>=0.7.0",
+  "numpy>=1.24.1",
+]
+
+[project.urls]
+homepage = "https://github.com/google-deepmind/rlax"
+repository = "https://github.com/google-deepmind/rlax"
+
+[project.optional-dependencies]
+test = [
+    "dm-haiku>=0.0.14",
+    "flax>=0.5.3",
+    "optax>=0.2.5",
+]
+
+docs = [
+    "sphinx>=6.0.0",
+    "sphinx-book-theme>=1.0.1",
+    "sphinxcontrib-katex",
+]
+
+[tool.setuptools.packages.find]
+include = ["README.md", "LICENSE"]
+exclude = ["*_test.py"]
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.lint]
+select = [
+    "F",
+    "E",
+    "W291",  # whitespace at the end of the line
+    "B023",  # pylint's cell-var-over-loop, closures capturing variables in loop
+]
+ignore = [
+    "E731",  # lambdas are allowed
+    "F401",  # allow unused imports
+    "E402",  # allow modules not at top of file
+    "E741",  # allow "l" as a variable name
+    "E703",  # allow semicolons (for jupyter notebooks)
+]
+
+[tool.pylint.messages_control]
+disable = [
+    "bad-indentation",
+    "unknown-option-value",
+    "invalid-name",
+    "missing-function-docstring",
+    "missing-class-docstring",
+    "missing-module-docstring",
+    "no-member",
+    "too-many-locals",
+    "too-many-positional-arguments",
+    "no-else-return",
+    "line-too-long",
+    "too-many-arguments",
+    "no-value-for-parameter",
+    "duplicate-code",
+    "unused-argument",
+    "too-few-public-methods",
+    "wrong-import-order",
+    "unused-import",
+    "wrong-import-position",
+    "unnecessary-lambda-assignment",
+    "too-many-lines",
+    "too-many-statements",
+    "deprecated-class",
+    "redefined-builtin",
+    "used-before-assignment",
+    "undefined-variable",
+    "protected-access",
+    "not-callable",
+    "redefined-outer-name",
+    "too-many-instance-attributes",
+    "missing-final-newline",
+    "too-many-public-methods",
+    "import-error",
+]
+
+# We include pyink to allow external contributors to optionally, but easily,
+# pass google internal formatting checks.
+[tool.pyink]
+pyink = true  # false would mean black is used directly without pyink features
+pyink-use-majority-quotes = true
+pyink-indentation = 2
+line-length = 80
+include = '\.pyi?$'

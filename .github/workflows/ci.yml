@@ -2,27 +2,37 @@ name: ci
 
 on:
   push:
-    branches: ["master"]
+    branches: ["main"]
   pull_request:
-    branches: ["master"]
+    branches: ["main"]
   schedule:
     - cron: '0 3 * * *'
 
+permissions:
+  contents: read
+  actions: write  # to cancel previous workflows
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+
 jobs:
   build-and-test:
-    name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
+    name: "Pytest ${{ matrix.python-version }} on ${{ matrix.os }} jax=${{ matrix.jax-version}}"
     runs-on: "${{ matrix.os }}"
 
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
         os: [ubuntu-latest]
+        jax-version: ["newest"]
 
     steps:
-      - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v1"
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5.3.0
         with:
             python-version: "${{ matrix.python-version }}"
       - name: Run CI tests
-        run: bash test.sh
+        run: JAX_VERSION="${{ matrix.jax-version }}" bash test.sh
         shell: bash

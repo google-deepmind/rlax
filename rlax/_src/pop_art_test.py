@@ -78,8 +78,13 @@ class PopArtTest(parameterized.TestCase):
     shape = (2, 2, 3)
     source = np.zeros(shape)
     fn = functools.partial(pop_art._cross_replica_scatter_add, axis_name=axes)
-    mapped_fn = jax.pmap(fn, axis_name='i', backend='cpu')
-    mapped_fn = jax.pmap(mapped_fn, axis_name='j', backend='cpu')
+    # NOTE(dsuo): Under pmap_shmap_merge=True, nested pmaps are not supported.
+    if jax.config.jax_pmap_shmap_merge:
+      mapped_fn = jax.pmap(fn, axis_name='i', backend='cpu')
+      mapped_fn = jax.vmap(mapped_fn, axis_name='j')
+    else:
+      mapped_fn = jax.pmap(fn, axis_name='i', backend='cpu')
+      mapped_fn = jax.pmap(mapped_fn, axis_name='j', backend='cpu')
 
     updates = np.array([[[1., 0., 0.],
                          [0., 5., 0.]],
@@ -209,6 +214,19 @@ class PopArtTest(parameterized.TestCase):
                              transform.shape) * transform + jnp.broadcast_to(
                                  state.shift, transform.shape)
       np.testing.assert_allclose(initial_result, out, atol=1e-2)
+
+
+class PopArtTestWithPmapShmapMerge(PopArtTest):
+  """Tests for pop_art.py with jax_pmap_shmap_merge=True."""
+
+  def setUp(self):
+    super().setUp()
+    self.pmap_shmap_merge = jax.config.jax_pmap_shmap_merge
+    jax.config.update('jax_pmap_shmap_merge', True)
+
+  def tearDown(self):
+    super().tearDown()
+    jax.config.update('jax_pmap_shmap_merge', self.pmap_shmap_merge)
 
 
 if __name__ == '__main__':

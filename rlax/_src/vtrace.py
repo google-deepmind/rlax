@@ -44,6 +44,7 @@ def vtrace(
     lambda_: Numeric = 1.0,
     clip_rho_threshold: float = 1.0,
     stop_target_gradients: bool = True,
+    unroll: int | bool = 1,
 ) -> Array:
   """Calculates V-Trace errors from importance weights.
 
@@ -62,6 +63,7 @@ def vtrace(
     lambda_: mixing parameter; a scalar or a vector for timesteps t.
     clip_rho_threshold: clip threshold for importance weights.
     stop_target_gradients: whether or not to apply stop gradient to targets.
+    unroll: how many scan iterations to unroll.
 
   Returns:
     V-Trace error.
@@ -86,7 +88,12 @@ def vtrace(
     return acc, acc
 
   _, errors = jax.lax.scan(
-      _body, 0.0, (td_errors, discount_t, c_tm1), reverse=True)
+      _body,
+      0.0,
+      (td_errors, discount_t, c_tm1),
+      reverse=True,
+      unroll=unroll,
+  )
 
   # Return errors, maybe disabling gradient flow through bootstrap targets.
   return jax.lax.select(
@@ -104,7 +111,9 @@ def leaky_vtrace(
     alpha_: float = 1.0,
     lambda_: Numeric = 1.0,
     clip_rho_threshold: float = 1.0,
-    stop_target_gradients: bool = True):
+    stop_target_gradients: bool = True,
+    unroll: int | bool = 1,
+):
   """Calculates Leaky V-Trace errors from importance weights.
 
   Leaky-Vtrace is a combination of Importance sampling and V-trace, where the
@@ -123,6 +132,7 @@ def leaky_vtrace(
     lambda_: mixing parameter; a scalar or a vector for timesteps t.
     clip_rho_threshold: clip threshold for importance weights.
     stop_target_gradients: whether or not to apply stop gradient to targets.
+    unroll: how many scan iterations to unroll.
 
   Returns:
     Leaky V-Trace error.
@@ -150,7 +160,12 @@ def leaky_vtrace(
     return acc, acc
 
   _, errors = jax.lax.scan(
-      _body, 0.0, (td_errors, discount_t, c_tm1), reverse=True)
+      _body,
+      0.0,
+      (td_errors, discount_t, c_tm1),
+      reverse=True,
+      unroll=unroll,
+  )
 
   # Return errors, maybe disabling gradient flow through bootstrap targets.
   return jax.lax.select(

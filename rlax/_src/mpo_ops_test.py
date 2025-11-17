@@ -61,7 +61,10 @@ _MAX_ACTION_ERROR = 0.2
 _MAX_KL_ERROR = 1e-6
 
 _DIAGONAL_GAUSSIAN_DIST = distributions.gaussian_diagonal()
-_PROJECTION_OPERATOR = functools.partial(jnp.clip, min=1e-10)
+
+
+def _projection_operator(x: Array) -> Array:
+  return jnp.clip(x, min=1e-10)
 
 
 def _hk_mock_policy_params(s_tm1):
@@ -344,9 +347,11 @@ class MPOTest(parameterized.TestCase):
       temperature_constraint = mpo_ops.LagrangePenalty(
           temperature_, _EPSILON_BOUND)
       temperature_loss, _, _ = e_step_fn(
-          target_, temperature_constraint=temperature_constraint,
-          projection_operator=_PROJECTION_OPERATOR,
-          **additional_inputs)
+          target_,
+          temperature_constraint=temperature_constraint,
+          projection_operator=_projection_operator,
+          **additional_inputs
+      )
       return jnp.mean(temperature_loss)
     grad = jax.grad(fn, argnums=(0, 1))(target, temperature)
 
@@ -375,9 +380,11 @@ class MPOTest(parameterized.TestCase):
       temperature_constraint = mpo_ops.LagrangePenalty(
           temperature_, _EPSILON_BOUND)
       _, weights, _ = e_step_fn(
-          target_, temperature_constraint=temperature_constraint,
-          projection_operator=_PROJECTION_OPERATOR,
-          **additional_inputs)
+          target_,
+          temperature_constraint=temperature_constraint,
+          projection_operator=_projection_operator,
+          **additional_inputs
+      )
       return jnp.mean(weights)
     grad = jax.grad(mean_weights_fn, argnums=(0, 1))(target, temperature)
     np.testing.assert_almost_equal(
@@ -388,15 +395,20 @@ class MPOTest(parameterized.TestCase):
     """Tests the gradients in the `_kl_constraint_loss` method."""
     kl = jnp.array(1., jnp.float32)
     alpha = jnp.array(1., jnp.float32)
-    _, _, alpha = mpo_ops.kl_constraint_loss(kl, mpo_ops.LagrangePenalty(
-        alpha=alpha, epsilon=_EPSILON_MEAN_BOUND, per_dimension=False),
-                                             _PROJECTION_OPERATOR)
+    _, _, alpha = mpo_ops.kl_constraint_loss(
+        kl,
+        mpo_ops.LagrangePenalty(
+            alpha=alpha, epsilon=_EPSILON_MEAN_BOUND, per_dimension=False
+        ),
+        _projection_operator,
+    )
 
     def alpha_loss_fn(alpha_):
       penalty = mpo_ops.LagrangePenalty(
           alpha=alpha_, epsilon=_EPSILON_MEAN_BOUND, per_dimension=False)
       _, alpha_loss, _ = mpo_ops.kl_constraint_loss(
-          kl, penalty, _PROJECTION_OPERATOR)
+          kl, penalty, _projection_operator
+      )
       return alpha_loss
     alpha_gradients = jax.grad(alpha_loss_fn)(alpha)
     actual_alpha_gradients = _EPSILON_MEAN_BOUND - kl
@@ -405,7 +417,8 @@ class MPOTest(parameterized.TestCase):
       penalty = mpo_ops.LagrangePenalty(
           alpha=alpha, epsilon=_EPSILON_MEAN_BOUND, per_dimension=False)
       kl_loss, _, _ = mpo_ops.kl_constraint_loss(
-          kl_, penalty, _PROJECTION_OPERATOR)
+          kl_, penalty, _projection_operator
+      )
       return kl_loss
     kl_gradients = jax.grad(kl_loss_fn)(kl)
     actual_kl_gradients = alpha
@@ -421,15 +434,20 @@ class MPOTest(parameterized.TestCase):
     """
     kl = jnp.array(1., jnp.float32)
     alpha = jnp.array(1., jnp.float32)
-    _, _, alpha = mpo_ops.kl_constraint_loss(kl, mpo_ops.LagrangePenalty(
-        alpha=alpha, epsilon=_EPSILON_MEAN_BOUND, per_dimension=False),
-                                             _PROJECTION_OPERATOR)
+    _, _, alpha = mpo_ops.kl_constraint_loss(
+        kl,
+        mpo_ops.LagrangePenalty(
+            alpha=alpha, epsilon=_EPSILON_MEAN_BOUND, per_dimension=False
+        ),
+        _projection_operator,
+    )
 
     def kl_loss_fn(alpha_):
       penalty = mpo_ops.LagrangePenalty(
           alpha=alpha_, epsilon=_EPSILON_MEAN_BOUND, per_dimension=False)
       kl_loss, _, _ = mpo_ops.kl_constraint_loss(
-          kl, penalty, _PROJECTION_OPERATOR)
+          kl, penalty, _projection_operator
+      )
       return kl_loss
 
     kl_gradients = jax.grad(kl_loss_fn)(alpha)
@@ -438,7 +456,8 @@ class MPOTest(parameterized.TestCase):
       penalty = mpo_ops.LagrangePenalty(
           alpha=alpha, epsilon=_EPSILON_MEAN_BOUND, per_dimension=False)
       _, alpha_loss, _ = mpo_ops.kl_constraint_loss(
-          kl_, penalty, _PROJECTION_OPERATOR)
+          kl_, penalty, _projection_operator
+      )
       return alpha_loss
     alpha_gradients = jax.grad(alpha_loss_fn)(kl)
 

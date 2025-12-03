@@ -216,19 +216,6 @@ class PopArtTest(parameterized.TestCase):
       np.testing.assert_allclose(initial_result, out, atol=1e-2)
 
 
-class PopArtTestWithPmapShmapMerge(PopArtTest):
-  """Tests for pop_art.py with jax_pmap_shmap_merge=True."""
-
-  def setUp(self):
-    super().setUp()
-    self.pmap_shmap_merge = jax.config.jax_pmap_shmap_merge
-    jax.config.update('jax_pmap_shmap_merge', True)
-
-  def tearDown(self):
-    super().tearDown()
-    jax.config.update('jax_pmap_shmap_merge', self.pmap_shmap_merge)
-
-
 if __name__ == '__main__':
   jax.config.update('jax_numpy_rank_promotion', 'raise')
   absltest.main()

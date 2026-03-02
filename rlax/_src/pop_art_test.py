@@ -79,12 +79,8 @@ class PopArtTest(parameterized.TestCase):
     source = np.zeros(shape)
     fn = functools.partial(pop_art._cross_replica_scatter_add, axis_name=axes)
     # NOTE(dsuo): Under pmap_shmap_merge=True, nested pmaps are not supported.
-    if jax.config.jax_pmap_shmap_merge:
-      mapped_fn = jax.pmap(fn, axis_name='i', backend='cpu')
-      mapped_fn = jax.vmap(mapped_fn, axis_name='j')
-    else:
-      mapped_fn = jax.pmap(fn, axis_name='i', backend='cpu')
-      mapped_fn = jax.pmap(mapped_fn, axis_name='j', backend='cpu')
+    mapped_fn = jax.pmap(fn, axis_name='i', backend='cpu')
+    mapped_fn = jax.vmap(mapped_fn, axis_name='j')
 
     updates = np.array([[[1., 0., 0.],
                          [0., 5., 0.]],

@@ -78,7 +78,7 @@ def mpo_loss(
     temperature_constraint: LagrangePenalty,
     kl_constraints: Sequence[Tuple[Array, LagrangePenalty]],
     projection_operator: ProjectionOperatorFn = functools.partial(
-        jnp.clip, a_min=_EPSILON),
+        jnp.clip, min=_EPSILON),
     policy_loss_weight: float = 1.0,
     temperature_loss_weight: float = 1.0,
     kl_loss_weight: float = 1.0,
@@ -269,7 +269,7 @@ def vmpo_loss(
     temperature_constraint: LagrangePenalty,
     kl_constraints: Sequence[Tuple[Array, LagrangePenalty]],
     projection_operator: ProjectionOperatorFn = functools.partial(
-        jnp.clip, a_min=_EPSILON),
+        jnp.clip, min=_EPSILON),
     restarting_weights: Optional[Array] = None,
     importance_weights: Optional[Array] = None,
     top_k_fraction: float = 0.5,

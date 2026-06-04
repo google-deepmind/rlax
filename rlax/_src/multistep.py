@@ -36,7 +36,7 @@ def lambda_returns(
     discount_t: Array,
     v_t: Array,
     lambda_: Numeric = 1.,
-    stop_target_gradients: bool = False,
+    stop_target_gradients: bool = True,
 ) -> Array:
   """Estimates a multistep truncated lambda return from a trajectory.
 
@@ -124,7 +124,7 @@ def n_step_bootstrapped_returns(
     v_t: Array,
     n: int,
     lambda_t: Numeric = 1.,
-    stop_target_gradients: bool = False,
+    stop_target_gradients: bool = True,
 ) -> Array:
   """Computes strided n-step bootstrapped return targets over a sequence.
 
@@ -182,7 +182,7 @@ def discounted_returns(
     r_t: Array,
     discount_t: Array,
     v_t: Array,
-    stop_target_gradients: bool = False,
+    stop_target_gradients: bool = True,
 ) -> Array:
   """Calculates a discounted return from a trajectory.
 
@@ -218,7 +218,7 @@ def importance_corrected_td_errors(
     rho_tm1: Array,
     lambda_: Array,
     values: Array,
-    stop_target_gradients: bool = False,
+    stop_target_gradients: bool = True,
 ) -> Array:
   """Computes the multistep td errors with per decision importance sampling.
 
@@ -281,7 +281,7 @@ def truncated_generalized_advantage_estimation(
     discount_t: Array,
     lambda_: Union[Array, Scalar],
     values: Array,
-    stop_target_gradients: bool = False,
+    stop_target_gradients: bool = True,
 ) -> Array:
   """Computes truncated generalized advantage estimates for a sequence length k.
 
@@ -334,7 +334,7 @@ def general_off_policy_returns_from_action_values(
     discount_t: Array,
     c_t: Array,
     pi_t: Array,
-    stop_target_gradients: bool = False,
+    stop_target_gradients: bool = True,
 ) -> Array:
   """Calculates targets for various off-policy correction algorithms.
 
@@ -392,7 +392,7 @@ def general_off_policy_returns_from_q_and_v(
     r_t: Array,
     discount_t: Array,
     c_t: Array,
-    stop_target_gradients: bool = False,
+    stop_target_gradients: bool = True,
 ) -> Array:
   """Calculates targets for various off-policy evaluation algorithms.
 

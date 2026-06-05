@@ -897,7 +897,7 @@ class QuantileLearningTest(parameterized.TestCase):
 
 
 class StopTargetGradientsDefaultTest(absltest.TestCase):
-  """Regression tests verifying stop_target_gradients=True default in value_learning.
+  """Regression tests for stop_target_gradients=True default in value_learning.
 
   All value_learning functions default to stop_target_gradients=True, which
   means gradients do NOT flow through the bootstrap targets.  This is the
@@ -920,7 +920,8 @@ class StopTargetGradientsDefaultTest(absltest.TestCase):
     disc  = jnp.array([0.9, 0.8, 1.0])
     v_t   = jnp.array([1.5, 2.5, 2.0])
     batched = jax.vmap(value_learning.td_learning)
-    def fn(vt): return batched(v_tm1, r_t, disc, vt).sum()
+    def fn(vt):
+      return batched(v_tm1, r_t, disc, vt).sum()
     grad = jax.grad(fn)(v_t)
     np.testing.assert_array_equal(grad, jnp.zeros_like(v_t))
 
@@ -932,7 +933,8 @@ class StopTargetGradientsDefaultTest(absltest.TestCase):
     v_t   = jnp.array([1.5, 2.5])
     batched = jax.vmap(functools.partial(
         value_learning.td_learning, stop_target_gradients=False))
-    def fn(vt): return batched(v_tm1, r_t, disc, vt).sum()
+    def fn(vt):
+      return batched(v_tm1, r_t, disc, vt).sum()
     grad = jax.grad(fn)(v_t)
     self.assertFalse(jnp.all(grad == 0))
 
@@ -961,7 +963,8 @@ class StopTargetGradientsDefaultTest(absltest.TestCase):
     q_t   = jnp.array([[1.5, 2.5], [2.0, 1.0]])
     a_t   = jnp.array([1, 0])
     batched = jax.vmap(value_learning.sarsa)
-    def fn(qt): return batched(q_tm1, a_tm1, r_t, disc, qt, a_t).sum()
+    def fn(qt):
+      return batched(q_tm1, a_tm1, r_t, disc, qt, a_t).sum()
     grad = jax.grad(fn)(q_t)
     np.testing.assert_array_equal(grad, jnp.zeros_like(q_t))
 
@@ -989,7 +992,8 @@ class StopTargetGradientsDefaultTest(absltest.TestCase):
     disc  = jnp.array([0.9, 0.8])
     q_t   = jnp.array([[1.5, 2.5], [2.0, 1.0]])
     batched = jax.vmap(value_learning.q_learning)
-    def fn(qt): return batched(q_tm1, a_tm1, r_t, disc, qt).sum()
+    def fn(qt):
+      return batched(q_tm1, a_tm1, r_t, disc, qt).sum()
     grad = jax.grad(fn)(q_t)
     np.testing.assert_array_equal(grad, jnp.zeros_like(q_t))
 

@@ -33,7 +33,7 @@ python3 -m uv pip install --upgrade flake8 pytest-xdist pylint pylint-exit
 python3 -m uv pip install --editable ".[test]"
 
 # Install the requested JAX version
-if [ "$JAX_VERSION" = "" ]; then
+if [ "${JAX_VERSION:-none}" = "none" ]; then
   : # use version installed in requirements above
 elif [ "$JAX_VERSION" = "newest" ]; then
   pip install -U jax jaxlib

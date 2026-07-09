@@ -48,52 +48,52 @@ class TransformsTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_identity_scalar(self):
-    identity = self.variant(transforms.identity)
+    identity = self.variant(transforms.identity)  # pyrefly: ignore[missing-attribute]
     x = jnp.array(self.x)
     # Test output.
     np.testing.assert_allclose(identity(x), self.x)
 
   @chex.all_variants()
   def test_identity_vector(self):
-    identity = self.variant(transforms.identity)
+    identity = self.variant(transforms.identity)  # pyrefly: ignore[missing-attribute]
     # Test output.
     np.testing.assert_allclose(identity(self.xs), self.xs)
 
   @chex.all_variants()
   def test_sigmoid_scalar(self):
-    sigmoid = self.variant(transforms.sigmoid)
-    logit = self.variant(transforms.logit)
+    sigmoid = self.variant(transforms.sigmoid)  # pyrefly: ignore[missing-attribute]
+    logit = self.variant(transforms.logit)  # pyrefly: ignore[missing-attribute]
     x = jnp.array(self.x)
     # Test output.
     np.testing.assert_allclose(logit(sigmoid(x)), self.x, atol=1e-3)
 
   @chex.all_variants()
   def test_sigmoid_vector(self):
-    sigmoid = self.variant(transforms.sigmoid)
-    logit = self.variant(transforms.logit)
+    sigmoid = self.variant(transforms.sigmoid)  # pyrefly: ignore[missing-attribute]
+    logit = self.variant(transforms.logit)  # pyrefly: ignore[missing-attribute]
     # Test output.
     np.testing.assert_allclose(logit(sigmoid(self.xs)), self.xs, atol=1e-3)
 
   @chex.all_variants()
   def test_signed_log_exp_transform_scalar(self):
-    signed_logp1 = self.variant(transforms.signed_logp1)
-    signed_expm1 = self.variant(transforms.signed_expm1)
+    signed_logp1 = self.variant(transforms.signed_logp1)  # pyrefly: ignore[missing-attribute]
+    signed_expm1 = self.variant(transforms.signed_expm1)  # pyrefly: ignore[missing-attribute]
     x = jnp.array(self.x)
     # Test inverse.
     np.testing.assert_allclose(signed_expm1(signed_logp1(x)), self.x, atol=1e-3)
 
   @chex.all_variants()
   def test_signed_log_exp_transform_vector(self):
-    signed_logp1 = self.variant(transforms.signed_logp1)
-    signed_expm1 = self.variant(transforms.signed_expm1)
+    signed_logp1 = self.variant(transforms.signed_logp1)  # pyrefly: ignore[missing-attribute]
+    signed_expm1 = self.variant(transforms.signed_expm1)  # pyrefly: ignore[missing-attribute]
     # Test inverse.
     np.testing.assert_allclose(
         signed_expm1(signed_logp1(self.xs)), self.xs, atol=1e-3)
 
   @chex.all_variants()
   def test_signed_hyper_parabolic_transform_scalar(self):
-    signed_hyperbolic = self.variant(transforms.signed_hyperbolic)
-    signed_parabolic = self.variant(transforms.signed_parabolic)
+    signed_hyperbolic = self.variant(transforms.signed_hyperbolic)  # pyrefly: ignore[missing-attribute]
+    signed_parabolic = self.variant(transforms.signed_parabolic)  # pyrefly: ignore[missing-attribute]
     x = jnp.array(self.x)
     # Test inverse.
     np.testing.assert_allclose(
@@ -101,31 +101,31 @@ class TransformsTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_signed_hyper_parabolic_transform_vector(self):
-    signed_hyperbolic = self.variant(transforms.signed_hyperbolic)
-    signed_parabolic = self.variant(transforms.signed_parabolic)
+    signed_hyperbolic = self.variant(transforms.signed_hyperbolic)  # pyrefly: ignore[missing-attribute]
+    signed_parabolic = self.variant(transforms.signed_parabolic)  # pyrefly: ignore[missing-attribute]
     # Test inverse.
     np.testing.assert_allclose(
         signed_parabolic(signed_hyperbolic(self.xs)), self.xs, atol=1e-3)
 
   @chex.all_variants()
   def test_signed_power_transform_scalar(self):
-    square = self.variant(functools.partial(transforms.power, p=2.))
-    sqrt = self.variant(functools.partial(transforms.power, p=1/2.))
+    square = self.variant(functools.partial(transforms.power, p=2.))  # pyrefly: ignore[missing-attribute]
+    sqrt = self.variant(functools.partial(transforms.power, p=1/2.))  # pyrefly: ignore[missing-attribute]
     x = jnp.array(self.x)
     # Test inverse.
     np.testing.assert_allclose(square(sqrt(x)), self.x, atol=1e-3)
 
   @chex.all_variants()
   def test_signed_power_transform_vector(self):
-    square = self.variant(functools.partial(transforms.power, p=2.))
-    sqrt = self.variant(functools.partial(transforms.power, p=1/2.))
+    square = self.variant(functools.partial(transforms.power, p=2.))  # pyrefly: ignore[missing-attribute]
+    sqrt = self.variant(functools.partial(transforms.power, p=1/2.))  # pyrefly: ignore[missing-attribute]
     # Test inverse.
     np.testing.assert_allclose(square(sqrt(self.xs)), self.xs, atol=1e-3)
 
   @chex.all_variants()
   def test_hyperbolic_sin_transform_scalar(self):
-    sinh = self.variant(transforms.hyperbolic_sin)
-    arcsinh = self.variant(transforms.hyperbolic_arcsin)
+    sinh = self.variant(transforms.hyperbolic_sin)  # pyrefly: ignore[missing-attribute]
+    arcsinh = self.variant(transforms.hyperbolic_arcsin)  # pyrefly: ignore[missing-attribute]
     x = jnp.array(self.x)
     # Test inverse.
     np.testing.assert_allclose(sinh(arcsinh(x)), self.x, atol=1e-3)
@@ -133,8 +133,8 @@ class TransformsTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_hyperbolic_sin_transform_vector(self):
-    sinh = self.variant(transforms.hyperbolic_sin)
-    arcsinh = self.variant(transforms.hyperbolic_arcsin)
+    sinh = self.variant(transforms.hyperbolic_sin)  # pyrefly: ignore[missing-attribute]
+    arcsinh = self.variant(transforms.hyperbolic_arcsin)  # pyrefly: ignore[missing-attribute]
     # Test inverse.
     np.testing.assert_allclose(sinh(arcsinh(self.xs)), self.xs, atol=1e-3)
     np.testing.assert_allclose(arcsinh(sinh(self.xs)), self.xs, atol=1e-3)

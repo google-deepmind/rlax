@@ -52,6 +52,7 @@ def l2_loss(predictions: Array,
   if targets is None:
     targets = jnp.zeros_like(predictions)
   chex.assert_type([predictions, targets], float)
+  # pyrefly: ignore[unsupported-operation]
   return 0.5 * (predictions - targets)**2
 
 
@@ -156,12 +157,14 @@ def pixel_control_loss(
   # shape [T,H,W,N] and rewards have shape [T,H,W]. We can think of the
   # [H,W] dimensions as extra batch dimensions for the purposes of the loss
   # calculation, so we first collapse [H,W] into a single dimension.
+  # pyrefly: ignore[bad-index]
   q_tm1 = jnp.reshape(action_values[:-1], (sequence_length, -1, num_actions))
   r_t = jnp.reshape(pseudo_rewards, (sequence_length, -1))
+  # pyrefly: ignore[bad-index]
   q_t = jnp.reshape(action_values[1:], (sequence_length, -1, num_actions))
   # The actions tensor is of shape [T], and is the same for each H and W.
   # We thus expand it to be same shape as the reward tensor, [T,HW].
-  expanded_actions = actions[..., None, None]
+  expanded_actions = actions[..., None, None]  # pyrefly: ignore[bad-index]
   a_tm1 = jnp.tile(expanded_actions, (1,) + height_width)
   a_tm1 = jnp.reshape(a_tm1, (sequence_length, -1))
   # We similarly expand-and-tile the discount to [T,HW].
@@ -208,7 +211,7 @@ def expectile_loss(predictions: Array, targets: Array, expectile: float):
     a vector of same shape as predictions.
   """
   chex.assert_equal_shape([predictions, targets])
-  diff = targets - predictions
+  diff = targets - predictions  # pyrefly: ignore[unsupported-operation]
   is_underestimation = jnp.less(diff, 0)
   weight = jnp.abs(expectile - is_underestimation)
   return weight * (diff**2)

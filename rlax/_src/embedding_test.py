@@ -35,7 +35,7 @@ class EmbeddingTest(parameterized.TestCase):
     zero_features = np.zeros_like(self._features)
     emb = embedding.embed_oar(zero_features, self._actions, self._rewards,
                               self._num_actions)
-    np.testing.assert_array_equal(emb[:, :self._features.shape[-1]],
+    np.testing.assert_array_equal(emb[:, :self._features.shape[-1]],  # pyrefly: ignore[bad-index]
                                   zero_features)
 
   def test_embed_shape(self):

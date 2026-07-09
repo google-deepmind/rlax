@@ -38,14 +38,14 @@ class HuberLossTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_huber_loss_scalar(self):
-    huber_loss = self.variant(self.loss_fn)
+    huber_loss = self.variant(self.loss_fn)  # pyrefly: ignore[missing-attribute]
     x = jnp.array(0.5)
     # Test output.
     np.testing.assert_allclose(huber_loss(x), 0.125)
 
   @chex.all_variants()
   def test_huber_loss_vector(self):
-    huber_loss = self.variant(self.loss_fn)
+    huber_loss = self.variant(self.loss_fn)  # pyrefly: ignore[missing-attribute]
     xs = self.xs
     # Compute transformation.
     actual = huber_loss(xs)
@@ -54,7 +54,7 @@ class HuberLossTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_gradients(self):
-    huber_loss = self.variant(self.loss_fn)
+    huber_loss = self.variant(self.loss_fn)  # pyrefly: ignore[missing-attribute]
     xs = self.xs
     # Compute gradient in batch
     batch_grad_func = jax.vmap(jax.grad(huber_loss), (0))
@@ -70,7 +70,7 @@ class ClipGradientsTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_clip_gradient(self):
-    clip_gradient = self.variant(clipping.clip_gradient)
+    clip_gradient = self.variant(clipping.clip_gradient)  # pyrefly: ignore[missing-attribute]
     x = jnp.array(0.5)
     # Test output.
     actual = clip_gradient(x, -1., 1.)
@@ -78,7 +78,7 @@ class ClipGradientsTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_clip_gradient_vector(self):
-    clip_gradient = self.variant(clipping.clip_gradient)
+    clip_gradient = self.variant(clipping.clip_gradient)  # pyrefly: ignore[missing-attribute]
     xs = self.xs
     # Test output.
     actual = clip_gradient(xs, -1., 1.)
@@ -98,12 +98,12 @@ class EquivalenceTest(parameterized.TestCase):
       ('0.5', 0.5))
   def test_clip_huber_equivalence(self, td_error):
 
-    @self.variant
+    @self.variant  # pyrefly: ignore[missing-attribute]
     def td_error_with_clip(x):
       return 0.5 * jnp.square(
           clipping.clip_gradient(x, -self.large_delta, self.large_delta))
 
-    @self.variant
+    @self.variant  # pyrefly: ignore[missing-attribute]
     def td_error_with_huber(x):
       return clipping.huber_loss(x, self.large_delta)
 

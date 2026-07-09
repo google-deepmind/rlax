@@ -113,6 +113,7 @@ def unnormalize_linear(state: PopArtState, inputs: Array,
   """
   assert jnp.issubdtype(indices.dtype, jnp.integer)
   assert indices.shape == inputs.shape[:-1]
+  # pyrefly: ignore[bad-index]
   normalized = jnp.take_along_axis(inputs, indices[..., None], axis=-1)
   normalized = jnp.squeeze(normalized, axis=-1)
   return PopArtOutput(normalized, unnormalize(state, normalized, indices))

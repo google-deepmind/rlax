@@ -262,6 +262,7 @@ def episodic_memory_intrinsic_rewards(
 
   # Compute the intrinsic reward:
   # r = 1 / s.
+  # pyrefly: ignore[bad-index]
   reward_new = jnp.ones_like(embeddings[..., 0]) / similarity
 
   # Zero the reward if similarity is greater than max_similarity

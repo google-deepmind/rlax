@@ -45,7 +45,7 @@ class TDLearningTest(parameterized.TestCase):
   @chex.all_variants()
   def test_td_learning_batch(self):
     """Tests for a full batch."""
-    td_learning = self.variant(jax.vmap(value_learning.td_learning))
+    td_learning = self.variant(jax.vmap(value_learning.td_learning))  # pyrefly: ignore[missing-attribute]
     # Compute errors in batch.
     actual_td = td_learning(self.v_tm1, self.r_t, self.discount_t, self.v_t)
     # Tets output.
@@ -74,7 +74,7 @@ class TDLambdaTest(parameterized.TestCase):
   @chex.all_variants()
   def test_batch_compatibility(self):
     """Tests for a full batch."""
-    td_lambda = self.variant(jax.vmap(functools.partial(
+    td_lambda = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         value_learning.td_lambda, lambda_=self.lambda_)))
     # Get arguments.
     v_t = np.concatenate([self.v_tm1[:, 1:], self.bootstrap_v[:, None]], axis=1)
@@ -100,7 +100,7 @@ class SarsaTest(parameterized.TestCase):
   @chex.all_variants()
   def test_sarsa_batch(self):
     """Tests for a full batch."""
-    batch_sarsa = self.variant(jax.vmap(value_learning.sarsa))
+    batch_sarsa = self.variant(jax.vmap(value_learning.sarsa))  # pyrefly: ignore[missing-attribute]
     # Test outputs.
     actual = batch_sarsa(self.q_tm1, self.a_tm1, self.r_t, self.discount_t,
                          self.q_t, self.a_t)
@@ -131,7 +131,7 @@ class ExpectedSarsaTest(parameterized.TestCase):
   @chex.all_variants()
   def test_expected_sarsa_batch(self):
     """Tests for a full batch."""
-    expected_sarsa = self.variant(jax.vmap(value_learning.expected_sarsa))
+    expected_sarsa = self.variant(jax.vmap(value_learning.expected_sarsa))  # pyrefly: ignore[missing-attribute]
     # Test outputs.
     actual = expected_sarsa(self.q_tm1, self.a_tm1, self.r_t, self.discount_t,
                             self.q_t, self.probs_a_t)
@@ -176,7 +176,7 @@ class SarsaLambdaTest(parameterized.TestCase):
   @chex.all_variants()
   def test_sarsa_lambda_batch(self):
     """Tests for a full batch."""
-    sarsa_lambda = self.variant(jax.vmap(functools.partial(
+    sarsa_lambda = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         value_learning.sarsa_lambda, lambda_=self.lambda_)))
     # Test outputs.
     actual = sarsa_lambda(self.q_tm1, self.a_tm1, self.r_t, self.discount_t,
@@ -200,7 +200,7 @@ class QLearningTest(parameterized.TestCase):
   @chex.all_variants()
   def test_q_learning_batch(self):
     """Tests for a full batch."""
-    q_learning = self.variant(jax.vmap(value_learning.q_learning))
+    q_learning = self.variant(jax.vmap(value_learning.q_learning))  # pyrefly: ignore[missing-attribute]
     # Test outputs.
     actual = q_learning(self.q_tm1, self.a_tm1, self.r_t, self.discount_t,
                         self.q_t)
@@ -224,7 +224,7 @@ class DoubleQLearningTest(parameterized.TestCase):
   @chex.all_variants()
   def test_double_q_learning_batch(self):
     """Tests for a full batch."""
-    double_q_learning = self.variant(jax.vmap(value_learning.double_q_learning))
+    double_q_learning = self.variant(jax.vmap(value_learning.double_q_learning))  # pyrefly: ignore[missing-attribute]
     # Test outputs.
     actual = double_q_learning(self.q_tm1, self.a_tm1, self.r_t,
                                self.discount_t, self.q_t_value,
@@ -250,7 +250,7 @@ class PersistentQLearningTest(parameterized.TestCase):
   def test_persistent_q_learning_batch(self):
     """Tests for a full batch."""
     # Vmap and optionally compile.
-    persistent_q_learning = self.variant(jax.vmap(functools.partial(
+    persistent_q_learning = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         value_learning.persistent_q_learning,
         action_gap_scale=self.action_gap_scale)))
     # Test outputs.
@@ -275,7 +275,7 @@ class QVLearningTest(parameterized.TestCase):
   @chex.all_variants()
   def test_qv_learning_batch(self):
     """Tests for a full batch."""
-    batch_qv_learning = self.variant(jax.vmap(value_learning.qv_learning))
+    batch_qv_learning = self.variant(jax.vmap(value_learning.qv_learning))  # pyrefly: ignore[missing-attribute]
     # Test outputs.
     actual = batch_qv_learning(self.q_tm1, self.a_tm1, self.r_t,
                                self.discount_t, self.v_t)
@@ -308,7 +308,7 @@ class QVMaxTest(parameterized.TestCase):
   @chex.all_variants()
   def test_qv_max_batch(self):
     """Tests for a full batch."""
-    qv_max = self.variant(jax.vmap(value_learning.qv_max))
+    qv_max = self.variant(jax.vmap(value_learning.qv_max))  # pyrefly: ignore[missing-attribute]
     # Test outputs.
     actual = qv_max(self.v_tm1, self.r_t, self.discount_t, self.q_t)
     np.testing.assert_allclose(self.expected, actual)
@@ -349,7 +349,7 @@ class QLambdaTest(parameterized.TestCase):
   @chex.all_variants()
   def test_q_lambda_batch(self):
     """Tests for a full batch."""
-    q_lambda = self.variant(jax.vmap(functools.partial(
+    q_lambda = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         value_learning.q_lambda, lambda_=self.lambda_)))
     # Test outputs.
     actual = q_lambda(self.q_tm1, self.a_tm1, self.r_t, self.discount_t,
@@ -402,7 +402,7 @@ class RetraceTest(parameterized.TestCase):
   @chex.all_variants()
   def test_retrace_batch(self):
     """Tests for a full batch."""
-    retrace = self.variant(jax.vmap(functools.partial(
+    retrace = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         value_learning.retrace, lambda_=self._lambda)))
     # Test outputs.
     actual_td = retrace(self._qs[:, :-1], self._targnet_qs[:, 1:],
@@ -458,7 +458,7 @@ class RetraceContinuousTest(parameterized.TestCase):
   @chex.all_variants()
   def test_retrace_batch(self):
     """Tests for a full batch."""
-    retrace = self.variant(jax.vmap(value_learning.retrace_continuous))
+    retrace = self.variant(jax.vmap(value_learning.retrace_continuous))  # pyrefly: ignore[missing-attribute]
     # Test outputs.
     actual_td = retrace(self._qs[:, :-1], self._targnet_qs[:,
                                                            1:-1], self._exp_q_t,
@@ -475,7 +475,7 @@ class RetraceContinuousTest(parameterized.TestCase):
     expected = np.array([[2.880000e+00, 1.365213e+00, 4.594238e+00],
                          [2.448239e-02, 1.860500e+01, 3.160141e-03]],
                         dtype=np.float32)
-    retrace = self.variant(jax.vmap(value_learning.retrace_continuous))
+    retrace = self.variant(jax.vmap(value_learning.retrace_continuous))  # pyrefly: ignore[missing-attribute]
 
     # Test outputs.
     actual_td = retrace(self._qs[:, :-1], self._targnet_qs[:, 1:-1],
@@ -506,7 +506,7 @@ class L2ProjectTest(parameterized.TestCase):
   @chex.all_variants()
   def test_categorical_l2_project_batch(self):
     """Testsfor a full batch."""
-    l2_project = self.variant(jax.vmap(functools.partial(
+    l2_project = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         value_learning.categorical_l2_project)))
     # Compute projection in batch.
     actual = l2_project(self.old_supports, self.weights, self.new_supports)
@@ -549,7 +549,7 @@ class CategoricalTDLearningTest(parameterized.TestCase):
           discount_t=discount_t,
           v_atoms_t=self.atoms,
           v_logits_t=v_logits_t)
-    categorical_td_learning = self.variant(jax.vmap(fn))
+    categorical_td_learning = self.variant(jax.vmap(fn))  # pyrefly: ignore[missing-attribute]
     # Test outputs.
     actual = categorical_td_learning(
         self.logits_tm1, self.r_t, self.discount_t, self.logits_t)
@@ -606,7 +606,7 @@ class CategoricalQLearningTest(parameterized.TestCase):
           discount_t=discount_t,
           q_atoms_t=self.atoms,
           q_logits_t=q_logits_t)
-    categorical_q_learning = self.variant(jax.vmap(fn))
+    categorical_q_learning = self.variant(jax.vmap(fn))  # pyrefly: ignore[missing-attribute]
     # Test outputs.
     actual = categorical_q_learning(*self.inputs)
     np.testing.assert_allclose(self.expected, actual, rtol=1e-4)
@@ -666,7 +666,7 @@ class CategoricalDoubleQLearningTest(parameterized.TestCase):
           q_atoms_t=self.atoms,
           q_logits_t=q_logits_t,
           q_t_selector=q_t_selector)
-    categorical_double_q_learning = self.variant(jax.vmap(fn))
+    categorical_double_q_learning = self.variant(jax.vmap(fn))  # pyrefly: ignore[missing-attribute]
     # Test outputs.
     actual = categorical_double_q_learning(*self.inputs)
     np.testing.assert_allclose(self.expected, actual, rtol=1e-4)
@@ -675,7 +675,7 @@ class CategoricalDoubleQLearningTest(parameterized.TestCase):
   def test_single_double_q_learning_eq_batch(self):
     """Tests equivalence to categorical_q_learning when q_t_selector == q_t."""
     # Not using vmap for atoms.
-    @self.variant
+    @self.variant  # pyrefly: ignore[missing-attribute]
     @jax.vmap
     def batch_categorical_double_q_learning(
         q_logits_tm1, a_tm1, r_t, discount_t, q_logits_t, q_t_selector):
@@ -689,7 +689,7 @@ class CategoricalDoubleQLearningTest(parameterized.TestCase):
           q_logits_t=q_logits_t,
           q_t_selector=q_t_selector)
 
-    @self.variant
+    @self.variant  # pyrefly: ignore[missing-attribute]
     @jax.vmap
     def batch_categorical_q_learning(
         q_logits_tm1, a_tm1, r_t, discount_t, q_logits_t):
@@ -749,7 +749,7 @@ class QuantileRegressionLossTest(parameterized.TestCase):
   def test_quantile_regression_loss_batch(self, huber_param):
     """Tests for a full batch."""
     loss_fn = value_learning.quantile_regression_loss
-    loss_fn = self.variant(jax.vmap(functools.partial(
+    loss_fn = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         loss_fn, huber_param=huber_param)))
     # Compute quantile regression loss.
     actual = loss_fn(self.dist_src, self.tau_src, self.dist_target)
@@ -858,7 +858,7 @@ class QuantileLearningTest(parameterized.TestCase):
       ('huber', 1.0))
   def test_quantile_q_learning_batch(self, huber_param):
     """Tests for a full batch."""
-    quantile_q_learning = self.variant(jax.vmap(functools.partial(
+    quantile_q_learning = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         value_learning.quantile_q_learning, huber_param=huber_param)))
     # Test outputs.
     actual = quantile_q_learning(
@@ -872,7 +872,7 @@ class QuantileLearningTest(parameterized.TestCase):
       ('huber', 1.0))
   def test_quantile_expected_sarsa_batch_greedy(self, huber_param):
     """Tests for a full batch."""
-    quantile_expected_sarsa = self.variant(jax.vmap(functools.partial(
+    quantile_expected_sarsa = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         value_learning.quantile_expected_sarsa, huber_param=huber_param)))
     # Test outputs.
     actual = quantile_expected_sarsa(
@@ -886,7 +886,7 @@ class QuantileLearningTest(parameterized.TestCase):
       ('huber', 1.0))
   def test_quantile_expected_sarsa_batch_uniform(self, huber_param):
     """Tests for a full batch."""
-    quantile_expected_sarsa = self.variant(jax.vmap(functools.partial(
+    quantile_expected_sarsa = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         value_learning.quantile_expected_sarsa, huber_param=huber_param)))
     # Test outputs.
     actual = quantile_expected_sarsa(

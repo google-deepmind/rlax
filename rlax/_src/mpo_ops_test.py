@@ -183,7 +183,7 @@ def _decoupled_multivariate_normal_kl_divergence(
   sigma_0 = jnp.ones_like(mu_0) * sigma_0
   v1 = jnp.clip(sigma_1**2, 1e-6, 1e6)
   v0 = jnp.clip(sigma_0**2, 1e-6, 1e6)
-  mu_diff = mu_1 - mu_0
+  mu_diff = mu_1 - mu_0  # pyrefly: ignore[unsupported-operation]
   kl_mean = 0.5 * jnp.divide(mu_diff**2, v1)
   kl_cov = 0.5 * (jnp.divide(v0, v1) - jnp.ones_like(mu_1) + jnp.log(v1) -
                   jnp.log(v0))
@@ -302,7 +302,7 @@ class MPOTest(parameterized.TestCase):
       grad, stats = grad_fn(params_, key_)
       updates, opt_state_ = optimizer.update(
           (grad['online'], grad['mpo']), opt_state_)
-      online_params, mpo_params = optax.apply_updates(
+      online_params, mpo_params = optax.apply_updates(  # pyrefly: ignore[not-iterable]
           (params_['online'], params_['mpo']), updates)
       params_['online'] = online_params
       params_['mpo'] = mpo_params
@@ -576,8 +576,8 @@ class MPOTest(parameterized.TestCase):
     tbs_loss, tbs_outputs = mpo_ops.mpo_loss(**mpo_inputs)
     mean_tbs_loss = jnp.mean(tbs_loss)
 
-    self.assertAlmostEqual(mean_stb_loss, mean_sbt_loss, places=4)
-    self.assertAlmostEqual(mean_tbs_loss, mean_sbt_loss, places=4)
+    self.assertAlmostEqual(mean_stb_loss, mean_sbt_loss, places=4)  # pyrefly: ignore[no-matching-overload]
+    self.assertAlmostEqual(mean_tbs_loss, mean_sbt_loss, places=4)  # pyrefly: ignore[no-matching-overload]
     self.assertEqual(tbs_outputs.num_samples, sbt_outputs.num_samples)
     self.assertEqual(tbs_outputs.num_samples, stb_outputs.num_samples)
 
@@ -607,7 +607,7 @@ class MPOTest(parameterized.TestCase):
     bt_loss, bt_outputs = mpo_ops.vmpo_loss(**vmpo_inputs)
     mean_bt_loss = jnp.mean(bt_loss)
 
-    self.assertAlmostEqual(mean_tb_loss, mean_bt_loss, places=4)
+    self.assertAlmostEqual(mean_tb_loss, mean_bt_loss, places=4)  # pyrefly: ignore[no-matching-overload]
     self.assertEqual(tb_outputs.num_samples, bt_outputs.num_samples)
 
 

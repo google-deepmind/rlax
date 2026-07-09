@@ -46,7 +46,7 @@ class PixelControlTest(parameterized.TestCase):
   @chex.all_variants()
   def test_pixel_control_rewards(self):
     """Tests for a single element."""
-    pixel_control_rewards = self.variant(
+    pixel_control_rewards = self.variant(  # pyrefly: ignore[missing-attribute]
         functools.partial(
             general_value_functions.pixel_control_rewards,
             cell_size=self.cell_size))
@@ -60,7 +60,7 @@ class PixelControlTest(parameterized.TestCase):
     """Tests for a batch."""
     pixel_control_rewards = functools.partial(
         general_value_functions.pixel_control_rewards, cell_size=self.cell_size)
-    pixel_control_rewards = self.variant(jax.vmap(
+    pixel_control_rewards = self.variant(jax.vmap(  # pyrefly: ignore[missing-attribute]
         pixel_control_rewards, in_axes=(1,), out_axes=1))
     # Test pseudo rewards.
     rs = pixel_control_rewards(self.obs)
@@ -98,7 +98,7 @@ class FeatureControlTest(parameterized.TestCase):
   @chex.all_variants()
   def test_feature_control_rewards_feature_batch(self):
     """Tests for a batch, cumulant_type='feature'."""
-    feature_control_rewards = self.variant(jax.vmap(functools.partial(
+    feature_control_rewards = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         general_value_functions.feature_control_rewards,
         cumulant_type='feature')))
     # Test pseudo rewards.
@@ -108,7 +108,7 @@ class FeatureControlTest(parameterized.TestCase):
   @chex.all_variants()
   def test_feature_control_rewards_abs_change_batch(self):
     """Tests for a batch, cumulant_type='absolute_change'."""
-    feature_control_rewards = self.variant(jax.vmap(functools.partial(
+    feature_control_rewards = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         general_value_functions.feature_control_rewards,
         cumulant_type='absolute_change')))
     # Test pseudo rewards.
@@ -118,7 +118,7 @@ class FeatureControlTest(parameterized.TestCase):
   @chex.all_variants()
   def test_feature_control_rewards_increase_batch(self):
     """Tests for a batch, cumulant_type='increase'."""
-    feature_control_rewards = self.variant(jax.vmap(functools.partial(
+    feature_control_rewards = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         general_value_functions.feature_control_rewards,
         cumulant_type='increase')))
     # Test pseudo rewards.
@@ -128,7 +128,7 @@ class FeatureControlTest(parameterized.TestCase):
   @chex.all_variants()
   def test_feature_control_rewards_decrease_batch(self):
     """Tests for a batch, cumulant_type='decrease'."""
-    feature_control_rewards = self.variant(jax.vmap(functools.partial(
+    feature_control_rewards = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         general_value_functions.feature_control_rewards,
         cumulant_type='decrease')))
     # Test pseudo rewards.
@@ -138,7 +138,7 @@ class FeatureControlTest(parameterized.TestCase):
   @chex.all_variants()
   def test_feature_control_rewards_potential_batch(self):
     """Tests for a batch, cumulant_type='potential'."""
-    feature_control_rewards = self.variant(jax.vmap(functools.partial(
+    feature_control_rewards = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         general_value_functions.feature_control_rewards,
         cumulant_type='potential',
         discount=self.potential_discount)))

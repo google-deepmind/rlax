@@ -36,6 +36,7 @@ def batched_index(
   Returns:
     a tensor of shape [...] or [..., 1].
   """
+  # pyrefly: ignore[bad-index]
   indexed = jnp.take_along_axis(values, indices[..., None], axis=-1)
   if not keepdims:
     indexed = jnp.squeeze(indexed, axis=-1)

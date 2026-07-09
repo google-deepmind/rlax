@@ -34,27 +34,27 @@ class L2LossTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_l2_loss_scalar(self):
-    l2_loss = self.variant(losses.l2_loss)
+    l2_loss = self.variant(losses.l2_loss)  # pyrefly: ignore[missing-attribute]
     x = jnp.array(0.5)
     # Test output.
     np.testing.assert_allclose(l2_loss(x), 0.125)
 
   @chex.all_variants()
   def test_l2_loss_vector(self):
-    l2_loss = self.variant(losses.l2_loss)
+    l2_loss = self.variant(losses.l2_loss)  # pyrefly: ignore[missing-attribute]
     # Test output.
     np.testing.assert_allclose(l2_loss(self.xs), self.ys)
 
   @chex.all_variants()
   def test_l2_regularizer(self):
-    l2_loss = self.variant(losses.l2_loss)
+    l2_loss = self.variant(losses.l2_loss)  # pyrefly: ignore[missing-attribute]
     # Test output.
     np.testing.assert_allclose(
         l2_loss(self.xs), l2_loss(self.xs, jnp.zeros_like(self.xs)))
 
   @chex.all_variants()
   def test_gradients(self):
-    l2_loss = self.variant(losses.l2_loss)
+    l2_loss = self.variant(losses.l2_loss)  # pyrefly: ignore[missing-attribute]
     # Compute gradient in batch
     batch_grad_func = jax.vmap(jax.grad(l2_loss), (0))
     actual = batch_grad_func(self.xs)
@@ -75,7 +75,7 @@ class ExpectileLossTest(parameterized.TestCase):
                                ], [3.0, 0.75, 0.1875, 0., 0.0625, 0.25, 1.0]),
   )
   def test_expectile_loss_vector(self, expectile, predictions, expected_loss):
-    expectile_loss = self.variant(losses.expectile_loss)
+    expectile_loss = self.variant(losses.expectile_loss)  # pyrefly: ignore[missing-attribute]
     predictions = jnp.array(predictions)
     expected_loss = jnp.array(expected_loss)
     targets = jnp.zeros_like(predictions)
@@ -104,7 +104,7 @@ class ExpectileLossTest(parameterized.TestCase):
     predictions = jnp.array(predictions)
     expected_grads = jnp.array(expected_grads)
     targets = jnp.zeros_like(predictions)
-    expectile_loss_fn = self.variant(
+    expectile_loss_fn = self.variant(  # pyrefly: ignore[missing-attribute]
         functools.partial(losses.expectile_loss, expectile=expectile))
     batch_grad_fn = jax.vmap(jax.grad(expectile_loss_fn), (0, 0))
     predicted_grads = batch_grad_fn(predictions, targets)
@@ -121,7 +121,7 @@ class LogLossTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_log_loss_scalar(self):
-    log_loss = self.variant(losses.log_loss)
+    log_loss = self.variant(losses.log_loss)  # pyrefly: ignore[missing-attribute]
     preds = self.preds[2]
     targets = self.targets[2]
     # Test output.
@@ -130,7 +130,7 @@ class LogLossTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_log_loss_vector(self):
-    log_loss = self.variant(losses.log_loss)
+    log_loss = self.variant(losses.log_loss)  # pyrefly: ignore[missing-attribute]
     # Test output.
     np.testing.assert_allclose(
         log_loss(self.preds, self.targets), self.expected, atol=1e-4)
@@ -198,7 +198,7 @@ class PixelControlLossTest(parameterized.TestCase):
   @chex.all_variants()
   def testPixelControlLossScalarDiscount(self):
     """Compute loss for given observations, actions, values, scalar discount."""
-    loss_fn = self.variant(functools.partial(
+    loss_fn = self.variant(functools.partial(  # pyrefly: ignore[missing-attribute]
         losses.pixel_control_loss, cell_size=self.cell_size))
     loss = loss_fn(
         self.observations,
@@ -214,7 +214,7 @@ class PixelControlLossTest(parameterized.TestCase):
     zero_discount = np.zeros((1,))
     non_zero_discount = self.discount * np.ones(self.seq_length - 1)
     discount = np.concatenate([zero_discount, non_zero_discount], axis=0)
-    loss_fn = self.variant(functools.partial(
+    loss_fn = self.variant(functools.partial(  # pyrefly: ignore[missing-attribute]
         losses.pixel_control_loss, cell_size=self.cell_size))
     loss = loss_fn(
         self.observations,
@@ -228,7 +228,7 @@ class PixelControlLossTest(parameterized.TestCase):
   def testPixelControlLossShapes(self):
     with self.assertRaisesRegex(
         ValueError, 'Pixel Control values are not compatible'):
-      loss_fn = self.variant(functools.partial(
+      loss_fn = self.variant(functools.partial(  # pyrefly: ignore[missing-attribute]
           losses.pixel_control_loss, cell_size=self.cell_size))
       loss_fn(
           self.observations, self.actions,
@@ -240,7 +240,7 @@ class PixelControlLossTest(parameterized.TestCase):
         ValueError, 'discount_factor must be a scalar or a tensor of rank 1'):
       discount = np.tile(
           np.reshape(self.discount, (1, 1)), (self.seq_length, 1))
-      loss_fn = self.variant(functools.partial(
+      loss_fn = self.variant(functools.partial(  # pyrefly: ignore[missing-attribute]
           losses.pixel_control_loss, cell_size=self.cell_size))
       loss_fn(
           self.observations, self.actions, self.action_values, discount)

@@ -45,7 +45,7 @@ class LambdaReturnsTest(parameterized.TestCase):
   @chex.all_variants()
   def test_lambda_returns_batch(self):
     """Tests for a full batch."""
-    lambda_returns = self.variant(jax.vmap(functools.partial(
+    lambda_returns = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         multistep.lambda_returns, lambda_=self.lambda_)))
     # Compute lambda return in batch.
     actual = lambda_returns(self.r_t, self.discount_t, self.v_t)
@@ -74,7 +74,7 @@ class DiscountedReturnsTest(parameterized.TestCase):
   @chex.all_variants()
   def test_discounted_returns_batch(self):
     """Tests for a single element."""
-    discounted_returns = self.variant(jax.vmap(multistep.discounted_returns))
+    discounted_returns = self.variant(jax.vmap(multistep.discounted_returns))  # pyrefly: ignore[missing-attribute]
     # Compute discounted return.
     actual_scalar = discounted_returns(self.r_t, self.discount_t,
                                        self.bootstrap_v)
@@ -112,7 +112,7 @@ class NStepBootstrappedReturnsTest(parameterized.TestCase):
       ('smaller_n', 3,), ('equal_n', 5,), ('bigger_n', 7,))
   def test_n_step_sequence_returns_batch(self, n):
     """Tests for a full batch."""
-    n_step_returns = self.variant(jax.vmap(functools.partial(
+    n_step_returns = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         multistep.n_step_bootstrapped_returns, n=n)))
     # Compute n-step return in batch.
     actual = n_step_returns(self.r_t, self.discount_t, self.v_t)
@@ -149,8 +149,8 @@ class TDErrorTest(parameterized.TestCase):
   def test_importance_corrected_td_errors_batch(self):
     """Tests equivalence to computing the error from a the lambda-return."""
     # Vmap and optionally compile.
-    lambda_returns = self.variant(jax.vmap(multistep.lambda_returns))
-    td_errors = self.variant(jax.vmap(multistep.importance_corrected_td_errors))
+    lambda_returns = self.variant(jax.vmap(multistep.lambda_returns))  # pyrefly: ignore[missing-attribute]
+    td_errors = self.variant(jax.vmap(multistep.importance_corrected_td_errors))  # pyrefly: ignore[missing-attribute]
     # Compute multistep td-error with recursion on deltas.
     td_direct = td_errors(self.r_t, self.discount_t, self.rho_tm1,
                           np.ones_like(self.discount_t), self.values)
@@ -201,7 +201,7 @@ class TruncatedGeneralizedAdvantageEstimationTest(parameterized.TestCase):
       ('lambda0.4', 0.4))
   def test_truncated_gae(self, lambda_):
     """Tests truncated GAE for a full batch."""
-    batched_advantage_fn_variant = self.variant(jax.vmap(
+    batched_advantage_fn_variant = self.variant(jax.vmap(  # pyrefly: ignore[missing-attribute]
         multistep.truncated_generalized_advantage_estimation,
         in_axes=(0, 0, None, 0), out_axes=0))
     actual = batched_advantage_fn_variant(
@@ -211,10 +211,10 @@ class TruncatedGeneralizedAdvantageEstimationTest(parameterized.TestCase):
   @chex.all_variants()
   def test_array_lambda(self):
     """Tests that truncated GAE is consistent with scalar or array lambda_."""
-    scalar_lambda_fn = self.variant(jax.vmap(
+    scalar_lambda_fn = self.variant(jax.vmap(  # pyrefly: ignore[missing-attribute]
         multistep.truncated_generalized_advantage_estimation,
         in_axes=(0, 0, None, 0), out_axes=0))
-    array_lambda_fn = self.variant(jax.vmap(
+    array_lambda_fn = self.variant(jax.vmap(  # pyrefly: ignore[missing-attribute]
         multistep.truncated_generalized_advantage_estimation))
     scalar_lambda_result = scalar_lambda_fn(
         self.r_t, self.discount_t, 0.9, self.v_t)
@@ -237,13 +237,13 @@ class TruncatedGeneralizedAdvantageEstimationTest(parameterized.TestCase):
     Args:
       lambda_: a lambda to use in GAE.
     """
-    batched_gae_fn_variant = self.variant(jax.vmap(
+    batched_gae_fn_variant = self.variant(jax.vmap(  # pyrefly: ignore[missing-attribute]
         multistep.truncated_generalized_advantage_estimation,
         in_axes=(0, 0, None, 0), out_axes=0))
     gae_result = batched_gae_fn_variant(
         self.r_t, self.discount_t, lambda_, self.v_t)
 
-    batched_ictd_errors_fn_variant = self.variant(jax.vmap(
+    batched_ictd_errors_fn_variant = self.variant(jax.vmap(  # pyrefly: ignore[missing-attribute]
         multistep.importance_corrected_td_errors))
     ictd_errors_result = batched_ictd_errors_fn_variant(
         self.r_t,

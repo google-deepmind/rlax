@@ -40,8 +40,9 @@ def fix_step_type_on_interruptions(step_type: chex.Array):
   """
   chex.assert_rank(step_type, 2)
   next_step_type = jnp.concatenate([
-      step_type[1:],
+      step_type[1:],  # pyrefly: ignore[bad-index]
       jnp.full(
+          # pyrefly: ignore[bad-index]
           step_type[:1].shape, int(dm_env.StepType.MID), dtype=step_type.dtype),
   ],
                                    axis=0)

@@ -123,12 +123,12 @@ def transform_from_2hot(
 
 def transform_to_2hot_nonlinear(scalar: Array, bins: Array) -> Array:
   """Transforms a scalar tensor to a 2 hot representation defined using bins."""
-  min_value, max_value = bins[0], bins[-1]
-  num_bins = len(bins)
+  min_value, max_value = bins[0], bins[-1]  # pyrefly: ignore[bad-index]
+  num_bins = len(bins)  # pyrefly: ignore[bad-argument-type]
   scalar = jnp.clip(scalar, min_value, max_value)
   upper_index = jnp.argmax(scalar[..., None] <= bins.reshape(1, -1), axis=-1)
-  upper_value = bins[upper_index]
-  lower_value = bins[upper_index - 1]
+  upper_value = bins[upper_index]  # pyrefly: ignore[bad-index]
+  lower_value = bins[upper_index - 1]  # pyrefly: ignore[bad-index]
   p_lower = (upper_value - scalar) / (upper_value - lower_value)
   p_upper = 1 - p_lower
   lower_one_hot = jax.nn.one_hot(upper_index - 1, num_bins) * p_lower[..., None]

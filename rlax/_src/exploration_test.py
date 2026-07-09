@@ -32,7 +32,7 @@ class GaussianTest(parameterized.TestCase):
   @chex.all_variants()
   def test_deterministic(self):
     """Check that noisy and noisless actions match for zero stddev."""
-    add_noise = self.variant(exploration.add_gaussian_noise)
+    add_noise = self.variant(exploration.add_gaussian_noise)  # pyrefly: ignore[missing-attribute]
     # Test that noisy and noisless actions match for zero stddev
     for _ in range(10):
       action = np.random.normal(0., 1., self._num_actions)
@@ -52,7 +52,7 @@ class OrnsteinUhlenbeckTest(parameterized.TestCase):
   @chex.all_variants()
   def test_deterministic(self):
     """Check that noisy and noisless actions match for zero stddev."""
-    add_noise = self.variant(exploration.add_ornstein_uhlenbeck_noise)
+    add_noise = self.variant(exploration.add_ornstein_uhlenbeck_noise)  # pyrefly: ignore[missing-attribute]
     # Test that noisy and noisless actions match for zero stddev
     noise_tm1 = np.zeros((self._num_actions,))
     for _ in range(10):
@@ -75,7 +75,7 @@ class DirichletNoiseTest(parameterized.TestCase):
   @chex.all_variants()
   def test_deterministic(self):
     """Check that noisy and noisless actions match for zero stddev."""
-    add_noise = self.variant(exploration.add_dirichlet_noise)
+    add_noise = self.variant(exploration.add_dirichlet_noise)  # pyrefly: ignore[missing-attribute]
 
     # Test that noisy and noisless actions match for zero Dirichlet noise
     for _ in range(10):
@@ -99,7 +99,7 @@ class EMIntrinsicRewardTest(parameterized.TestCase):
   def test_novelty_reward(self):
     """Check reward is higher for novel embed than those identical to memory."""
 
-    @self.variant
+    @self.variant  # pyrefly: ignore[missing-attribute]
     def episodic_memory_intrinsic_rewards(embeddings, reward_scale):
       return exploration.episodic_memory_intrinsic_rewards(
           embeddings, self.num_neighbors, reward_scale, max_memory_size=10)
@@ -118,7 +118,7 @@ class EMIntrinsicRewardTest(parameterized.TestCase):
   def test_custom_memory(self):
     """Check that embeddings are added appropriately to a custom memory."""
 
-    @self.variant
+    @self.variant  # pyrefly: ignore[missing-attribute]
     def episodic_memory_intrinsic_rewards(embeddings, memory, reward_scale):
       return exploration.episodic_memory_intrinsic_rewards(
           embeddings, self.num_neighbors, reward_scale,

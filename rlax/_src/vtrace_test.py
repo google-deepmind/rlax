@@ -73,12 +73,12 @@ class VTraceTest(parameterized.TestCase):
   @chex.all_variants()
   def test_vtrace_td_error_and_advantage(self):
     """Tests for a full batch."""
-    vtrace_td_error_and_advantage = self.variant(jax.vmap(functools.partial(
+    vtrace_td_error_and_advantage = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         vtrace.vtrace_td_error_and_advantage,
         clip_rho_threshold=self._clip_rho_threshold, lambda_=self._lambda)))
     # Get function arguments.
     r_t, discount_t, rho_tm1, v_tm1, bootstrap_value = self._inputs
-    v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)
+    v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)  # pyrefly: ignore[bad-index]
     # Compute vtrace output.
     vtrace_output = vtrace_td_error_and_advantage(
         v_tm1, v_t, r_t, discount_t, rho_tm1)
@@ -102,7 +102,7 @@ class VTraceTest(parameterized.TestCase):
   )
   def test_vtrace_lambda_multiple_episodes_per_trace(self, discount_t, lambda_):
     """Tests for a full batch."""
-    vtrace_ = self.variant(
+    vtrace_ = self.variant(  # pyrefly: ignore[missing-attribute]
         jax.vmap(
             functools.partial(
                 vtrace.vtrace, clip_rho_threshold=self._clip_rho_threshold)))
@@ -126,12 +126,12 @@ class VTraceTest(parameterized.TestCase):
   def test_lambda_q_estimate(self):
     """Tests for a full batch."""
     lambda_ = 0.8
-    vtrace_td_error_and_advantage = self.variant(jax.vmap(functools.partial(
+    vtrace_td_error_and_advantage = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         vtrace.vtrace_td_error_and_advantage,
         clip_rho_threshold=self._clip_rho_threshold, lambda_=lambda_)))
     # Get function arguments.
     r_t, discount_t, rho_tm1, v_tm1, bootstrap_value = self._inputs
-    v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)
+    v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)  # pyrefly: ignore[bad-index]
     # Compute vtrace output.
     vtrace_output = vtrace_td_error_and_advantage(
         v_tm1, v_t, r_t, discount_t, rho_tm1)
@@ -144,13 +144,13 @@ class VTraceTest(parameterized.TestCase):
   @chex.all_variants()
   def test_leaky_and_non_leaky_vtrace(self):
     """Tests for a full batch."""
-    vtrace_fn = self.variant(jax.vmap(functools.partial(
+    vtrace_fn = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         vtrace.vtrace, lambda_=self._lambda)))
-    leaky_vtrace_fn = self.variant(jax.vmap(functools.partial(
+    leaky_vtrace_fn = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         vtrace.leaky_vtrace, alpha_=1., lambda_=self._lambda)))
     # Get function arguments.
     r_t, discount_t, rho_tm1, v_tm1, bootstrap_value = self._inputs
-    v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)
+    v_t = np.concatenate([v_tm1[:, 1:], bootstrap_value[:, None]], axis=1)  # pyrefly: ignore[bad-index]
     # Compute vtrace and leaky vtrace output.
     vtrace_output = vtrace_fn(v_tm1, v_t, r_t, discount_t, rho_tm1)
     leaky_vtrace_output = leaky_vtrace_fn(v_tm1, v_t, r_t, discount_t, rho_tm1)

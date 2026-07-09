@@ -57,6 +57,7 @@ def extract_subsequences(
   num_subs = start_indices.shape[1]
   idx_arr = jnp.arange(subsequence_len)[:, None, None] * jnp.ones(
       (subsequence_len, batch_size, num_subs), dtype=jnp.int32) + start_indices
+  # pyrefly: ignore[bad-index]
   return trajectories[idx_arr, batch_range[None, :, None], ...]
 
 

@@ -43,7 +43,7 @@ class DpgLossTest(parameterized.TestCase):
   @chex.all_variants()
   def test_dpg_loss_batch(self):
     """Tests for a full batch."""
-    dpg = self.variant(jax.vmap(functools.partial(
+    dpg = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         policy_gradients.dpg_loss, dqda_clipping=1.)))
     # Actor and critic function approximators.
     actor = lambda s_t: jnp.matmul(s_t, self.w_s) + self.b_s
@@ -76,7 +76,7 @@ class PolicyGradientLossTest(parameterized.TestCase):
   @chex.all_variants()
   def test_policy_gradient_loss_batch(self):
     """Tests for a full batch."""
-    policy_gradient_loss = self.variant(jax.vmap(
+    policy_gradient_loss = self.variant(jax.vmap(  # pyrefly: ignore[missing-attribute]
         policy_gradients.policy_gradient_loss))
     # Test outputs.
     actual = policy_gradient_loss(self.logits, self.actions, self.advantages,
@@ -100,7 +100,7 @@ class EntropyLossTest(parameterized.TestCase):
   @chex.all_variants()
   def test_entropy_loss_batch(self):
     """Tests for a full batch."""
-    entropy_loss = self.variant(jax.vmap(policy_gradients.entropy_loss))
+    entropy_loss = self.variant(jax.vmap(policy_gradients.entropy_loss))  # pyrefly: ignore[missing-attribute]
     # Test outputs.
     actual = entropy_loss(self.logits, self.weights)
     np.testing.assert_allclose(self.expected, actual, atol=1e-4)
@@ -221,7 +221,7 @@ class ClippedSurrogatePGLossTest(parameterized.TestCase):
     """Tests for a full batch."""
     get_ratios = jax.vmap(distributions.categorical_importance_sampling_ratios)
     prob_ratios = get_ratios(self.logits, self.old_logits, self.actions)
-    batched_fn_variant = self.variant(jax.vmap(functools.partial(
+    batched_fn_variant = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         policy_gradients.clipped_surrogate_pg_loss, epsilon=self.epsilon)))
     actual = batched_fn_variant(prob_ratios, self.advantages)
     np.testing.assert_allclose(actual, self.expected, atol=1e-4)

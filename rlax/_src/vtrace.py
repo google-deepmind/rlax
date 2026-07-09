@@ -86,6 +86,7 @@ def vtrace(
   clipped_rhos_tm1 = jnp.minimum(clip_rho_threshold, rho_tm1)
 
   # Compute the temporal difference errors.
+  # pyrefly: ignore[unsupported-operation]
   td_errors = clipped_rhos_tm1 * (r_t + discount_t * v_t - v_tm1)
 
   # Work backwards computing the td-errors.
@@ -161,6 +162,7 @@ def leaky_vtrace(
   )
 
   # Compute the temporal difference errors.
+  # pyrefly: ignore[unsupported-operation]
   td_errors = clipped_rhos_tm1 * (r_t + discount_t * v_t - v_tm1)
 
   # Work backwards computing the td-errors.
@@ -244,8 +246,9 @@ def vtrace_td_error_and_advantage(
   )
   targets_tm1 = errors + v_tm1
   q_bootstrap = jnp.concatenate([
+      # pyrefly: ignore[bad-index]
       lambda_[:-1] * targets_tm1[1:] + (1 - lambda_[:-1]) * v_tm1[1:],
-      v_t[-1:],
+      v_t[-1:],  # pyrefly: ignore[bad-index]
   ], axis=0)
   q_estimate = r_t + discount_t * q_bootstrap
   clipped_pg_rho_tm1 = jnp.minimum(clip_pg_rho_threshold, rho_tm1)
@@ -326,8 +329,9 @@ def leaky_vtrace_td_error_and_advantage(
   )
   targets_tm1 = errors + v_tm1
   q_bootstrap = jnp.concatenate([
+      # pyrefly: ignore[bad-index]
       lambda_[:-1] * targets_tm1[1:] + (1 - lambda_[:-1]) * v_tm1[1:],
-      v_t[-1:],
+      v_t[-1:],  # pyrefly: ignore[bad-index]
   ], axis=0)
   q_estimate = r_t + discount_t * q_bootstrap
   clipped_pg_rho_tm1 = ((1 - alpha) * rho_tm1 + alpha *

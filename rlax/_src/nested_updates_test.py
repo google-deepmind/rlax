@@ -35,7 +35,7 @@ class NestedUpdatesTest(parameterized.TestCase):
   @chex.all_variants()
   def test_conditional_update_is_time(self):
     """Check periodic update enabled."""
-    conditional_update = self.variant(nested_updates.conditional_update)
+    conditional_update = self.variant(nested_updates.conditional_update)  # pyrefly: ignore[missing-attribute]
 
     is_time = jnp.array(True)
     output = conditional_update(self._new_struct, self._old_struct, is_time)
@@ -46,7 +46,7 @@ class NestedUpdatesTest(parameterized.TestCase):
   @chex.all_variants()
   def test_conditional_update_is_not_time(self):
     """Check periodic update disables."""
-    conditional_update = self.variant(nested_updates.conditional_update)
+    conditional_update = self.variant(nested_updates.conditional_update)  # pyrefly: ignore[missing-attribute]
 
     is_not_time = jnp.array(False)
     output = conditional_update(self._new_struct, self._old_struct, is_not_time)

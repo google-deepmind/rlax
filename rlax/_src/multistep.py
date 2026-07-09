@@ -111,6 +111,7 @@ def lambda_returns(
     return acc, acc
 
   _, returns = jax.lax.scan(
+      # pyrefly: ignore[bad-index]
       _body, v_t[-1], (r_t, discount_t, v_t, lambda_), reverse=True)
 
   return jax.lax.select(stop_target_gradients,
@@ -158,12 +159,14 @@ def n_step_bootstrapped_returns(
 
   # Shift bootstrap values by n and pad end of sequence with last value v_t[-1].
   pad_size = min(n - 1, seq_len)
+  # pyrefly: ignore[bad-index]
   targets = jnp.concatenate([v_t[n - 1:], jnp.array([v_t[-1]] * pad_size)])
 
   # Pad sequences. Shape is now (T + n - 1,).
   r_t = jnp.concatenate([r_t, jnp.zeros(n - 1)])
   discount_t = jnp.concatenate([discount_t, jnp.ones(n - 1)])
   lambda_t = jnp.concatenate([lambda_t, jnp.ones(n - 1)])
+  # pyrefly: ignore[bad-index]
   v_t = jnp.concatenate([v_t, jnp.array([v_t[-1]] * (n - 1))])
 
   # Work backwards to compute n-step returns.
@@ -252,10 +255,14 @@ def importance_corrected_td_errors(
   """
   chex.assert_rank([r_t, discount_t, rho_tm1, values], [1, 1, 1, 1])
   chex.assert_type([r_t, discount_t, rho_tm1, values], float)
+  # pyrefly: ignore[bad-index]
   chex.assert_equal_shape([r_t, discount_t, rho_tm1, values[1:]])
 
+  # pyrefly: ignore[bad-index]
   v_tm1 = values[:-1]  # Predictions to compute errors for.
+  # pyrefly: ignore[bad-index]
   v_t = values[1:]  # Values for bootstrapping.
+  # pyrefly: ignore[bad-index]
   rho_t = jnp.concatenate((rho_tm1[1:], jnp.array([1.])))  # Unused dummy value.
   lambda_ = jnp.ones_like(discount_t) * lambda_  # If scalar, make into vector.
 
@@ -311,6 +318,7 @@ def truncated_generalized_advantage_estimation(
   chex.assert_type([r_t, values, discount_t], float)
   lambda_ = jnp.ones_like(discount_t) * lambda_  # If scalar, make into vector.
 
+  # pyrefly: ignore[bad-index]
   delta_t = r_t + discount_t * values[1:] - values[:-1]
 
   # Iterate backwards to calculate advantages.
@@ -373,14 +381,15 @@ def general_off_policy_returns_from_action_values(
   chex.assert_type([q_t, a_t, r_t, discount_t, c_t, pi_t],
                    [float, int, float, float, float, float])
   chex.assert_equal_shape(
+      # pyrefly: ignore[bad-index]
       [q_t[..., 0], a_t, r_t, discount_t, c_t, pi_t[..., 0]])
 
   # Get the expected values and the values of actually selected actions.
   exp_q_t = (pi_t * q_t).sum(axis=-1)
   # The generalized returns are independent of Q-values and cs at the final
   # state.
-  q_a_t = base.batched_index(q_t, a_t)[:-1]
-  c_t = c_t[:-1]
+  q_a_t = base.batched_index(q_t, a_t)[:-1]  # pyrefly: ignore[bad-index]
+  c_t = c_t[:-1]  # pyrefly: ignore[bad-index]
 
   return general_off_policy_returns_from_q_and_v(
       q_a_t, exp_q_t, r_t, discount_t, c_t, stop_target_gradients)
@@ -428,8 +437,10 @@ def general_off_policy_returns_from_q_and_v(
   """
   chex.assert_rank([q_t, v_t, r_t, discount_t, c_t], 1)
   chex.assert_type([q_t, v_t, r_t, discount_t, c_t], float)
+  # pyrefly: ignore[bad-index]
   chex.assert_equal_shape([q_t, v_t[:-1], r_t[:-1], discount_t[:-1], c_t])
 
+  # pyrefly: ignore[bad-index]
   g = r_t[-1] + discount_t[-1] * v_t[-1]  # G_K-1.
 
   def _body(acc, xs):
@@ -438,6 +449,7 @@ def general_off_policy_returns_from_q_and_v(
     return acc, acc
 
   _, returns = jax.lax.scan(
+      # pyrefly: ignore[bad-index]
       _body, g, (r_t[:-1], discount_t[:-1], c_t, v_t[:-1], q_t), reverse=True)
   returns = jnp.concatenate([returns, g[jnp.newaxis]], axis=0)
 

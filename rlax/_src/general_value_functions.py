@@ -63,6 +63,7 @@ def pixel_control_rewards(
   h = observations.shape[1] // cell_size  # new height.
   w = observations.shape[2] // cell_size  # new width.
   # Calculate the absolute differences across the sequence.
+  # pyrefly: ignore[bad-index]
   abs_diff = jnp.abs(observations[1:] - observations[:-1])
   # Average within cells to get the cumulants.
   abs_diff = abs_diff.reshape(
@@ -102,14 +103,15 @@ def feature_control_rewards(
   chex.assert_type(features, float)
 
   if cumulant_type == 'feature':
-    return features[1:]
+    return features[1:]  # pyrefly: ignore[bad-index]
   elif cumulant_type == 'absolute_change':
-    return jnp.abs(features[1:] - features[:-1])
+    return jnp.abs(features[1:] - features[:-1])  # pyrefly: ignore[bad-index]
   elif cumulant_type == 'increase':
-    return features[1:] - features[:-1]
+    return features[1:] - features[:-1]  # pyrefly: ignore[bad-index]
   elif cumulant_type == 'decrease':
-    return features[:-1] - features[1:]
+    return features[:-1] - features[1:]  # pyrefly: ignore[bad-index]
   elif cumulant_type == 'potential':
+    # pyrefly: ignore[bad-index, unsupported-operation]
     return discount * features[1:] - features[:-1]
   else:
     raise ValueError(f'Unknown cumulant_type {cumulant_type}')

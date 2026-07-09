@@ -43,4 +43,5 @@ def periodic_update(
       PendingDeprecationWarning, stacklevel=2
   )
   return conditional_update(
+      # pyrefly: ignore[unsupported-operation]
       new_tensors, old_tensors, is_time=steps % update_period == 0)

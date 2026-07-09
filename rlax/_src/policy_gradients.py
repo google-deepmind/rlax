@@ -181,6 +181,7 @@ def qpg_loss(
   policy_t, advantage_t = _compute_advantages(logits_t, q_t)
   advantage_t = jax.lax.select(use_stop_gradient,
                                jax.lax.stop_gradient(advantage_t), advantage_t)
+  # pyrefly: ignore[unsupported-operation]
   policy_advantages = -policy_t * advantage_t
   loss = jnp.mean(jnp.sum(policy_advantages, axis=1), axis=0)
   return loss
@@ -217,6 +218,7 @@ def rm_loss(
   action_regret_t = jax.lax.select(use_stop_gradient,
                                    jax.lax.stop_gradient(action_regret_t),
                                    action_regret_t)
+  # pyrefly: ignore[unsupported-operation]
   policy_regret = -policy_t * action_regret_t
   loss = jnp.mean(jnp.sum(policy_regret, axis=1), axis=0)
   return loss

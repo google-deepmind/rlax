@@ -129,10 +129,10 @@ def sarsa(
   chex.assert_type([q_tm1, a_tm1, r_t, discount_t, q_t, a_t],
                    [float, int, float, float, float, int])
 
-  target_tm1 = r_t + discount_t * q_t[a_t]
+  target_tm1 = r_t + discount_t * q_t[a_t]  # pyrefly: ignore[bad-index]
   target_tm1 = jax.lax.select(stop_target_gradients,
                               jax.lax.stop_gradient(target_tm1), target_tm1)
-  return target_tm1 - q_tm1[a_tm1]
+  return target_tm1 - q_tm1[a_tm1]  # pyrefly: ignore[bad-index]
 
 
 def expected_sarsa(
@@ -171,7 +171,7 @@ def expected_sarsa(
   target_tm1 = r_t + discount_t * jnp.dot(q_t, probs_a_t)
   target_tm1 = jax.lax.select(stop_target_gradients,
                               jax.lax.stop_gradient(target_tm1), target_tm1)
-  return target_tm1 - q_tm1[a_tm1]
+  return target_tm1 - q_tm1[a_tm1]  # pyrefly: ignore[bad-index]
 
 
 def sarsa_lambda(
@@ -248,7 +248,7 @@ def q_learning(
   target_tm1 = r_t + discount_t * jnp.max(q_t)
   target_tm1 = jax.lax.select(stop_target_gradients,
                               jax.lax.stop_gradient(target_tm1), target_tm1)
-  return target_tm1 - q_tm1[a_tm1]
+  return target_tm1 - q_tm1[a_tm1]  # pyrefly: ignore[bad-index]
 
 
 def double_q_learning(
@@ -283,10 +283,11 @@ def double_q_learning(
   chex.assert_type([q_tm1, a_tm1, r_t, discount_t, q_t_value, q_t_selector],
                    [float, int, float, float, float, float])
 
+  # pyrefly: ignore[bad-index]
   target_tm1 = r_t + discount_t * q_t_value[q_t_selector.argmax()]
   target_tm1 = jax.lax.select(stop_target_gradients,
                               jax.lax.stop_gradient(target_tm1), target_tm1)
-  return target_tm1 - q_tm1[a_tm1]
+  return target_tm1 - q_tm1[a_tm1]  # pyrefly: ignore[bad-index]
 
 
 def persistent_q_learning(
@@ -322,12 +323,12 @@ def persistent_q_learning(
 
   corrected_q_t = (
       (1. - action_gap_scale) * jnp.max(q_t)
-      + action_gap_scale * q_t[a_tm1]
+      + action_gap_scale * q_t[a_tm1]  # pyrefly: ignore[bad-index]
   )
   target_tm1 = r_t + discount_t * corrected_q_t
   target_tm1 = jax.lax.select(stop_target_gradients,
                               jax.lax.stop_gradient(target_tm1), target_tm1)
-  return target_tm1 - q_tm1[a_tm1]
+  return target_tm1 - q_tm1[a_tm1]  # pyrefly: ignore[bad-index]
 
 
 def qv_learning(
@@ -363,7 +364,7 @@ def qv_learning(
   target_tm1 = r_t + discount_t * v_t
   target_tm1 = jax.lax.select(stop_target_gradients,
                               jax.lax.stop_gradient(target_tm1), target_tm1)
-  return target_tm1 - q_tm1[a_tm1]
+  return target_tm1 - q_tm1[a_tm1]  # pyrefly: ignore[bad-index]
 
 
 def qv_max(
@@ -575,13 +576,13 @@ def categorical_l2_project(
   d_neg = jnp.roll(z_q, shift=1)
 
   # Clip z_p to be in new support range (vmin, vmax).
-  z_p = jnp.clip(z_p, z_q[0], z_q[-1])[None, :]
+  z_p = jnp.clip(z_p, z_q[0], z_q[-1])[None, :]  # pyrefly: ignore[bad-index]
   assert z_p.shape == (1, kp)
 
   # Get the distance between atom values in support.
   d_pos = (d_pos - z_q)[:, None]  # z_q[i+1] - z_q[i]
   d_neg = (z_q - d_neg)[:, None]  # z_q[i] - z_q[i-1]
-  z_q = z_q[:, None]
+  z_q = z_q[:, None]  # pyrefly: ignore[bad-index]
   assert z_q.shape == (kq, 1)
 
   # Ensure that we do not divide by zero, in case of atoms of identical value.
@@ -595,7 +596,7 @@ def categorical_l2_project(
 
   # Matrix of entries sgn(a_ij) * |a_ij|, with a_ij = clip(z_p)[j] - z_q[i].
   delta_hat = (d_sign * delta_qp * d_pos) - ((1. - d_sign) * delta_qp * d_neg)
-  probs = probs[None, :]
+  probs = probs[None, :]  # pyrefly: ignore[bad-index]
   assert delta_hat.shape == (kq, kp)
   assert probs.shape == (1, kp)
 
@@ -643,6 +644,7 @@ def categorical_td_learning(
   v_t_probs = jax.nn.softmax(v_logits_t)
 
   # Project using the Cramer distance and maybe stop gradient flow to targets.
+  # pyrefly: ignore[bad-argument-type]
   target = categorical_l2_project(target_z, v_t_probs, v_atoms_tm1)
   target = jax.lax.select(stop_target_gradients, jax.lax.stop_gradient(target),
                           target)
@@ -693,6 +695,7 @@ def categorical_q_learning(
 
   # Convert logits to distribution, then find greedy action in state s_t.
   q_t_probs = jax.nn.softmax(q_logits_t)
+  # pyrefly: ignore[bad-index]
   q_t_mean = jnp.sum(q_t_probs * q_atoms_t[jnp.newaxis, :], axis=1)
   pi_t = jnp.argmax(q_t_mean)
 
@@ -700,11 +703,13 @@ def categorical_q_learning(
   p_target_z = q_t_probs[pi_t]
 
   # Project using the Cramer distance and maybe stop gradient flow to targets.
+  # pyrefly: ignore[bad-argument-type]
   target = categorical_l2_project(target_z, p_target_z, q_atoms_tm1)
   target = jax.lax.select(stop_target_gradients, jax.lax.stop_gradient(target),
                           target)
 
   # Compute loss (i.e. temporal difference error).
+  # pyrefly: ignore[bad-index]
   logit_qa_tm1 = q_logits_tm1[a_tm1]
   return distributions.categorical_cross_entropy(
       labels=target, logits=logit_qa_tm1)
@@ -756,15 +761,17 @@ def categorical_double_q_learning(
   target_z = r_t + discount_t * q_atoms_t
 
   # Select logits for greedy action in state s_t and convert to distribution.
+  # pyrefly: ignore[bad-index]
   p_target_z = jax.nn.softmax(q_logits_t[q_t_selector.argmax()])
 
   # Project using the Cramer distance and maybe stop gradient flow to targets.
+  # pyrefly: ignore[bad-argument-type]
   target = categorical_l2_project(target_z, p_target_z, q_atoms_tm1)
   target = jax.lax.select(stop_target_gradients, jax.lax.stop_gradient(target),
                           target)
 
   # Compute loss (i.e. temporal difference error).
-  logit_qa_tm1 = q_logits_tm1[a_tm1]
+  logit_qa_tm1 = q_logits_tm1[a_tm1]  # pyrefly: ignore[bad-index]
   return distributions.categorical_cross_entropy(
       labels=target, logits=logit_qa_tm1)
 
@@ -796,10 +803,12 @@ def quantile_regression_loss(
   chex.assert_type([dist_src, tau_src, dist_target], float)
 
   # Calculate quantile error.
+  # pyrefly: ignore[bad-index]
   delta = dist_target[None, :] - dist_src[:, None]
   delta_neg = (delta < 0.).astype(jnp.float32)
   delta_neg = jax.lax.select(stop_target_gradients,
                              jax.lax.stop_gradient(delta_neg), delta_neg)
+  # pyrefly: ignore[bad-index]
   weight = jnp.abs(tau_src[:, None] - delta_neg)
 
   # Calculate Huber loss.
@@ -854,12 +863,12 @@ def quantile_q_learning(
   ], [float, float, int, float, float, float, float])
 
   # Only update the taken actions.
-  dist_qa_tm1 = dist_q_tm1[:, a_tm1]
+  dist_qa_tm1 = dist_q_tm1[:, a_tm1]  # pyrefly: ignore[bad-index]
 
   # Select target action according to greedy policy w.r.t. dist_q_t_selector.
   q_t_selector = jnp.mean(dist_q_t_selector, axis=0)
   a_t = jnp.argmax(q_t_selector)
-  dist_qa_t = dist_q_t[:, a_t]
+  dist_qa_t = dist_q_t[:, a_t]  # pyrefly: ignore[bad-index]
 
   # Compute target, do not backpropagate into it.
   dist_target = r_t + discount_t * dist_qa_t
@@ -906,7 +915,7 @@ def quantile_expected_sarsa(
   ], [float, float, int, float, float, float, float])
 
   # Only update the taken actions.
-  dist_qa_tm1 = dist_q_tm1[:, a_tm1]
+  dist_qa_tm1 = dist_q_tm1[:, a_tm1]  # pyrefly: ignore[bad-index]
 
   # Compute target, do not backpropagate into it.
   dist_target = r_t + discount_t * dist_q_t

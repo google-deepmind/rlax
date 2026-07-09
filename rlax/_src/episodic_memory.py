@@ -38,7 +38,7 @@ class KNNQueryResult():
 
 
 def _sqeuclidian(x: Array, y: Array) -> Array:
-  return jnp.sum(jnp.square(x - y))
+  return jnp.sum(jnp.square(x - y))  # pyrefly: ignore[unsupported-operation]
 
 
 def _cdist(a: Array, b: Array, metric: MetricFn) -> Array:

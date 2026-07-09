@@ -36,7 +36,7 @@ class CategoricalSampleTest(parameterized.TestCase):
   def test_categorical_sample(self):
     key = np.array([1, 2], dtype=np.uint32)
     probs = np.array([0.2, 0.3, 0.5])
-    sample = self.variant(distributions.categorical_sample)(key, probs)
+    sample = self.variant(distributions.categorical_sample)(key, probs)  # pyrefly: ignore[missing-attribute]
     self.assertEqual(sample, 0)
 
   @chex.all_variants()
@@ -50,7 +50,7 @@ class CategoricalSampleTest(parameterized.TestCase):
   def test_categorical_sample_on_invalid_distributions(self, probs):
     key = np.array([1, 2], dtype=np.uint32)
     probs = np.asarray(probs)
-    sample = self.variant(distributions.categorical_sample)(key, probs)
+    sample = self.variant(distributions.categorical_sample)(key, probs)  # pyrefly: ignore[missing-attribute]
     self.assertEqual(sample, -1)
 
 
@@ -83,7 +83,7 @@ class SoftmaxTest(parameterized.TestCase):
   def test_softmax_probs(self, softmax_dist):
     """Tests for a single element."""
     distrib = softmax_dist(temperature=10.)
-    softmax = self.variant(distrib.probs)
+    softmax = self.variant(distrib.probs)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_probs):
       # Test outputs.
@@ -97,7 +97,7 @@ class SoftmaxTest(parameterized.TestCase):
   def test_softmax_probs_batch(self, softmax_dist):
     """Tests for a full batch."""
     distrib = softmax_dist(temperature=10.)
-    softmax = self.variant(distrib.probs)
+    softmax = self.variant(distrib.probs)  # pyrefly: ignore[missing-attribute]
     # Test softmax output in batch.
     actual = softmax(self.logits)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
@@ -109,7 +109,7 @@ class SoftmaxTest(parameterized.TestCase):
   def test_softmax_logprob(self, softmax_dist):
     """Tests for a single element."""
     distrib = softmax_dist()
-    logprob_fn = self.variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for logits, samples, expected in zip(
         self.logits, self.samples, self.expected_logprobs):
@@ -124,7 +124,7 @@ class SoftmaxTest(parameterized.TestCase):
   def test_softmax_logprob_batch(self, softmax_dist):
     """Tests for a full batch."""
     distrib = softmax_dist()
-    logprob_fn = self.variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)  # pyrefly: ignore[missing-attribute]
     # Test softmax output in batch.
     actual = logprob_fn(self.samples, self.logits)
     np.testing.assert_allclose(self.expected_logprobs, actual, atol=1e-4)
@@ -136,7 +136,7 @@ class SoftmaxTest(parameterized.TestCase):
   def test_softmax_entropy(self, softmax_dist):
     """Tests for a single element."""
     distrib = softmax_dist()
-    entropy_fn = self.variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for logits, expected in zip(self.logits, self.expected_entropy):
       # Test outputs.
@@ -149,7 +149,7 @@ class SoftmaxTest(parameterized.TestCase):
   def test_softmax_clipped_entropy_batch(self, entropy_clip, expected_clipped):
     """Tests for a single element."""
     distrib = distributions.clipped_entropy_softmax(entropy_clip=entropy_clip)
-    entropy_fn = self.variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)  # pyrefly: ignore[missing-attribute]
     # Test softmax output in batch.
     actual = entropy_fn(self.logits)
     np.testing.assert_allclose(expected_clipped, actual, atol=1e-4)
@@ -161,7 +161,7 @@ class SoftmaxTest(parameterized.TestCase):
   def test_softmax_entropy_batch(self, softmax_dist):
     """Tests for a full batch."""
     distrib = softmax_dist()
-    entropy_fn = self.variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)  # pyrefly: ignore[missing-attribute]
     # Test softmax output in batch.
     actual = entropy_fn(self.logits)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
@@ -186,7 +186,7 @@ class GreedyTest(parameterized.TestCase):
   def test_greedy_probs(self):
     """Tests for a single element."""
     distrib = distributions.greedy()
-    greedy = self.variant(distrib.probs)
+    greedy = self.variant(distrib.probs)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_probs):
       # Test outputs.
@@ -197,7 +197,7 @@ class GreedyTest(parameterized.TestCase):
   def test_greedy_probs_batch(self):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    greedy = self.variant(distrib.probs)
+    greedy = self.variant(distrib.probs)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = greedy(self.preferences)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
@@ -206,7 +206,7 @@ class GreedyTest(parameterized.TestCase):
   def test_greedy_logprob(self):
     """Tests for a single element."""
     distrib = distributions.greedy()
-    logprob_fn = self.variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for preferences, samples, expected in zip(
         self.preferences, self.samples, self.expected_logprob):
@@ -218,7 +218,7 @@ class GreedyTest(parameterized.TestCase):
   def test_greedy_logprob_batch(self):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    logprob_fn = self.variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = logprob_fn(self.samples, self.preferences)
     np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
@@ -227,7 +227,7 @@ class GreedyTest(parameterized.TestCase):
   def test_greedy_entropy(self):
     """Tests for a single element."""
     distrib = distributions.greedy()
-    entropy_fn = self.variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_entropy):
       # Test outputs.
@@ -238,7 +238,7 @@ class GreedyTest(parameterized.TestCase):
   def test_greedy_entropy_batch(self):
     """Tests for a full batch."""
     distrib = distributions.greedy()
-    entropy_fn = self.variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = entropy_fn(self.preferences)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
@@ -264,7 +264,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
   def test_greedy_probs(self):
     """Tests for a single element."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    probs_fn = self.variant(distrib.probs)
+    probs_fn = self.variant(distrib.probs)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_probs):
       # Test outputs.
@@ -275,7 +275,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
   def test_greedy_probs_batch(self):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    probs_fn = self.variant(distrib.probs)
+    probs_fn = self.variant(distrib.probs)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = probs_fn(self.preferences)
     np.testing.assert_allclose(self.expected_probs, actual, atol=1e-4)
@@ -284,7 +284,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
   def test_greedy_logprob(self):
     """Tests for a single element."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    logprob_fn = self.variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for preferences, samples, expected in zip(
         self.preferences, self.samples, self.expected_logprob):
@@ -296,7 +296,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
   def test_greedy_logprob_batch(self):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    logprob_fn = self.variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = logprob_fn(self.samples, self.preferences)
     np.testing.assert_allclose(self.expected_logprob, actual, atol=1e-4)
@@ -305,7 +305,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
   def test_greedy_entropy(self):
     """Tests for a single element."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    entropy_fn = self.variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for preferences, expected in zip(self.preferences, self.expected_entropy):
       # Test outputs.
@@ -316,7 +316,7 @@ class EpsilonGreedyTest(parameterized.TestCase):
   def test_greedy_entropy_batch(self):
     """Tests for a full batch."""
     distrib = distributions.epsilon_greedy(self.epsilon)
-    entropy_fn = self.variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = entropy_fn(self.preferences)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
@@ -350,7 +350,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
   def test_gaussian_prob(self):
     """Tests for a single element."""
     distrib = distributions.gaussian_diagonal()
-    prob_fn = self.variant(distrib.prob)
+    prob_fn = self.variant(distrib.prob)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for mu, sigma, sample, expected in zip(
         self.mu, self.sigma, self.sample, self.expected_prob_a):
@@ -362,7 +362,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
   def test_gaussian_prob_batch(self):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    prob_fn = self.variant(distrib.prob)
+    prob_fn = self.variant(distrib.prob)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = prob_fn(self.sample, self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_prob_a, actual, atol=1e-4)
@@ -371,7 +371,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
   def test_gaussian_logprob(self):
     """Tests for a single element."""
     distrib = distributions.gaussian_diagonal()
-    logprob_fn = self.variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for mu, sigma, sample, expected in zip(
         self.mu, self.sigma, self.sample, self.expected_logprob_a):
@@ -383,7 +383,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
   def test_gaussian_logprob_batch(self):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    logprob_fn = self.variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = logprob_fn(self.sample, self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_logprob_a, actual, atol=1e-4)
@@ -392,7 +392,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
   def test_gaussian_entropy(self):
     """Tests for a single element."""
     distrib = distributions.gaussian_diagonal()
-    entropy_fn = self.variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)  # pyrefly: ignore[missing-attribute]
     # For each element in the batch.
     for mu, sigma, expected in zip(
         self.mu, self.sigma, self.expected_entropy):
@@ -404,7 +404,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
   def test_gaussian_entropy_batch(self):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    entropy_fn = self.variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = entropy_fn(self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-4)
@@ -413,7 +413,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
   def test_gaussian_kl_batch(self):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    kl_fn = self.variant(distrib.kl)
+    kl_fn = self.variant(distrib.kl)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = kl_fn(self.mu, self.sigma, self.other_mu, self.other_sigma)
     np.testing.assert_allclose(self.expected_kl, actual, atol=1e-3, rtol=1e-6)
@@ -422,7 +422,7 @@ class GaussianDiagonalTest(parameterized.TestCase):
   def test_gaussian_kl_to_std_normal_batch(self):
     """Tests for a full batch."""
     distrib = distributions.gaussian_diagonal()
-    kl_fn = self.variant(distrib.kl_to_standard_normal)
+    kl_fn = self.variant(distrib.kl_to_standard_normal)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = kl_fn(self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_kl_to_std_normal, actual,
@@ -461,7 +461,7 @@ class SquashedGaussianTest(parameterized.TestCase):
     """Tests for a full batch."""
     distrib = distributions.squashed_gaussian(sigma_min=self.sigma_min,
                                               sigma_max=self.sigma_max)
-    prob_fn = self.variant(distrib.prob)
+    prob_fn = self.variant(distrib.prob)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = prob_fn(self.sample, self.mu, self.sigma, self.action_spec)
     np.testing.assert_allclose(self.expected_prob_a, actual, atol=1e-4)
@@ -471,7 +471,7 @@ class SquashedGaussianTest(parameterized.TestCase):
     """Tests for a full batch."""
     distrib = distributions.squashed_gaussian(sigma_min=self.sigma_min,
                                               sigma_max=self.sigma_max)
-    logprob_fn = self.variant(distrib.logprob)
+    logprob_fn = self.variant(distrib.logprob)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = logprob_fn(self.sample, self.mu, self.sigma, self.action_spec)
     np.testing.assert_allclose(self.expected_logprob_a, actual, atol=1e-3,
@@ -482,7 +482,7 @@ class SquashedGaussianTest(parameterized.TestCase):
     """Tests for a full batch."""
     distrib = distributions.squashed_gaussian(sigma_min=self.sigma_min,
                                               sigma_max=self.sigma_max)
-    entropy_fn = self.variant(distrib.entropy)
+    entropy_fn = self.variant(distrib.entropy)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = entropy_fn(self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_entropy, actual, atol=1e-3,
@@ -493,7 +493,7 @@ class SquashedGaussianTest(parameterized.TestCase):
     """Tests for a full batch."""
     distrib = distributions.squashed_gaussian(sigma_min=self.sigma_min,
                                               sigma_max=self.sigma_max)
-    kl_fn = self.variant(distrib.kl)
+    kl_fn = self.variant(distrib.kl)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = kl_fn(self.mu, self.sigma, self.other_mu, self.other_sigma)
     np.testing.assert_allclose(self.expected_kl, actual, atol=1e-3, rtol=1e-6)
@@ -503,7 +503,7 @@ class SquashedGaussianTest(parameterized.TestCase):
     """Tests for a full batch."""
     distrib = distributions.squashed_gaussian(sigma_min=self.sigma_min,
                                               sigma_max=self.sigma_max)
-    kl_fn = self.variant(distrib.kl_to_standard_normal)
+    kl_fn = self.variant(distrib.kl_to_standard_normal)  # pyrefly: ignore[missing-attribute]
     # Test greedy output in batch.
     actual = kl_fn(self.mu, self.sigma)
     np.testing.assert_allclose(self.expected_kl_to_std_normal, actual,
@@ -527,7 +527,7 @@ class ImportanceSamplingTest(parameterized.TestCase):
   @chex.all_variants()
   def test_importance_sampling_ratios_batch(self):
     """Tests for a full batch."""
-    ratios_fn = self.variant(
+    ratios_fn = self.variant(  # pyrefly: ignore[missing-attribute]
         distributions.categorical_importance_sampling_ratios)
     # Test softmax output in batch.
     actual = ratios_fn(self.pi_logits, self.mu_logits, self.actions)
@@ -554,7 +554,7 @@ class CategoricalKLTest(parameterized.TestCase):
   @chex.all_variants()
   def test_categorical_kl_divergence_batch(self):
     """Tests for a full batch."""
-    kl_fn = self.variant(distributions.categorical_kl_divergence)
+    kl_fn = self.variant(distributions.categorical_kl_divergence)  # pyrefly: ignore[missing-attribute]
     # Test softmax output in batch.
     actual = kl_fn(self.p_logits, self.q_logits)
     np.testing.assert_allclose(self.expected_kl, actual, atol=1e-4)
@@ -573,7 +573,7 @@ class CategoricalCrossEntropyTest(parameterized.TestCase):
   @chex.all_variants()
   def test_categorical_cross_entropy_batch(self):
     """Tests for a full batch."""
-    cross_entropy = self.variant(jax.vmap(
+    cross_entropy = self.variant(jax.vmap(  # pyrefly: ignore[missing-attribute]
         distributions.categorical_cross_entropy))
     # Test outputs.
     actual = cross_entropy(self.labels, self.logits)
@@ -594,7 +594,7 @@ class MultivariateNormalKLTest(parameterized.TestCase):
 
   @chex.all_variants()
   def test_multivariate_normal_kl_divergence_batch(self):
-    kl_fn = self.variant(distributions.multivariate_normal_kl_divergence)
+    kl_fn = self.variant(distributions.multivariate_normal_kl_divergence)  # pyrefly: ignore[missing-attribute]
     actual = kl_fn(self.mu0, self.sigma0, self.mu1, self.sigma1)
     np.testing.assert_allclose(self.expected_kl, actual, atol=1e-3, rtol=1e-6)
 

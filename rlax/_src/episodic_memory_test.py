@@ -37,7 +37,7 @@ class KNNQueryTest(parameterized.TestCase):
     expected_neg_distances = np.array([[-5.69, -30.34], [-1., -56.25]])
     expected_neighbor_indices = np.array([[0., 1.], [1., 0.]])
 
-    @self.variant
+    @self.variant  # pyrefly: ignore[missing-attribute]
     def query_variant(data, points):
       return episodic_memory.knn_query(data, points, num_neighbors)
     actual = query_variant(self.data, self.query_points)
@@ -62,7 +62,7 @@ class KNNQueryTest(parameterized.TestCase):
                                        [-1., -56.25, -2656.25]])
     expected_neighbor_indices = np.array([[0, 1, 2], [1, 0, 2],])
 
-    @self.variant
+    @self.variant  # pyrefly: ignore[missing-attribute]
     def query_variant(data, points):
       return episodic_memory.knn_query(data, points, num_neighbors)
     actual = query_variant(self.data, self.query_points)

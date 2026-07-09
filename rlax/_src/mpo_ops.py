@@ -260,7 +260,7 @@ def compute_parametric_kl_penalty_and_dual_loss(
     kl_losses.append(kl_loss)
     alpha_losses.append(alpha_loss)
   kl_loss, alpha_loss = sum(kl_losses), sum(alpha_losses)
-  return kl_loss, alpha_loss
+  return kl_loss, alpha_loss  # pyrefly: ignore[bad-return]
 
 
 def vmpo_loss(
@@ -355,6 +355,7 @@ def vmpo_loss(
         sample_log_probs, axis_name=axis_name).size
   else:
     num_examples = sample_log_probs.size
+  # pyrefly: ignore[unsupported-operation]
   policy_loss = -sample_log_probs * norm_weights * num_examples
 
   kl_loss, alpha_loss = compute_parametric_kl_penalty_and_dual_loss(

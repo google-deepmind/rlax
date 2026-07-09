@@ -107,7 +107,7 @@ class TransformedQLambdaTest(parameterized.TestCase):
       ('hyperbolic_sin3', nonlinear_bellman.HYPERBOLIC_SIN_PAIR, 3))
   def test_transformed_q_lambda_batch(self, tx_pair, td_index):
     """Tests correctness for full batch."""
-    transformed_q_lambda = self.variant(jax.vmap(functools.partial(
+    transformed_q_lambda = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         nonlinear_bellman.transformed_q_lambda, tx_pair=tx_pair,
         lambda_=self.lambda_)))
     # Compute vtrace output.
@@ -167,7 +167,7 @@ class TransformedNStepQLearningTest(parameterized.TestCase):
       ('hyperbolic_sin3', nonlinear_bellman.HYPERBOLIC_SIN_PAIR, 3))
   def test_transformed_q_lambda_batch(self, tx_pair, td_index):
     """Tests correctness for full batch."""
-    transformed_n_step_q_learning = self.variant(jax.vmap(functools.partial(
+    transformed_n_step_q_learning = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         nonlinear_bellman.transformed_n_step_q_learning, tx_pair=tx_pair,
         n=self.n)))
     actual_td = transformed_n_step_q_learning(
@@ -226,7 +226,7 @@ class TransformedRetraceTest(parameterized.TestCase):
       ('hyperbolic_sin3', nonlinear_bellman.HYPERBOLIC_SIN_PAIR, 3))
   def test_transformed_retrace_batch(self, tx_pair, td_index):
     """Tests correctness for full batch."""
-    transformed_retrace = self.variant(jax.vmap(functools.partial(
+    transformed_retrace = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         nonlinear_bellman.transformed_retrace,
         tx_pair=tx_pair, lambda_=self._lambda)))
     # Compute transformed vtrace td errors in batch.

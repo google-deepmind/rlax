@@ -58,6 +58,7 @@ def softmax(temperature=1.):
   )
 
   def sample_fn(key: Array, logits: Array):
+    # pyrefly: ignore[bad-argument-type]
     return distrax.Softmax(logits, temperature).sample(seed=key)
 
   def probs_fn(logits: Array):
@@ -86,6 +87,7 @@ def clipped_entropy_softmax(temperature=1., entropy_clip=1.):
   )
   def sample_fn(key: Array, logits: Array, action_spec=None):
     del action_spec
+    # pyrefly: ignore[bad-argument-type]
     return distrax.Softmax(logits, temperature).sample(seed=key)
 
   def probs_fn(logits: Array, action_spec=None):
@@ -116,6 +118,7 @@ def greedy():
       PendingDeprecationWarning, stacklevel=2
   )
   def sample_fn(key: Array, preferences: Array):
+    # pyrefly: ignore[bad-argument-type]
     return distrax.Greedy(preferences).sample(seed=key)
 
   def probs_fn(preferences: Array):
@@ -140,15 +143,19 @@ def epsilon_greedy(epsilon=None):
       PendingDeprecationWarning, stacklevel=2
   )
   def sample_fn(key: Array, preferences: Array, epsilon=epsilon):
+    # pyrefly: ignore[bad-argument-type]
     return distrax.EpsilonGreedy(preferences, epsilon).sample(seed=key)
 
   def probs_fn(preferences: Array, epsilon=epsilon):
+    # pyrefly: ignore[bad-argument-type]
     return distrax.EpsilonGreedy(preferences, epsilon).probs
 
   def logprob_fn(sample: Array, preferences: Array, epsilon=epsilon):
+    # pyrefly: ignore[bad-argument-type]
     return distrax.EpsilonGreedy(preferences, epsilon).log_prob(sample)
 
   def entropy_fn(preferences: Array, epsilon=epsilon):
+    # pyrefly: ignore[bad-argument-type]
     return distrax.EpsilonGreedy(preferences, epsilon).entropy()
 
   return DiscreteDistribution(sample_fn, probs_fn, logprob_fn, entropy_fn, None)
@@ -163,22 +170,28 @@ def gaussian_diagonal(sigma=None):
       PendingDeprecationWarning, stacklevel=2
   )
 
+  # pyrefly: ignore[bad-function-definition]
   def sample_fn(key: Array, mu: Array, sigma: Array = sigma):
     return distrax.MultivariateNormalDiag(
+        # pyrefly: ignore[bad-argument-type]
         mu, jnp.ones_like(mu) * sigma).sample(seed=key)
 
+  # pyrefly: ignore[bad-function-definition]
   def prob_fn(sample: Array, mu: Array, sigma: Array = sigma):
     return distrax.MultivariateNormalDiag(
         mu, jnp.ones_like(mu) * sigma).prob(sample)
 
+  # pyrefly: ignore[bad-function-definition]
   def logprob_fn(sample: Array, mu: Array, sigma: Array = sigma):
     return distrax.MultivariateNormalDiag(
         mu, jnp.ones_like(mu) * sigma).log_prob(sample)
 
+  # pyrefly: ignore[bad-function-definition]
   def entropy_fn(mu: Array, sigma: Array = sigma):
     return distrax.MultivariateNormalDiag(
         mu, jnp.ones_like(mu) * sigma).entropy()
 
+  # pyrefly: ignore[bad-function-definition]
   def kl_to_standard_normal_fn(mu: Array, sigma: Array = sigma):
     return distrax.MultivariateNormalDiag(
         mu, jnp.ones_like(mu) * sigma).kl_divergence(
@@ -343,5 +356,7 @@ def multivariate_normal_kl_divergence(
       "Please use distrax.MultivariateNormalDiag.kl_divergence instead.",
       PendingDeprecationWarning, stacklevel=2
   )
+  # pyrefly: ignore[bad-argument-type]
   return distrax.MultivariateNormalDiag(mu_0, sigma_0).kl_divergence(
+      # pyrefly: ignore[bad-argument-type]
       distrax.MultivariateNormalDiag(mu_1, sigma_1))

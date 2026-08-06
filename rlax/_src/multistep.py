@@ -104,15 +104,24 @@ def lambda_returns(
   # If scalar make into vector.
   lambda_ = jnp.ones_like(discount_t) * lambda_
 
-  # Work backwards to compute `G_{T-1}`, ..., `G_0`.
-  def _body(acc, xs):
-    returns, discounts, values, lambda_ = xs
-    acc = returns + discounts * ((1-lambda_) * values + lambda_ * acc)
-    return acc, acc
+  # Express each update as the affine map `x -> shift + scale * x`, then
+  # compose suffixes in parallel to compute `G_{T-1}`, ..., `G_0`.
+  scales = discount_t * lambda_
+  shifts = r_t + discount_t * (1. - lambda_) * v_t
 
-  _, returns = jax.lax.scan(
-      # pyrefly: ignore[bad-index]
-      _body, v_t[-1], (r_t, discount_t, v_t, lambda_), reverse=True)
+  # Fold the terminal bootstrap into the last map so the scan outputs returns.
+  # pyrefly: ignore[bad-index]
+  shifts = shifts.at[-1].add(scales[-1] * v_t[-1])
+  scales = scales.at[-1].set(0.)
+
+  def _compose(later, earlier):
+    later_scale, later_shift = later
+    earlier_scale, earlier_shift = earlier
+    return (earlier_scale * later_scale,
+            earlier_shift + earlier_scale * later_shift)
+
+  _, returns = jax.lax.associative_scan(
+      _compose, (scales, shifts), reverse=True)
 
   return jax.lax.select(stop_target_gradients,
                         jax.lax.stop_gradient(returns),

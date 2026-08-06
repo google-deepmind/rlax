@@ -76,7 +76,7 @@ def knn_query(
   chex.assert_rank([data, query_points], 2)
   assert data.shape[-1] == query_points.shape[-1]
   distance_fn = jax.jit(functools.partial(_cdist, metric=metric))
-  neg_distances = -distance_fn(query_points, data)
+  neg_distances = -distance_fn(query_points, data)  # pyrefly: ignore[unsupported-operation]
   neg_distances, indices = jax.lax.top_k(
       neg_distances, k=min(num_neighbors, data.shape[0]))
   # Batch index into data using indices shaped [num queries, num neighbors]

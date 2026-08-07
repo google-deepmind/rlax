@@ -52,6 +52,76 @@ class LambdaReturnsTest(parameterized.TestCase):
     # Test return estimate.
     np.testing.assert_allclose(self.expected, actual, rtol=1e-5)
 
+  @staticmethod
+  def _sequential_reference(r_t, discount_t, v_t, lambda_):
+    lambda_ = jnp.ones_like(discount_t) * lambda_
+
+    def _body(acc, xs):
+      reward, discount, value, lambda_ = xs
+      acc = reward + discount * ((1. - lambda_) * value + lambda_ * acc)
+      return acc, acc
+
+    return jax.lax.scan(
+        _body, v_t[-1], (r_t, discount_t, v_t, lambda_), reverse=True)[1]
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('length_one_scalar_lambda', 1, False),
+      ('non_power_of_two_vector_lambda', 17, True),
+      ('long_vector_lambda', 4097, True),
+  )
+  def test_matches_sequential_reference(self, sequence_length, vector_lambda):
+    keys = jax.random.split(jax.random.key(sequence_length), 4)
+    r_t = jax.random.normal(keys[0], (sequence_length,))
+    discount_t = 0.99 * jax.random.uniform(keys[1], (sequence_length,))
+    discount_t = discount_t.at[::max(1, sequence_length // 4)].set(0.)
+    v_t = jax.random.normal(keys[2], (sequence_length,))
+    if vector_lambda:
+      lambda_ = jax.random.uniform(keys[3], (sequence_length,))
+    else:
+      lambda_ = 0.75
+
+    expected = self._sequential_reference(r_t, discount_t, v_t, lambda_)
+    actual = self.variant(multistep.lambda_returns)(
+        r_t, discount_t, v_t, lambda_)
+
+    np.testing.assert_allclose(expected, actual, rtol=1e-5, atol=1e-6)
+
+  def test_gradients_match_sequential_reference(self):
+    keys = jax.random.split(jax.random.key(7), 4)
+    inputs = (
+        jax.random.normal(keys[0], (17,)),
+        0.99 * jax.random.uniform(keys[1], (17,)),
+        jax.random.normal(keys[2], (17,)),
+        jax.random.uniform(keys[3], (17,)),
+    )
+
+    def summed_returns(fn, *args):
+      return jnp.sum(fn(*args))
+
+    expected = jax.grad(
+        functools.partial(summed_returns, self._sequential_reference),
+        argnums=(0, 1, 2, 3))(*inputs)
+    actual = jax.grad(
+        functools.partial(summed_returns, multistep.lambda_returns),
+        argnums=(0, 1, 2, 3))(*inputs)
+
+    chex.assert_trees_all_close(expected, actual, rtol=1e-5, atol=1e-6)
+
+  def test_stop_target_gradients(self):
+    r_t = jnp.array([1., 2., 3.])
+    discount_t = jnp.array([0.9, 0.9, 0.9])
+    v_t = jnp.array([0.5, 1., 1.5])
+    lambda_ = jnp.array([0.7, 0.8, 0.9])
+
+    gradients = jax.grad(
+        lambda *args: jnp.sum(multistep.lambda_returns(
+            *args, stop_target_gradients=True)),
+        argnums=(0, 1, 2, 3))(r_t, discount_t, v_t, lambda_)
+
+    chex.assert_trees_all_close(
+        gradients, jax.tree.map(jnp.zeros_like, gradients))
+
 
 class DiscountedReturnsTest(parameterized.TestCase):
 

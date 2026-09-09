@@ -109,7 +109,7 @@ class TransformedQLambdaTest(parameterized.TestCase):
     """Tests correctness for full batch."""
     transformed_q_lambda = self.variant(jax.vmap(functools.partial(  # pyrefly: ignore[missing-attribute]
         nonlinear_bellman.transformed_q_lambda, tx_pair=tx_pair,
-        lambda_=self.lambda_)))
+        lambda_=self.lambda_)))  # pyrefly: ignore[bad-argument-type]
     # Compute vtrace output.
     actual_td = transformed_q_lambda(
         self.q_tm1, self.a_tm1, self.r_t, self.discount_t, self.q_t)

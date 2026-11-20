@@ -102,7 +102,7 @@ def vtrace(
   # Return errors, maybe disabling gradient flow through bootstrap targets.
   return jax.lax.select(
       stop_target_gradients,
-      jax.lax.stop_gradient(errors + v_tm1) - v_tm1,
+      jax.lax.stop_gradient(errors) - (v_tm1 - jax.lax.stop_gradient(v_tm1)),
       errors)
 
 
@@ -178,7 +178,7 @@ def leaky_vtrace(
   # Return errors, maybe disabling gradient flow through bootstrap targets.
   return jax.lax.select(
       stop_target_gradients,
-      jax.lax.stop_gradient(errors + v_tm1) - v_tm1,
+      jax.lax.stop_gradient(errors) - (v_tm1 - jax.lax.stop_gradient(v_tm1)),
       errors)
 
 

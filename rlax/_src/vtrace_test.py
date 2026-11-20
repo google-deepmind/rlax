@@ -19,6 +19,7 @@ from absl.testing import absltest
 from absl.testing import parameterized
 import chex
 import jax
+import jax.numpy as jnp
 import numpy as np
 from rlax._src import distributions
 from rlax._src import vtrace
@@ -140,6 +141,34 @@ class VTraceTest(parameterized.TestCase):
     vs_from_q = v_tm1 + clipped_rho_tm1 * (vtrace_output.q_estimate - v_tm1)
     # Test output.
     np.testing.assert_allclose(expected_vs, vs_from_q, rtol=1e-3)
+
+  @chex.all_variants()
+  @parameterized.named_parameters(
+      ('vtrace', vtrace.vtrace),
+      ('leaky_vtrace', vtrace.leaky_vtrace),
+  )
+  def test_stop_target_gradients_preserves_forward_errors(self, vtrace_fn):
+    v_tm1 = jnp.array([128.0], dtype=jnp.bfloat16)
+    v_t = jnp.array([127.0], dtype=jnp.bfloat16)
+    r_t = jnp.zeros_like(v_t)
+    discount_t = jnp.ones_like(v_t)
+    rho_tm1 = jnp.array([0.128], dtype=jnp.bfloat16)
+
+    def loss(v_tm1, v_t, stop_target_gradients=True):
+      return vtrace_fn(
+          v_tm1, v_t, r_t, discount_t, rho_tm1,
+          stop_target_gradients=stop_target_gradients,
+      ).sum()
+
+    value_and_grad = self.variant(jax.value_and_grad(loss, argnums=(0, 1)))
+    unstopped_error, _ = value_and_grad(v_tm1, v_t, False)
+    stopped_error, (prediction_grad, bootstrap_grad) = value_and_grad(
+        v_tm1, v_t)
+
+    np.testing.assert_array_equal(unstopped_error, -0.1279296875)
+    np.testing.assert_array_equal(stopped_error, unstopped_error)
+    np.testing.assert_array_equal(prediction_grad, [-1.0])
+    np.testing.assert_array_equal(bootstrap_grad, [0.0])
 
   @chex.all_variants()
   def test_leaky_and_non_leaky_vtrace(self):
